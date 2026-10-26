@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.login-layout {
+  display: grid;
+  align-items: center;
+  gap: 3rem;
+  min-height: calc(100svh - 10rem);
+}
+
+@media (min-width: 768px) {
+  .login-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .login-intro {
+    padding-top: 0.5rem;
+  }
+}

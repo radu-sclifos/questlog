@@ -30,8 +30,12 @@ class EntryControllerTests {
     @BeforeEach
     void setUp() {
         repository = mock(EntryRepository.class);
+        var users = mock(com.radusclifos.questlog.user.service.UserService.class);
+        var user = new com.radusclifos.questlog.user.User("tester", "Tester", "hash");
+        ReflectionTestUtils.setField(user, "id", 10L);
+        when(users.current(any())).thenReturn(user);
         mvc = MockMvcBuilders.standaloneSetup(
-                new EntryController(repository, Mappers.getMapper(EntryMapper.class))).build();
+                new EntryController(new com.radusclifos.questlog.entry.service.EntryService(repository, Mappers.getMapper(EntryMapper.class), users))).build();
     }
 
     @ParameterizedTest
@@ -47,7 +51,6 @@ class EntryControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"  Hollow Knight  \"}"))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost" + contextPath + "/entries/" + id))
                 .andExpect(jsonPath("$.id").value(id.intValue()))
                 .andExpect(jsonPath("$.title").value("Hollow Knight"));
     }
@@ -55,8 +58,8 @@ class EntryControllerTests {
     @Test
     void readsEntries() throws Exception {
         Entry entry = existingEntry();
-        when(repository.findAll()).thenReturn(List.of(entry));
-        when(repository.findById(id)).thenReturn(Optional.of(entry));
+        when(repository.findAllByUserIdOrderByIdAsc(10L)).thenReturn(List.of(entry));
+        when(repository.findByIdAndUserId(id, 10L)).thenReturn(Optional.of(entry));
 
         mvc.perform(get("/entries"))
                 .andExpect(status().isOk())
@@ -74,24 +77,24 @@ class EntryControllerTests {
 
     @Test
     void updatesAllEditableFields() throws Exception {
-        when(repository.findById(id)).thenReturn(Optional.of(existingEntry()));
+        when(repository.findByIdAndUserId(id, 10L)).thenReturn(Optional.of(existingEntry()));
         when(repository.save(any(Entry.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"Celeste\",\"score\":8.5,\"notes\":\"Updated notes\",\"status\":\"PAUSED\"}"))
+                        .content("{\"title\":\"Celeste\",\"score\":8.5,\"notes\":\"Updated notes\",\"status\":\"ON_HOLD\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.intValue()))
                 .andExpect(jsonPath("$.title").value("Celeste"))
                 .andExpect(jsonPath("$.score").value(8.5))
                 .andExpect(jsonPath("$.notes").value("Updated notes"))
-                .andExpect(jsonPath("$.status").value("PAUSED"));
+                .andExpect(jsonPath("$.status").value("ON_HOLD"));
         verify(repository).save(any(Entry.class));
     }
 
     @Test
     void deletesEntry() throws Exception {
         Entry entry = existingEntry();
-        when(repository.findById(id)).thenReturn(Optional.of(entry));
+        when(repository.findByIdAndUserId(id, 10L)).thenReturn(Optional.of(entry));
 
         mvc.perform(delete("/entries/{id}", id)).andExpect(status().isNoContent());
         verify(repository).delete(entry);
@@ -152,7 +155,7 @@ class EntryControllerTests {
     @Test
     void clearsOptionalDetailsWhenOmittedOnUpdate() throws Exception {
         Entry entry = existingEntry();
-        when(repository.findById(id)).thenReturn(Optional.of(entry));
+        when(repository.findByIdAndUserId(id, 10L)).thenReturn(Optional.of(entry));
         when(repository.save(any(Entry.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON)

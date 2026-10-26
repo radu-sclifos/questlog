@@ -26,7 +26,7 @@ public abstract class EntryMapper {
         if (request == null) {
             return null;
         }
-        var entry = new Entry(request.title());
+        var entry = new Entry(request.getTitle());
         copyDetails(request, entry);
         return entry;
     }
@@ -36,11 +36,13 @@ public abstract class EntryMapper {
         requireNonNull(request, "request must not be null");
         requireNonNull(entry, "entry must not be null");
 
-        entry.rename(request.title());
+        entry.rename(request.getTitle());
         copyDetails(request, entry);
     }
 
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "title", ignore = true)
     protected abstract void copyDetails(SaveEntryRequest request, @MappingTarget Entry entry);
+
 }

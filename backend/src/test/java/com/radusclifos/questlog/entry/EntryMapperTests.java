@@ -22,9 +22,9 @@ class EntryMapperTests {
         assertNull(entry.getId());
         assertEquals("Celeste", entry.getTitle());
         EntryDto result = mapper.toDto(entry);
-        assertEquals(request.score(), result.getScore());
-        assertEquals(request.notes(), result.getNotes());
-        assertEquals(request.status(), result.getStatus());
+        assertEquals(request.getScore(), result.getScore());
+        assertEquals(request.getNotes(), result.getNotes());
+        assertEquals(request.getStatus(), result.getStatus());
         assertThrows(IllegalArgumentException.class,
                 () -> mapper.toEntity(new SaveEntryRequest(" ", null, null, null, null, null)));
     }

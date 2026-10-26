@@ -6,20 +6,32 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public record SaveEntryRequest(
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class SaveEntryRequest {
 
-        @NotBlank @Size(max = 200) String title,
+    @NotBlank
+    @Size(max = 200)
+    private String title;
 
-        @DecimalMin("0.0") @DecimalMax("10.0") Double score,
+    @DecimalMin("0.0")
+    @DecimalMax("10.0")
+    private Double score;
 
-        @Size(max = 2000) String notes,
+    @Size(max = 2000)
+    private String notes;
 
-        EntryStatus status,
+    private EntryStatus status;
 
-        EntryOwnership ownership,
+    private EntryOwnership ownership;
 
-        Integer playtime
+    private Integer playtime;
 
-) {
 }
