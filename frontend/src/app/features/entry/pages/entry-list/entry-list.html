@@ -16,7 +16,13 @@
     <p>{{ message }}</p>
   }
 
-  @for (entry of entries(); track entry.id) {
+  <app-entry-list-header [query]="query()" (queryChange)="query.set($event)" [resultCount]="visibleEntries().length" />
+
+  @if (!errorMessage() && entries().length > 0 && visibleEntries().length === 0) {
+    <p class="py-10 text-center text-sm text-base-content/60">No games match your filters. Try another search or clear the filters.</p>
+  }
+
+  @for (entry of visibleEntries(); track entry.id) {
     <app-entry-card [entry]="entry" [canEdit]="canEdit" (editRequested)="editorDialog.open($event)"
                     (deleteRequested)="deleteDialog.open($event)" />
   }

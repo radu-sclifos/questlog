@@ -2,3 +2,13 @@
 @plugin 'daisyui' {
   themes: night --default;
 }
+
+/* default field focus follows the active theme. Keep semantic variants
+   (error, success, etc.) above this base component layer. */
+@layer daisyui.l1.l2.l3 {
+  .input:is(:focus, :focus-within),
+  .textarea:is(:focus, :focus-within),
+  .select:is(:focus, :focus-within, :open) {
+    --input-color: var(--color-primary);
+  }
+}
