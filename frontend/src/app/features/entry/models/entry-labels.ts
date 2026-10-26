@@ -13,7 +13,7 @@ export const ENTRY_STATUS_LABELS: Readonly<Record<EntryStatus, string>> = {
 export const ENTRY_OWNERSHIP_LABELS: Readonly<Record<EntryOwnership, string>> = {
   [EntryOwnership.OWN]: 'Own',
   [EntryOwnership.HOUSEHOLD]: 'Household',
-  [EntryOwnership.SUBSCRIPTION]: 'Subcription',
+  [EntryOwnership.SUBSCRIPTION]: 'Subscription',
   [EntryOwnership.FORMERLY_OWNED]: 'Formerly owned',
   [EntryOwnership.OTHER]: 'Other',
 };
