@@ -1,0 +1,21 @@
+# IntelliJ / WebStorm
+**/.idea/
+*.iml
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local secrets
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

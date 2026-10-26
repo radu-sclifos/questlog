@@ -1,0 +1,15 @@
+<div class="toast toast-bottom toast-end z-50 w-full max-w-xs pointer-events-none">
+
+  @for (toast of toastService.toasts(); track toast.id) {
+    <button type="button"
+         class="alert pointer-events-auto w-full cursor-pointer grid-cols-1 text-start shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2"
+         (click)="toastService.dismiss(toast.id)"
+         [class.alert-success]="toast.type === 'success'"
+         [class.alert-error]="toast.type === 'error'"
+         [class.alert-warning]="toast.type === 'warning'"
+         [class.alert-info]="toast.type === 'info'">
+      <span class="min-w-0 whitespace-pre-wrap wrap-break-word">{{ toast.message }}</span>
+    </button>
+  }
+
+</div>

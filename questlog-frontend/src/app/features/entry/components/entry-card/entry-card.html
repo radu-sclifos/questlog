@@ -1,0 +1,88 @@
+<article class="card overflow-hidden mb-2.5 border border-base-content/10 bg-base-100/80 shadow-xl">
+
+  <h2>
+    <button
+      type="button"
+      class="entry-card__toggle transition-colors"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="'entry-details-' + entry().id"
+      (click)="toggleExpanded()">
+      <span class="entry-card__cover rounded-lg bg-base-300 text-base-content/40">
+        <span class="text-center text-[10px] uppercase tracking-wider">Coming<br />soon</span>
+      </span>
+
+      <span class="min-w-0">
+        <span class="block wrap-break-word text-lg font-semibold sm:text-xl">{{ entry().title }}</span>
+        <span class="mt-1 block text-xs font-normal text-base-content/50">Coming soon</span>
+        <span class="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
+          <span class="badge badge-soft badge-sm"
+                [class]="statusClasses[entry().status ?? entryStatus.UNPLAYED]">{{ statusLabels[entry().status ?? entryStatus.UNPLAYED] }}</span>
+          <span class="text-xs font-normal">Score: {{ entry().score ?? '—' }}</span>
+        </span>
+      </span>
+
+      <span class="hidden text-center sm:block">
+        <span class="block text-[10px] font-normal uppercase tracking-widest text-base-content/50 justify-self-center">Score</span>
+        <span class="text-xl font-semibold text-primary justify-self-center">{{ entry().score ?? '—' }}</span>
+      </span>
+      <span class="badge badge-soft hidden sm:inline-flex justify-self-center"
+            [class]="statusClasses[entry().status ?? entryStatus.UNPLAYED]">{{ statusLabels[entry().status ?? entryStatus.UNPLAYED] }}</span>
+      <!-- Arrow svg -->
+      <svg class="size-5 text-base-content/50 transition-transform motion-reduce:transition-none justify-self-center"
+           [class.rotate-180]="expanded()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+           aria-hidden="true">
+        <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  </h2>
+
+  <div [id]="'entry-details-' + entry().id" [hidden]="!expanded()">
+    <div class="border-t border-base-content/10 p-5 pb-1 sm:p-6 sm:pb-1">
+      <dl class="entry-card__details">
+        <div>
+          <dt class="text-xs text-base-content/50">Genre</dt>
+          <dd class="mt-1 text-sm font-medium">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-base-content/50">Ownership</dt>
+          <dd class="mt-1 text-sm font-medium">
+            @if (entry().ownership; as ownership) {
+              {{ ownershipLabels[ownership] }}
+            } @else {
+              —
+            }
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-base-content/50">Playtime</dt>
+          <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-base-content/50">Achievement</dt>
+          <dd class="mt-1 text-sm font-medium">
+            Coming soon
+          </dd>
+        </div>
+      </dl>
+
+      <section class="mt-6 rounded-xl bg-base-200/60 p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/60">Notes</h3>
+        <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-base-content/80">{{ entry().notes || '-' }}</p>
+      </section>
+
+      @if (canEdit()) {
+        <div class="mb-4 mt-2 flex flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-outline" (click)="editRequested.emit(entry())">
+            Edit
+          </button>
+          <button type="button" class="btn btn-sm btn-outline btn-error" (click)="deleteRequested.emit(entry())">
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+</article>
+
+

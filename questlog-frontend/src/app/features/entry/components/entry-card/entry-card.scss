@@ -1,0 +1,42 @@
+.entry-card__toggle {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: color-mix(in oklab, var(--color-base-content) 5%, transparent);
+    }
+  }
+
+  //over 640px
+  @media (min-width: 40rem) {
+    grid-template-columns: 4rem minmax(0, 1fr) 2rem 5rem 1.5rem;
+    gap: 1.5rem;
+    padding-inline: 1rem;
+  }
+}
+
+.entry-card__cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  overflow: hidden;
+}
+
+.entry-card__details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+
+  @media (min-width: 48rem) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

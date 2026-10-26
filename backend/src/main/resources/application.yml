@@ -1,0 +1,16 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: nome-questlog
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false

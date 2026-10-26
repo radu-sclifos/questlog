@@ -1,0 +1,182 @@
+package com.radusclifos.questlog.entry;
+
+import com.radusclifos.questlog.entry.controller.EntryController;
+import com.radusclifos.questlog.entry.mapper.EntryMapper;
+import com.radusclifos.questlog.entry.repository.EntryRepository;
+import org.mapstruct.factory.Mappers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+class EntryControllerTests {
+
+    private EntryRepository repository;
+    private MockMvc mvc;
+    private final Long id = 1L;
+
+    @BeforeEach
+    void setUp() {
+        repository = mock(EntryRepository.class);
+        mvc = MockMvcBuilders.standaloneSetup(
+                new EntryController(repository, Mappers.getMapper(EntryMapper.class))).build();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "/api"})
+    void createsEntryWithManualTitle(String contextPath) throws Exception {
+        when(repository.save(any(Entry.class))).thenAnswer(invocation -> {
+            Entry entry = invocation.getArgument(0);
+            ReflectionTestUtils.setField(entry, "id", id);
+            return entry;
+        });
+
+        mvc.perform(post(contextPath + "/entries").contextPath(contextPath)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"  Hollow Knight  \"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "http://localhost" + contextPath + "/entries/" + id))
+                .andExpect(jsonPath("$.id").value(id.intValue()))
+                .andExpect(jsonPath("$.title").value("Hollow Knight"));
+    }
+
+    @Test
+    void readsEntries() throws Exception {
+        Entry entry = existingEntry();
+        when(repository.findAll()).thenReturn(List.of(entry));
+        when(repository.findById(id)).thenReturn(Optional.of(entry));
+
+        mvc.perform(get("/entries"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(id.intValue()))
+                .andExpect(jsonPath("$[0].score").value(9.0))
+                .andExpect(jsonPath("$[0].notes").value("A great game"))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
+        mvc.perform(get("/entries/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Hollow Knight"))
+                .andExpect(jsonPath("$.score").value(9.0))
+                .andExpect(jsonPath("$.notes").value("A great game"))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
+    void updatesAllEditableFields() throws Exception {
+        when(repository.findById(id)).thenReturn(Optional.of(existingEntry()));
+        when(repository.save(any(Entry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Celeste\",\"score\":8.5,\"notes\":\"Updated notes\",\"status\":\"PAUSED\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id.intValue()))
+                .andExpect(jsonPath("$.title").value("Celeste"))
+                .andExpect(jsonPath("$.score").value(8.5))
+                .andExpect(jsonPath("$.notes").value("Updated notes"))
+                .andExpect(jsonPath("$.status").value("PAUSED"));
+        verify(repository).save(any(Entry.class));
+    }
+
+    @Test
+    void deletesEntry() throws Exception {
+        Entry entry = existingEntry();
+        when(repository.findById(id)).thenReturn(Optional.of(entry));
+
+        mvc.perform(delete("/entries/{id}", id)).andExpect(status().isNoContent());
+        verify(repository).delete(entry);
+    }
+
+    @Test
+    void missingEntriesReturnNotFound() throws Exception {
+        mvc.perform(get("/entries/{id}", id)).andExpect(status().isNotFound());
+        mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Celeste\"}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(delete("/entries/{id}", id)).andExpect(status().isNotFound());
+        verify(repository, never()).save(any());
+        verify(repository, never()).delete(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"title\":null}", "{\"title\":\"\"}", "{\"title\":\"   \"}"})
+    void rejectsMissingAndBlankTitles(String body) throws Exception {
+        assertInvalidTitle(body);
+    }
+
+    @Test
+    void rejectsOverlongTitles() throws Exception {
+        assertInvalidTitle("{\"title\":\"" + "a".repeat(201) + "\"}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"title\":\"Game\",\"score\":-0.1}",
+            "{\"title\":\"Game\",\"score\":10.1}",
+            "{\"title\":\"Game\",\"status\":\"UNKNOWN\"}"
+    })
+    void rejectsInvalidDetails(String body) throws Exception {
+        assertInvalidTitle(body);
+    }
+
+    @Test
+    void rejectsOverlongNotes() throws Exception {
+        assertInvalidTitle("{\"title\":\"Game\",\"notes\":\"" + "a".repeat(2001) + "\"}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, 10.0})
+    void createsEntryWithDetailsAtValidationLimits(double score) throws Exception {
+        when(repository.save(any(Entry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        String notes = "a".repeat(2000);
+
+        mvc.perform(post("/entries").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Game\",\"score\":" + score
+                                + ",\"notes\":\"" + notes + "\",\"status\":\"COMPLETED\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.score").value(score))
+                .andExpect(jsonPath("$.notes").value(notes))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
+    void clearsOptionalDetailsWhenOmittedOnUpdate() throws Exception {
+        Entry entry = existingEntry();
+        when(repository.findById(id)).thenReturn(Optional.of(entry));
+        when(repository.save(any(Entry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Celeste\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.score").doesNotExist())
+                .andExpect(jsonPath("$.notes").doesNotExist())
+                .andExpect(jsonPath("$.status").doesNotExist());
+    }
+
+    private void assertInvalidTitle(String body) throws Exception {
+        mvc.perform(post("/entries").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(repository);
+    }
+
+    private Entry existingEntry() {
+        Entry entry = new Entry("Hollow Knight");
+        ReflectionTestUtils.setField(entry, "id", id);
+        entry.setScore(9.0);
+        entry.setNotes("A great game");
+        entry.setStatus(EntryStatus.COMPLETED);
+        return entry;
+    }
+}
