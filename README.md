@@ -74,3 +74,14 @@ questlog/
     └── proxy.conf.json             # Development proxy to the backend
 ```
 
+## Author and License
+
+QuestLog was created by [Radu Sclifos](https://github.com/radu-sclifos) as a personal portfolio project.
+
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+You may download, run, study, and modify the project for personal, noncommercial purposes. Noncommercial redistribution and public forks are also permitted under the license. When sharing the project or a modified version, include the license text or its URL and preserve the required copyright notice identifying the original author. Please clearly identify your own modifications and do not present the original project as your own work.
+
+Commercial use, including selling the software or offering it as a paid service, is not permitted under this license. The license also expressly permits the uses described in its Personal Uses and Noncommercial Organizations sections.
+
+Third-party dependencies and assets remain subject to their respective licenses.
