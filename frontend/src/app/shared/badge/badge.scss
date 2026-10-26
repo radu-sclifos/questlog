@@ -1,0 +1,45 @@
+.questlog-badge {
+  --questlog-badge-color: #94a3b8;
+  color: color-mix(in oklab, var(--questlog-badge-color) 55%, var(--color-base-content));
+  background-color: color-mix(in oklab, var(--questlog-badge-color) 12%, var(--color-base-100));
+  border-color: color-mix(in oklab, var(--questlog-badge-color) 35%, var(--color-base-100));
+  font-weight: 500;
+  white-space: nowrap;
+
+  &[data-tone='green'] {
+    --questlog-badge-color: #22c55e;
+  }
+
+  &[data-tone='sky'] {
+    --questlog-badge-color: #38bdf8;
+  }
+
+  &[data-tone='violet'] {
+    --questlog-badge-color: #a78bfa;
+  }
+
+  &[data-tone='slate'] {
+    --questlog-badge-color: #94a3b8;
+  }
+
+  &[data-tone='blue'] {
+    --questlog-badge-color: #818cf8;
+  }
+
+  &[data-tone='amber'] {
+    --questlog-badge-color: #fba524;
+  }
+
+  &[data-tone='teal'] {
+    --questlog-badge-color: #2dd4bf;
+  }
+
+  &[data-tone='rose'] {
+    --questlog-badge-color: #d35e6d;
+  }
+
+  &[data-tone='beige'] {
+    --questlog-badge-color: #fdf5bf;
+  }
+
+}

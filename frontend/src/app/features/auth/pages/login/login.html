@@ -9,9 +9,9 @@
       Keep track of your adventures, from the next game on your list to the credits you will never forget.
     </p>
     <div class="mt-10 flex gap-2">
-      <span class="badge badge-primary badge-outline">Playing</span>
-      <span class="badge badge-outline">Completed</span>
-      <span class="badge badge-outline">Planned</span>
+      <app-entry-status-badge [status]="entryStatus.PLAYING" />
+      <app-entry-status-badge [status]="entryStatus.COMPLETED" />
+      <app-entry-status-badge [status]="entryStatus.UNPLAYED" />
     </div>
   </div>
 

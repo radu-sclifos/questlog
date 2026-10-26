@@ -15,8 +15,7 @@
         <span class="block wrap-break-word text-lg font-semibold sm:text-xl">{{ entry().title }}</span>
         <span class="mt-1 block text-xs font-normal text-base-content/50">Coming soon</span>
         <span class="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
-          <span class="badge badge-soft badge-sm"
-                [class]="statusClasses[entry().status ?? entryStatus.UNPLAYED]">{{ statusLabels[entry().status ?? entryStatus.UNPLAYED] }}</span>
+          <app-entry-status-badge [status]="entry().status" size="sm" />
           <span class="text-xs font-normal">Score: {{ entry().score ?? '—' }}</span>
         </span>
       </span>
@@ -25,8 +24,7 @@
         <span class="block text-[10px] font-normal uppercase tracking-widest text-base-content/50 justify-self-center">Score</span>
         <span class="text-xl font-semibold text-primary justify-self-center">{{ entry().score ?? '—' }}</span>
       </span>
-      <span class="badge badge-soft hidden sm:inline-flex justify-self-center"
-            [class]="statusClasses[entry().status ?? entryStatus.UNPLAYED]">{{ statusLabels[entry().status ?? entryStatus.UNPLAYED] }}</span>
+      <app-entry-status-badge class="hidden sm:inline-flex justify-self-center" [status]="entry().status" />
       <!-- Arrow svg -->
       <svg class="size-5 text-base-content/50 transition-transform motion-reduce:transition-none justify-self-center"
            [class.rotate-180]="expanded()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -84,5 +82,3 @@
   </div>
 
 </article>
-
-

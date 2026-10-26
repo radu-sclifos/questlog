@@ -30,8 +30,7 @@ CREATE TABLE entries
     ownership VARCHAR(30),
     playtime  INTEGER,
     notes     VARCHAR(2000),
-    CONSTRAINT entries_status_check CHECK (status IN ('COMPLETED', 'BEATEN', 'DROPPED', 'ON_HOLD', 'ENDLESS', 'UNPLAYED',
-                                                      'PLANNED', 'PLAYING')),
+    CONSTRAINT entries_status_check CHECK (status IN ('COMPLETED', 'BEATEN', 'DROPPED', 'ON_HOLD', 'ENDLESS', 'UNPLAYED', 'PLAYING')),
     CONSTRAINT entries_ownership_check CHECK (ownership IN ('OWN', 'HOUSEHOLD', 'FORMERLY_OWNED', 'OTHER', 'SUBSCRIPTION'))
 );
 

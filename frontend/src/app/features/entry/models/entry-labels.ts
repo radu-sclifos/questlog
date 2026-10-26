@@ -5,7 +5,6 @@ export const ENTRY_STATUS_LABELS: Readonly<Record<EntryStatus, string>> = {
   [EntryStatus.COMPLETED]: 'Completed',
   [EntryStatus.PLAYING]: 'Playing',
   [EntryStatus.UNPLAYED]: 'Unplayed',
-  [EntryStatus.PLANNED]: 'Planned',
   [EntryStatus.ON_HOLD]: 'On Hold',
   [EntryStatus.ENDLESS]: 'Endless',
   [EntryStatus.DROPPED]: 'Dropped',

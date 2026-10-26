@@ -5,13 +5,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 
+import { EntryStatusBadge } from '../../../entry/components/entry-status-badge/entry-status-badge';
+import { EntryStatus } from '../../../entry/models/entry';
+
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, EntryStatusBadge],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
 export class Login {
+  protected readonly entryStatus = EntryStatus;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);

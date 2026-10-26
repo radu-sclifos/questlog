@@ -6,7 +6,6 @@ public enum EntryStatus {
     DROPPED,
     PLAYING,
     UNPLAYED,
-    PLANNED,
     ON_HOLD,
     ENDLESS,
 }

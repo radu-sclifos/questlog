@@ -3,7 +3,6 @@ export enum EntryStatus {
   COMPLETED = 'COMPLETED',
   PLAYING = 'PLAYING',
   UNPLAYED = 'UNPLAYED',
-  PLANNED = 'PLANNED',
   ON_HOLD = 'ON_HOLD',
   ENDLESS = 'ENDLESS',
   DROPPED = 'DROPPED',
