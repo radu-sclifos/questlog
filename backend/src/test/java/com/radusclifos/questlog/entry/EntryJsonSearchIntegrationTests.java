@@ -19,6 +19,36 @@ class EntryJsonSearchIntegrationTests {
     @Autowired UserRepository users;
     @Autowired EntryRepository entries;
 
+    @Test void nullScoresComeLastInBothDirectionsBeforePaging() throws Exception {
+        var user = users.save(new User("null-score-sort", "Scores", "hash"));
+        for (int i = 0; i < 4; i++) {
+            var entry = new Entry("Game " + i);
+            entry.setUser(user);
+            entry.setScore(i < 2 ? (double) (i + 1) : null);
+            entries.save(entry);
+        }
+        entries.flush();
+        var mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        for (var direction : java.util.List.of("ASC", "DESC")) {
+            var request = """
+                {"username":"null-score-sort","pageSize":2,"pageNumber":%d,"sorts":[
+                  {"field":"score","direction":"%s","nullsLast":true},
+                  {"field":"title","direction":"ASC"}]}
+                """;
+            mvc.perform(post("/entries/search").contentType("application/json")
+                    .content(request.formatted(0, direction)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(4))
+                .andExpect(jsonPath("$.items[0].title").value(direction.equals("ASC") ? "Game 0" : "Game 1"))
+                .andExpect(jsonPath("$.items[1].title").value(direction.equals("ASC") ? "Game 1" : "Game 0"));
+            mvc.perform(post("/entries/search").contentType("application/json")
+                    .content(request.formatted(1, direction)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].title").value("Game 2"))
+                .andExpect(jsonPath("$.items[1].title").value("Game 3"));
+        }
+    }
+
     @Test void customStatusOrderIsAppliedBeforePaging() throws Exception {
         var user = users.save(new User("custom-sort", "Custom", "hash"));
         for (var entryStatus : EntryStatus.values()) {

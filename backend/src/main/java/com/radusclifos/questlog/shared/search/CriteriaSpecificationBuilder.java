@@ -144,6 +144,13 @@ final class CriteriaSpecificationBuilder<T> {
                 var orders = new ArrayList<Order>();
                 for (var sort : sorts) {
                     var path = path(root, sort.getField());
+                    if (sort.isNullsLast()) {
+                        // Keep null placement independent of the value sort's direction.
+                        var nullRank = cb.<Integer>selectCase()
+                                .when(cb.isNull(path), 1)
+                                .otherwise(0);
+                        orders.add(cb.asc(nullRank));
+                    }
                     Expression<?> expression = path.getJavaType() == String.class ? cb.lower(path.as(String.class)) : path;
                     if (sort.getCustomOrder() != null) {
                         var rank = cb.<Integer>selectCase();

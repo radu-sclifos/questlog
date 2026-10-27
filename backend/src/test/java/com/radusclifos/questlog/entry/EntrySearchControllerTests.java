@@ -57,6 +57,15 @@ class EntrySearchControllerTests {
         verify(repository).searchWithCriteria(argThat(criteria -> criteria.getPageNumber() == 2 && criteria.getPageSize() == 100));
     }
 
+    @Test void preservesNullsLastForScoreSort() throws Exception {
+        mvc.perform(post("/entries/search").contentType("application/json").content("""
+            {"username":"alice","sorts":[{"field":"score","direction":"DESC","nullsLast":true}]}
+            """))
+            .andExpect(status().isOk());
+        verify(repository).searchWithCriteria(argThat(criteria ->
+            criteria.findSort("score").orElseThrow().isNullsLast()));
+    }
+
     @ParameterizedTest
     @ValueSource(strings={"ASC", "DESC"})
     void statusSortUsesServerOrderWithoutChangingPriorityOrDirection(String direction) throws Exception {

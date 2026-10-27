@@ -27,6 +27,13 @@ public class SortCriteria {
      * */
     private List<String> customOrder;
 
+    /** Places null values last in both ASC and DESC; false keeps database defaults. */
+    private boolean nullsLast;
+
+    public SortCriteria(String field, Sort.Direction direction, List<String> customOrder) {
+        this(field, direction, customOrder, false);
+    }
+
     public SortCriteria(String field, Sort.Direction direction) {
         this.field = field;
         this.direction = direction;

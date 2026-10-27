@@ -87,6 +87,7 @@ export class EntryListHeader {
     criteria.addSort({
       field: sortBy,
       direction: sortDirection,
+      nullsLast: sortBy === 'score',
     });
 
     if (sortBy !== 'title') {
