@@ -26,7 +26,7 @@ CREATE TABLE entries
     user_id   BIGINT REFERENCES users (id) NOT NULL,
     title     VARCHAR(200) NOT NULL,
     score     DOUBLE PRECISION,
-    status    VARCHAR(30),
+    status    VARCHAR(30) NOT NULL DEFAULT 'UNPLAYED',
     ownership VARCHAR(30),
     playtime  INTEGER,
     notes     VARCHAR(2000),

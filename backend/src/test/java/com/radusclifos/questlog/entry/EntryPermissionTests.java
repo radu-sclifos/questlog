@@ -19,6 +19,7 @@ class EntryPermissionTests {
     private final EntryService service=new EntryService(repository,mapper,users);
     private final Principal principal=()->"alice";
     @BeforeEach void setup() {
+        com.radusclifos.questlog.shared.search.SearchTestSupport.configure(repository);
         var alice=new User("alice","Alice","hash"); ReflectionTestUtils.setField(alice,"id",10L);
         when(users.current(principal)).thenReturn(alice);
     }
@@ -27,7 +28,7 @@ class EntryPermissionTests {
         assertEquals(404,assertThrows(ResponseStatusException.class,()->service.get(principal,99L)).getStatusCode().value());
         assertThrows(ResponseStatusException.class,()->service.update(principal,99L,new SaveEntryRequest("Title",null,null,null,null,null)));
         assertThrows(ResponseStatusException.class,()->service.delete(principal,99L));
-        verify(repository,never()).save(any()); verify(repository,never()).delete(any()); verifyNoInteractions(mapper);
+        verify(repository,never()).save(any()); verify(repository,never()).delete(any(com.radusclifos.questlog.entry.Entry.class)); verifyNoInteractions(mapper);
     }
     @Test void creationAssignsAuthenticatedOwner() {
         var request=new SaveEntryRequest("Title",null,null,null,null,null);
@@ -39,6 +40,11 @@ class EntryPermissionTests {
     @Test void friendsLibraryIsReadUsingFriendsId() {
         var bob=new User("bob","Bob","hash"); ReflectionTestUtils.setField(bob,"id",20L);
         when(users.find("bob")).thenReturn(bob);
-        service.forUser("bob"); verify(repository).findAllByUserIdOrderByIdAsc(20L);
+        when(repository.searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        service.search(new com.radusclifos.questlog.entry.dto.EntrySearchCriteria("bob"));
+        verify(users).find("bob");
+        verify(users, never()).current(any());
+        verify(repository).searchWithCriteria(argThat(criteria -> criteria.getPageNumber() == 0 && criteria.getPageSize() == 100));
     }
 }

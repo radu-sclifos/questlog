@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 @Configuration
@@ -30,12 +31,16 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // deliberately scoped: the future /games feature keeps its existing behavior.
+        var publicEntrySearch = PathPatternRequestMatcher.withDefaults()
+                .matcher(HttpMethod.POST, "/entries/search");
+
         http.securityMatcher("/auth/**", "/me", "/users/**", "/entries", "/entries/**")
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/auth/csrf", "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/entries").permitAll()
+                        .requestMatchers(publicEntrySearch).permitAll()
                         .anyRequest().authenticated())
+                // This read-only POST can be called without a CSRF token
+                .csrf(csrf -> csrf.ignoringRequestMatchers(publicEntrySearch))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .requestCache(RequestCacheConfigurer::disable)
                 .formLogin(f -> f.loginProcessingUrl("/auth/login")

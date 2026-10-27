@@ -1,8 +1,8 @@
 package com.radusclifos.questlog.game.repository;
 
 import com.radusclifos.questlog.game.Game;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.radusclifos.questlog.shared.search.SearchRepository;
 
 
-public interface GameRepository extends JpaRepository<Game, Long> {
+public interface GameRepository extends SearchRepository<Game, Long> {
 }
