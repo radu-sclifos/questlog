@@ -44,10 +44,20 @@ class EntryMapperTests {
         assertEquals("Hollow Knight", result.getTitle());
         assertNull(result.getScore());
         assertNull(result.getNotes());
-        assertNull(result.getStatus());
+        assertEquals(EntryStatus.UNPLAYED, result.getStatus());
         assertThrows(IllegalArgumentException.class,
                 () -> mapper.updateEntity(new SaveEntryRequest(" ", null, null, null, null, null), entry));
         assertEquals("Hollow Knight", entry.getTitle());
+    }
+
+    @Test
+    void defaultsMissingAndExplicitNullStatusToUnplayed() {
+        assertEquals(EntryStatus.UNPLAYED, new Entry("Default").getStatus());
+        var entry = mapper.toEntity(new SaveEntryRequest("Created", null, null, null, null, null));
+        assertEquals(EntryStatus.UNPLAYED, entry.getStatus());
+        entry.setStatus(EntryStatus.COMPLETED);
+        entry.setStatus(null);
+        assertEquals(EntryStatus.UNPLAYED, entry.getStatus());
     }
 
     @Test

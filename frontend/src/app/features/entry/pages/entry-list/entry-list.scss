@@ -4,3 +4,106 @@
   display: block;
   padding-inline-start: var(--entry-sidebar-width);
 }
+
+.library-start {
+  scroll-margin-top: 1.5rem;
+}
+
+.library-layout.has-pagination {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  :host {
+    // Reserve a separate rail outside the shared header/card column.
+    padding-inline-end: 6.5rem;
+  }
+
+  .library-layout.has-pagination {
+    width: calc(100% + 6.5rem);
+  }
+}
+
+.pagination-controls {
+  position: sticky;
+  top: max(1rem, calc((100dvh - var(--pagination-height, 24rem)) / 2));
+  width: 5rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.375rem;
+}
+
+.pagination-select {
+  width: 4rem;
+  padding-inline: 0;
+  list-style: none;
+}
+
+.pagination-select::-webkit-details-marker {
+  display: none;
+}
+
+.pagination-picker {
+  position: relative;
+}
+
+.pagination-menu {
+  position: absolute;
+  inset-inline-start: calc(100% + 1rem);
+  top: 0;
+  z-index: 30;
+  width: 6rem;
+  max-height: min(18rem, 50dvh);
+  overflow-y: auto;
+}
+
+.pagination-arrow {
+  transform: rotate(90deg);
+}
+
+@media (max-width: 639px) {
+  .library-layout.has-pagination {
+    display: block;
+    padding-bottom: 5rem;
+  }
+
+  .pagination-controls {
+    position: fixed;
+    inset-inline-start: calc(var(--entry-sidebar-width) + 0.5rem);
+    inset-inline-end: 0.5rem;
+    top: auto;
+    transform: none;
+    width: auto;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.125rem;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .pagination-caption {
+    display: none;
+  }
+
+  .pagination-select {
+    width: 3.5rem;
+  }
+
+  .pagination-menu {
+    inset-inline-end: auto;
+    inset-inline-start: 0;
+    top: auto;
+    bottom: calc(100% + 0.75rem);
+  }
+
+  .pagination-arrow {
+    transform: none;
+  }
+}

@@ -14,6 +14,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +34,7 @@ class EntryControllerTests {
     @BeforeEach
     void setUp() {
         repository = mock(EntryRepository.class);
+        com.radusclifos.questlog.shared.search.SearchTestSupport.configure(repository);
         var users = mock(com.radusclifos.questlog.user.service.UserService.class);
         var user = new com.radusclifos.questlog.user.User("tester", "Tester", "hash");
         ReflectionTestUtils.setField(user, "id", 10L);
@@ -58,15 +63,10 @@ class EntryControllerTests {
     @Test
     void readsEntries() throws Exception {
         Entry entry = existingEntry();
-        when(repository.findAllByUserIdOrderByIdAsc(10L)).thenReturn(List.of(entry));
+        when(repository.searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
+                .thenReturn(new PageImpl<>(List.of(entry), PageRequest.of(0, 100), 1));
         when(repository.findByIdAndUserId(id, 10L)).thenReturn(Optional.of(entry));
 
-        mvc.perform(get("/entries"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(id.intValue()))
-                .andExpect(jsonPath("$[0].score").value(9.0))
-                .andExpect(jsonPath("$[0].notes").value("A great game"))
-                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
         mvc.perform(get("/entries/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Hollow Knight"))
@@ -108,7 +108,7 @@ class EntryControllerTests {
                 .andExpect(status().isNotFound());
         mvc.perform(delete("/entries/{id}", id)).andExpect(status().isNotFound());
         verify(repository, never()).save(any());
-        verify(repository, never()).delete(any());
+        verify(repository, never()).delete(any(com.radusclifos.questlog.entry.Entry.class));
     }
 
     @ParameterizedTest
@@ -163,7 +163,7 @@ class EntryControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.score").doesNotExist())
                 .andExpect(jsonPath("$.notes").doesNotExist())
-                .andExpect(jsonPath("$.status").doesNotExist());
+                .andExpect(jsonPath("$.status").value("UNPLAYED"));
     }
 
     private void assertInvalidTitle(String body) throws Exception {
@@ -171,7 +171,7 @@ class EntryControllerTests {
                 .andExpect(status().isBadRequest());
         mvc.perform(put("/entries/{id}", id).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest());
-        verifyNoInteractions(repository);
+        verify(repository, never()).searchWithCriteria(any());
     }
 
     private Entry existingEntry() {

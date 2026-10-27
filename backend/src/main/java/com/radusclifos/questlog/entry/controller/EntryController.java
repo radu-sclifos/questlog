@@ -1,6 +1,8 @@
 package com.radusclifos.questlog.entry.controller;
 
 import com.radusclifos.questlog.entry.dto.EntryDto;
+import com.radusclifos.questlog.entry.dto.EntryPage;
+import com.radusclifos.questlog.entry.dto.EntrySearchCriteria;
 import com.radusclifos.questlog.entry.dto.SaveEntryRequest;
 import com.radusclifos.questlog.entry.service.EntryService;
 import jakarta.validation.Valid;
@@ -10,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/entries")
@@ -23,14 +24,9 @@ public class EntryController {
         this.entryService = entryService;
     }
 
-    @GetMapping()
-    public List<EntryDto> findMine(Principal principal) {
-        return entryService.mine(principal);
-    }
-
-    @GetMapping(params = "username")
-    public List<EntryDto> findByUsername(@RequestParam(name = "username") String username) {
-        return entryService.forUser(username);
+    @PostMapping("/search")
+    public EntryPage search(@Valid @RequestBody EntrySearchCriteria searchCriteria) {
+        return entryService.search(searchCriteria);
     }
 
     @GetMapping("/{id}")

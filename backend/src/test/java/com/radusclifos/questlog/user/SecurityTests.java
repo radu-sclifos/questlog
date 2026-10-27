@@ -26,7 +26,9 @@ class SecurityTests {
     static class Config {
         @Bean UserRepository users() { return mock(UserRepository.class); }
         @Bean com.radusclifos.questlog.entry.repository.EntryRepository entryRepository() {
-            return mock(com.radusclifos.questlog.entry.repository.EntryRepository.class);
+            var repository = mock(com.radusclifos.questlog.entry.repository.EntryRepository.class);
+            com.radusclifos.questlog.shared.search.SearchTestSupport.configure(repository);
+            return repository;
         }
         @Bean EntryService entries(com.radusclifos.questlog.entry.repository.EntryRepository repository, UserService users) {
             return new EntryService(repository, org.mapstruct.factory.Mappers.getMapper(com.radusclifos.questlog.entry.mapper.EntryMapper.class), users);
@@ -38,8 +40,12 @@ class SecurityTests {
     @BeforeEach void setup() {
         context=new AnnotationConfigWebApplicationContext(); context.setServletContext(new MockServletContext());
         context.register(Config.class); context.refresh(); users=context.getBean(UserRepository.class);
+        when(context.getBean(com.radusclifos.questlog.entry.repository.EntryRepository.class)
+            .searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
+            .thenReturn(org.springframework.data.domain.Page.empty());
         var encoder=context.getBean(PasswordEncoder.class);
         when(users.findByUsername("alice")).thenReturn(Optional.of(new User("alice","Alice",encoder.encode("a-long-password"))));
+        org.springframework.test.util.ReflectionTestUtils.setField(users.findByUsername("alice").orElseThrow(),"id",10L);
         mvc=MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
     }
     @AfterEach void close() { context.close(); }
@@ -49,25 +55,26 @@ class SecurityTests {
         mvc.perform(get("/entries")).andExpect(status().isUnauthorized());
     }
     @Test void anonymousVisitorsCanReadSelectedLibrary() throws Exception {
-        var alice=users.findByUsername("alice").orElseThrow();
-        org.springframework.test.util.ReflectionTestUtils.setField(alice,"id",10L);
         var repository=context.getBean(com.radusclifos.questlog.entry.repository.EntryRepository.class);
-        when(repository.findAllByUserIdOrderByIdAsc(10L)).thenReturn(java.util.List.of(new com.radusclifos.questlog.entry.Entry("Celeste")));
-        mvc.perform(get("/entries").param("username","alice"))
-            .andExpect(status().isOk()).andExpect(jsonPath("$[0].title").value("Celeste"));
-        verify(repository).findAllByUserIdOrderByIdAsc(10L);
+        when(repository.searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
+            .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(new com.radusclifos.questlog.entry.Entry("Celeste")), org.springframework.data.domain.PageRequest.of(0,100),1));
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"alice\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].title").value("Celeste"));
     }
     @Test void selectedLibraryDoesNotDependOnViewerIdentity() throws Exception {
-        mvc.perform(get("/entries").param("username","alice").with(user("bob")))
+        mvc.perform(post("/entries/search").with(user("bob")).contentType("application/json").content("{\"username\":\"alice\"}"))
             .andExpect(status().isOk());
         verify(users,never()).findByUsername("bob");
     }
-    @Test void unknownDisabledAndEmptyUsernamesReturnNotFound() throws Exception {
-        mvc.perform(get("/entries").param("username","missing")).andExpect(status().isNotFound());
-        mvc.perform(get("/entries").param("username","")).andExpect(status().isNotFound());
+    @Test void validatesSelectedUsername() throws Exception {
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"missing\"}"))
+            .andExpect(status().isNotFound());
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"\"}"))
+            .andExpect(status().isBadRequest());
         var disabled=new User("disabled","Disabled","hash"); disabled.disable();
         when(users.findByUsername("disabled")).thenReturn(Optional.of(disabled));
-        mvc.perform(get("/entries").param("username","disabled")).andExpect(status().isNotFound());
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"disabled\"}"))
+            .andExpect(status().isNotFound());
     }
     @Test void anonymousWritesAndItemReadsRemainProtected() throws Exception {
         mvc.perform(get("/entries/1")).andExpect(status().isUnauthorized());
@@ -87,10 +94,37 @@ class SecurityTests {
             .andExpect(status().isNotFound());
         var repository=context.getBean(com.radusclifos.questlog.entry.repository.EntryRepository.class);
         verify(repository).findByIdAndUserId(99L,10L);
-        verify(repository,never()).delete(any());
+        verify(repository,never()).delete(any(com.radusclifos.questlog.entry.Entry.class));
     }
-    @Test void authenticatedVisitorCanReadOwnLibraryWithoutUsername() throws Exception {
-        mvc.perform(get("/entries").with(user("alice"))).andExpect(status().isOk());
+    @Test void usernameIsRequiredEvenForAuthenticatedViewer() throws Exception {
+        mvc.perform(post("/entries/search").with(user("alice")).contentType("application/json").content("{}"))
+            .andExpect(status().isBadRequest());
+    }
+    @Test void anonymousJsonSearchNeedsNoCsrfAndUsesSelectedLibrary() throws Exception {
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"alice\"}"))
+            .andExpect(status().isOk());
+        mvc.perform(post("/entries/search").with(user("bob")).contentType("application/json").content("{\"username\":\"alice\"}"))
+            .andExpect(status().isOk());
+        verify(users,never()).findByUsername("bob");
+    }
+    @Test void jsonSearchDoesNotExposeOtherWriteRoutes() throws Exception {
+        mvc.perform(post("/entries").contentType("application/json").content("{\"title\":\"Game\"}"))
+            .andExpect(status().isForbidden());
+        mvc.perform(put("/entries/1").contentType("application/json").content("{\"title\":\"Game\"}"))
+            .andExpect(status().isForbidden());
+        mvc.perform(delete("/entries/1")).andExpect(status().isForbidden());
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"missing\"}"))
+            .andExpect(status().isNotFound());
+        var disabled=new User("disabled-search","Disabled","hash"); disabled.disable();
+        when(users.findByUsername("disabled-search")).thenReturn(Optional.of(disabled));
+        mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"disabled-search\"}"))
+            .andExpect(status().isNotFound());
+    }
+    @Test void oldSearchRoutesAreRemoved() throws Exception {
+        mvc.perform(get("/entries").with(user("alice"))).andExpect(status().isMethodNotAllowed());
+        mvc.perform(post("/users/alice/entries/search").with(user("alice")).with(csrf())
+            .contentType("application/json").content("{}"))
+            .andExpect(status().isNotFound());
     }
     @Test void csrfIsRequiredForLoginAndProfileWrites() throws Exception {
         mvc.perform(post("/auth/login").param("username","alice").param("password","a-long-password")).andExpect(status().isForbidden());

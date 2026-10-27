@@ -34,8 +34,8 @@ public class Entry {
     private String notes;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 30)
-    private EntryStatus status;
+    @Column(length = 30, nullable = false)
+    private EntryStatus status = EntryStatus.UNPLAYED;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
@@ -46,6 +46,10 @@ public class Entry {
 
     public Entry(String title) {
         rename(title);
+    }
+
+    public void setStatus(EntryStatus status) {
+        this.status = status == null ? EntryStatus.UNPLAYED : status;
     }
 
     public void rename(String title) {

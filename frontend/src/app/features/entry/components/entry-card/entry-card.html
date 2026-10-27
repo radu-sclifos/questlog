@@ -70,7 +70,7 @@
 
       @if (canEdit()) {
         <div class="mb-4 mt-2 flex flex-wrap gap-2">
-          <button type="button" class="btn btn-sm btn-outline" (click)="editRequested.emit(entry())">
+          <button type="button" class="btn btn-sm btn-outline btn-primary" (click)="editRequested.emit(entry())">
             Edit
           </button>
           <button type="button" class="btn btn-sm btn-outline btn-error" (click)="deleteRequested.emit(entry())">

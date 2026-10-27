@@ -2,12 +2,14 @@ package com.radusclifos.questlog.entry.mapper;
 
 import com.radusclifos.questlog.entry.Entry;
 import com.radusclifos.questlog.entry.dto.EntryDto;
+import com.radusclifos.questlog.entry.dto.EntryPage;
 import com.radusclifos.questlog.entry.dto.SaveEntryRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -20,6 +22,10 @@ public abstract class EntryMapper {
     public abstract EntryDto toDto(Entry entry);
 
     public abstract List<EntryDto> toDtoList(List<Entry> entries);
+
+    public EntryPage toDtoPage(Page<Entry> page) {
+        return EntryPage.from(page.map(this::toDto));
+    }
 
     // Creates a new entry through the domain constructor; the database generates its ID.
     public Entry toEntity(SaveEntryRequest request) {
