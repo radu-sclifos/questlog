@@ -1,12 +1,18 @@
-import { EntryListHeader, INITIAL_ENTRY_LIST_QUERY, EntryListQuery } from '../../components/entry-list-header/entry-list-header';
+import { EntryListHeader } from '../../components/entry-list-header/entry-list-header';
 import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, distinctUntilChanged, EMPTY, map, Subject, switchMap } from 'rxjs';
+import { AuthService } from '../../../auth/services/auth.service';
 import { EntryCard } from '../../components/entry-card/entry-card';
 import { EntryNavbar } from '../../components/entry-navbar/entry-navbar';
 import { EntryEditorDialog } from '../../components/entry-editor-dialog/entry-editor-dialog';
 import { EntryDeleteDialog } from '../../components/entry-delete-dialog/entry-delete-dialog';
 import { EntryService } from '../../services/entry.service';
-import { Entry, EntryStatus } from '../../models/entry';
+import { Entry } from '../../models/entry';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { EntrySearchCriteria } from '../../models/entry-search-criteria';
+import { SearchCriteria } from '../../../../shared/search/search-criteria';
 
 @Component({
   selector: 'app-entry-list',
@@ -17,62 +23,69 @@ import { ToastService } from '../../../../shared/toast/toast.service';
 export class EntryList {
   private readonly entryService = inject(EntryService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
+  private readonly searchRequested = new Subject<EntrySearchCriteria>();
+  private currentCriteria?: EntrySearchCriteria;
+
+  protected readonly username = signal('');
   protected readonly entries = signal<Entry[]>([]);
-  protected readonly query = signal<EntryListQuery>({ ...INITIAL_ENTRY_LIST_QUERY });
-  protected readonly visibleEntries = computed(() => {
-    const query = this.query();
-    const search = query.search.trim().toLocaleLowerCase();
-    const direction = query.sortDirection === 'asc' ? 1 : -1;
-    return this.entries()
-      .filter(entry => entry.title.toLocaleLowerCase().includes(search)
-        && (!query.status || (entry.status ?? EntryStatus.UNPLAYED) === query.status))
-      .sort((a, b) => {
-        if (query.sortBy === 'score') {
-          if (a.score === null && b.score !== null) return 1;
-          if (b.score === null && a.score !== null) return -1;
-          const scoreOrder = (a.score ?? 0) - (b.score ?? 0);
-          if (scoreOrder) return scoreOrder * direction;
-        }
-        return a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true })
-          * (query.sortBy === 'title' ? direction : 1) || a.id - b.id;
-      });
-  });
-  protected readonly canEdit = true;
   protected readonly errorMessage = signal<string | null>(null);
 
+  protected readonly canEdit = computed(() => this.auth.user()?.username === this.username());
+
+  constructor() {
+    // Listen before the route emits the initial search criteria
+    this.searchRequested
+      .pipe(
+        switchMap((criteria) => {
+          this.errorMessage.set(null);
+
+          return this.entryService.search(criteria).pipe(
+            catchError((error: unknown) => {
+              this.errorMessage.set('Unable to load this library.');
+              console.error('Error during load entries list:', error);
+              return EMPTY;
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((page) => this.entries.set(page.items));
+
+    this.route.paramMap
+      .pipe(
+        map((params) => params.get('username') ?? ''),
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe((username) => {
+        this.username.set(username);
+        this.entries.set([]);
+        this.onCriteriaChange(new SearchCriteria());
+      });
+  }
+
+  protected onCriteriaChange(criteria: SearchCriteria): void {
+    this.currentCriteria = Object.assign(new EntrySearchCriteria(this.username()), criteria);
+    this.searchRequested.next(this.currentCriteria);
+  }
+
   protected onEntrySaved(entry: Entry): void {
-    const isUpdate = this.entries().some(existing => existing.id === entry.id);
-    this.entries.update((entries) =>
-      entries.some(existing => existing.id === entry.id)
-        ? entries.map(existing => existing.id === entry.id ? entry : existing)
-        : [...entries, entry]
-    );
-    this.errorMessage.set(null);
+    const isUpdate = this.entries().some((existing) => existing.id === entry.id);
     this.toast.success(isUpdate ? 'Game updated.' : 'Game added.');
+    this.reloadLibrary();
   }
 
-  protected onEntryDeleted(entry: Entry): void {
-    this.entries.update(entries => entries.filter(existing => existing.id !== entry.id));
-    this.errorMessage.set(null);
+  protected onEntryDeleted(): void {
     this.toast.success('Game deleted.');
+    this.reloadLibrary();
   }
 
-  ngOnInit(): void {
-    this.loadEntries();
+  private reloadLibrary(): void {
+    if (this.currentCriteria) {
+      this.searchRequested.next(this.currentCriteria);
+    }
   }
-
-  private loadEntries(): void {
-    this.entryService.findAll().subscribe({
-      next: (entries) => {
-        this.entries.set(entries);
-      },
-      error: (error) => {
-        this.errorMessage.set('Error during load entries list');
-        console.error('Error during load entries list:', error);
-      },
-    });
-  }
-
 }
-

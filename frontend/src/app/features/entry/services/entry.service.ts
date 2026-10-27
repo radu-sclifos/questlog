@@ -2,14 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Entry, SaveEntryRequest } from '../models/entry';
+import { EntrySearchCriteria } from '../models/entry-search-criteria';
+import { EntryPage } from '../models/entry-page';
 
 @Injectable({ providedIn: 'root' })
 export class EntryService {
   private readonly http = inject(HttpClient);
   private readonly url = '/api/entries';
 
-  findAll(): Observable<Entry[]> {
-    return this.http.get<Entry[]>(this.url);
+  search(criteria: EntrySearchCriteria): Observable<EntryPage> {
+    return this.http.post<EntryPage>(`${this.url}/search`, criteria);
   }
 
   findById(id: number): Observable<Entry> {

@@ -44,9 +44,14 @@ export class Login {
     this.auth.login(username.trim(), password).pipe(
       finalize(() => this.submitting.set(false)),
     ).subscribe({
-      next: () => {
+      next: (user) => {
         this.form.controls.password.reset();
-        void this.router.navigateByUrl('/');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        if (returnUrl?.startsWith('/list/')) {
+          void this.router.navigateByUrl(returnUrl);
+        } else {
+          void this.router.navigate(['/list', user.username]);
+        }
       },
       error: (error: unknown) => {
         const status = error instanceof HttpErrorResponse ? error.status : 0;

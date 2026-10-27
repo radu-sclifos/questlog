@@ -1,12 +1,12 @@
-<app-entry-navbar (addEntry)="editorDialog.open()" />
+<app-entry-navbar [canEdit]="canEdit()" (addEntry)="editorDialog.open()" />
 
 <app-entry-editor-dialog #editorDialog (savedEntry)="onEntrySaved($event)" />
-<app-entry-delete-dialog #deleteDialog (deletedEntry)="onEntryDeleted($event)" />
+<app-entry-delete-dialog #deleteDialog (deletedEntry)="onEntryDeleted()" />
 
 <div class="mx-auto max-w-5xl">
   <header class="mb-8">
     <p class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-primary">QuestLog · Your game diary</p>
-    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Your library</h1>
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{{ canEdit() ? 'Your library' : username() + "'s library" }}</h1>
     <p class="mt-3 max-w-xl text-sm leading-relaxed text-base-content/60">
       Every game has a story. Open the card for progress, notes, and more.
     </p>
@@ -16,14 +16,14 @@
     <p>{{ message }}</p>
   }
 
-  <app-entry-list-header [query]="query()" (queryChange)="query.set($event)" [resultCount]="visibleEntries().length" />
+  <app-entry-list-header (criteriaChange)="onCriteriaChange($event)" [resultCount]="entries().length" />
 
-  @if (!errorMessage() && entries().length > 0 && visibleEntries().length === 0) {
+  @if (!errorMessage() && entries().length > 0 && entries().length === 0) {
     <p class="py-10 text-center text-sm text-base-content/60">No games match your filters. Try another search or clear the filters.</p>
   }
 
-  @for (entry of visibleEntries(); track entry.id) {
-    <app-entry-card [entry]="entry" [canEdit]="canEdit" (editRequested)="editorDialog.open($event)"
+  @for (entry of entries(); track entry.id) {
+    <app-entry-card [entry]="entry" [canEdit]="canEdit()" (editRequested)="editorDialog.open($event)"
                     (deleteRequested)="deleteDialog.open($event)" />
   }
 

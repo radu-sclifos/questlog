@@ -18,9 +18,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const httpClient = inject(HttpClient);
   const authService = inject(AuthService);
   const router = inject(Router);
+  const publicSearch = request.method === 'POST' && request.url === '/api/entries/search';
   const safeMethod = ['GET', 'HEAD', 'OPTIONS'].includes(request.method);
   // obtain a fresh token for each mutation including after login/logout rotate it.
-  const response = safeMethod
+  const response = safeMethod || publicSearch
     ? next(request)
     : httpClient
         .get<CsrfToken>('/api/auth/csrf')
@@ -36,6 +37,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         if (
           error instanceof HttpErrorResponse &&
           error.status === 401 &&
+          !publicSearch &&
           request.url !== '/api/auth/login' &&
           request.url !== '/api/me'
         ) {

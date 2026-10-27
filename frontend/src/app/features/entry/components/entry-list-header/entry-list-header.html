@@ -1,4 +1,4 @@
-<section class="mb-4 border-t border-base-300 pt-5">
+<section class="mb-4 border-t border-base-300 pt-5" [formGroup]="form">
 
   <div class="flex flex-wrap items-center gap-3">
     <label class="input min-w-0 flex-1 basis-60">
@@ -7,13 +7,12 @@
         <circle cx="11" cy="11" r="7" />
         <path d="m16 16 4 4" />
       </svg>
-      <input type="search" class="min-w-0 grow" placeholder="Search games…" #searchInput [value]="query().search"
-             (input)="update('search', searchInput.value)" />
+      <input type="search" class="min-w-0 grow" placeholder="Search games…" formControlName="search" />
     </label>
 
     <label>
       <span class="sr-only">Status</span>
-      <select class="select w-auto" #statusSelect [value]="query().status" (change)="updateStatus(statusSelect.value)">
+      <select class="select w-auto" formControlName="status">
         <option value="">All statuses</option>
         @for (status of statuses; track status) {
           <option [value]="status">{{ statusLabels[status] }}</option>
@@ -34,7 +33,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <label class="flex items-center gap-2">
         <span class="text-sm text-base-content/60">Sort by</span>
-        <select class="select w-auto" #sortSelect [value]="query().sortBy" (change)="updateSortBy(sortSelect.value)">
+        <select class="select w-auto" formControlName="sortBy">
           <option value="title">Title</option>
           <option value="score">Rating</option>
         </select>
@@ -45,7 +44,7 @@
               (click)="reverseOrder()">
         <svg class="size-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          @if (query().sortDirection === 'asc') {
+          @if (form.controls.sortDirection.value === SortDirection.ASC) {
             <path d="M12 20V4m-7 7 7-7 7 7" />
           } @else {
             <path d="M12 4v16m-7-7 7 7 7-7" />

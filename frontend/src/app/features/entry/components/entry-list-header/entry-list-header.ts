@@ -1,58 +1,85 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, ValueChangeEvent } from '@angular/forms';
+import { filter, of, switchMap, timer } from 'rxjs';
 import { EntryStatus } from '../../models/entry';
 import { ENTRY_STATUS_LABELS } from '../../models/entry-labels';
-
-export interface EntryListQuery {
-  search: string;
-  status: EntryStatus | '';
-  sortBy: 'title' | 'score';
-  sortDirection: 'asc' | 'desc';
-}
-
-export const INITIAL_ENTRY_LIST_QUERY: EntryListQuery = {
-  search: '',
-  status: '',
-  sortBy: 'title',
-  sortDirection: 'asc',
-};
+import { SearchCriteria } from '../../../../shared/search/search-criteria';
+import { SortDirection } from '../../../../shared/search/sort-criteria';
+import { FilterOperator } from '../../../../shared/search/filter-criteria';
 
 @Component({
   selector: 'app-entry-list-header',
+  imports: [ReactiveFormsModule],
   templateUrl: './entry-list-header.html',
   host: { class: 'block' },
 })
 export class EntryListHeader {
-  readonly query = model<EntryListQuery>({ ...INITIAL_ENTRY_LIST_QUERY });
+  readonly criteriaChange = output<SearchCriteria>();
   readonly resultCount = input.required<number>();
+
+  private readonly fb = inject(FormBuilder).nonNullable;
+  protected readonly form = this.fb.group({
+    search: '',
+    status: this.fb.control<EntryStatus | ''>(''),
+    sortBy: this.fb.control<'title' | 'score'>('title'),
+    sortDirection: SortDirection.ASC,
+  });
+
   protected readonly statuses = Object.values(EntryStatus);
   protected readonly statusLabels = ENTRY_STATUS_LABELS;
-  protected readonly hasFilters = computed(() => !!(this.query().search || this.query().status));
+  protected readonly SortDirection = SortDirection;
 
-  protected update<K extends keyof EntryListQuery>(key: K, value: EntryListQuery[K]): void {
-    this.query.update((query) => ({ ...query, [key]: value }));
+  constructor() {
+    this.form.events.pipe(
+      filter((event) => event instanceof ValueChangeEvent),
+      // Only typing waits
+      switchMap((event) => event.source === this.form.controls.search ? timer(300) : of(0)),
+      takeUntilDestroyed(),
+    ).subscribe(() => {
+      this.criteriaChange.emit(this.buildCriteria());
+    });
   }
 
-  protected updateStatus(value: string): void {
-    if (value === '' || this.statuses.some((status) => status === value)) {
-      const status = this.statuses.find((status) => status === value) ?? '';
-      this.update('status', status);
-    }
-  }
-
-  protected updateSortBy(value: string): void {
-    if (value === 'title' || value === 'score') {
-      this.update('sortBy', value);
-    }
+  protected hasFilters(): boolean {
+    const { search, status } = this.form.getRawValue();
+    return !!(search.trim() || status);
   }
 
   protected reverseOrder(): void {
-    this.query.update((query) => ({
-      ...query,
-      sortDirection: query.sortDirection === 'asc' ? 'desc' : 'asc',
-    }));
+    const control = this.form.controls.sortDirection;
+    control.setValue(control.value === SortDirection.ASC ? SortDirection.DESC : SortDirection.ASC);
   }
 
   protected clearFilters(): void {
-    this.query.update((query) => ({ ...query, search: '', status: '' }));
+    this.form.patchValue({ search: '', status: '' });
+  }
+
+  private buildCriteria(): SearchCriteria {
+    const { search, status, sortBy, sortDirection } = this.form.getRawValue();
+    const criteria = new SearchCriteria();
+
+    if (search.trim()) {
+      criteria.addFilter({
+        field: 'title',
+        operator: FilterOperator.CONTAINS,
+        value: search.trim(),
+      });
+    }
+
+    if (status) {
+      criteria.addFilter({
+        field: 'status',
+        operator: FilterOperator.EQUAL,
+        value: status,
+      });
+    }
+
+    criteria.addSort({
+      field: sortBy,
+      direction: sortDirection,
+    });
+
+    return criteria;
   }
 }
