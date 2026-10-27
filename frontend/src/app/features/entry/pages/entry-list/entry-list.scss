@@ -15,6 +15,17 @@
   gap: 1.5rem;
 }
 
+@media (min-width: 640px) {
+  :host {
+    // Reserve a separate rail outside the shared header/card column.
+    padding-inline-end: 6.5rem;
+  }
+
+  .library-layout.has-pagination {
+    width: calc(100% + 6.5rem);
+  }
+}
+
 .pagination-controls {
   position: sticky;
   top: max(1rem, calc((100dvh - var(--pagination-height, 24rem)) / 2));
