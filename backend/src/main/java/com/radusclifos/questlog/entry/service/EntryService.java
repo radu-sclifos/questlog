@@ -9,11 +9,9 @@ import com.radusclifos.questlog.entry.mapper.EntryMapper;
 import com.radusclifos.questlog.entry.repository.EntryRepository;
 import com.radusclifos.questlog.shared.search.FilterCriteria;
 import com.radusclifos.questlog.shared.search.FilterOperator;
-import com.radusclifos.questlog.shared.search.SortCriteria;
 import com.radusclifos.questlog.user.service.UserService;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +43,14 @@ public class EntryService {
 
         var userId = userService.find(criteria.getUsername()).getId();
         criteria.addFilter(new FilterCriteria("user.id", FilterOperator.EQUAL, userId));
-        if (criteria.getSorts().isEmpty()) {
-            criteria.addSort(new SortCriteria("title", Sort.Direction.ASC));
+
+        // Preserve each sort's priority and direction when applying the status order.
+        criteria.getSorts().replaceAll(sort -> "status".equals(sort.getField())
+                ? EntrySearchDefaults.statusSort(sort.getDirection())
+                : sort);
+
+        if (criteria.getSorts().isEmpty()) { // Default sorting rules for entry searches without explicit sorts
+            criteria.setSorts(EntrySearchDefaults.sorts());
         }
 
         return entryMapper.toDtoPage(entryRepository.searchWithCriteria(criteria));

@@ -21,7 +21,7 @@ export class EntryListHeader {
   protected readonly form = this.fb.group({
     search: '',
     status: this.fb.control<EntryStatus | ''>(''),
-    sortBy: this.fb.control<'title' | 'score'>('title'),
+    sortBy: this.fb.control<'status' | 'title' | 'score'>('status'),
     sortDirection: SortDirection.ASC,
   });
 
@@ -30,14 +30,16 @@ export class EntryListHeader {
   protected readonly SortDirection = SortDirection;
 
   constructor() {
-    this.form.events.pipe(
-      filter((event) => event instanceof ValueChangeEvent),
-      // Only typing waits
-      switchMap((event) => event.source === this.form.controls.search ? timer(300) : of(0)),
-      takeUntilDestroyed(),
-    ).subscribe(() => {
-      this.criteriaChange.emit(this.buildCriteria());
-    });
+    this.form.events
+      .pipe(
+        filter((event) => event instanceof ValueChangeEvent),
+        // Only typing waits
+        switchMap((event) => (event.source === this.form.controls.search ? timer(300) : of(0))),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.criteriaChange.emit(this.buildCriteria());
+      });
   }
 
   protected hasFilters(): boolean {
@@ -74,11 +76,24 @@ export class EntryListHeader {
       });
     }
 
+    this.buildSort(criteria, sortBy, sortDirection);
+
+    return criteria;
+  }
+
+  private buildSort(criteria: SearchCriteria, sortBy: string, sortDirection: SortDirection): void {
+    // Sorts are applied in list order: the selected field comes first,
+    // then title ASC breaks ties unless title is already the selected field
     criteria.addSort({
       field: sortBy,
       direction: sortDirection,
     });
 
-    return criteria;
+    if (sortBy !== 'title') {
+      criteria.addSort({
+        field: 'title',
+        direction: SortDirection.ASC,
+      });
+    }
   }
 }

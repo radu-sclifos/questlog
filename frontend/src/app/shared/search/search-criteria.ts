@@ -19,6 +19,7 @@ export class SearchCriteria {
     return this;
   }
 
+  // ##### Filters
   setFilter(filters: FilterCriteria[]) {
     this.filters = filters;
   }
@@ -27,6 +28,11 @@ export class SearchCriteria {
     this.filters = [];
   }
 
+  hasFilters(): boolean {
+    return this.filters.length > 0;
+  }
+
+  // ##### Sorts
   addSort(sort: SortCriteria): this {
     this.sorts.push(sort);
     return this;
@@ -34,9 +40,5 @@ export class SearchCriteria {
 
   setSort(sorts: SortCriteria[]) {
     this.sorts = sorts;
-  }
-
-  hasFilters(): boolean {
-    return this.filters.length > 0;
   }
 }

@@ -1,19 +1,16 @@
 package com.radusclifos.questlog.shared.search;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Objects;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Size;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
-
 import lombok.Getter;
-import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -45,6 +42,7 @@ public class SearchCriteria {
         this(filters, sorts, 0, 100);
     }
 
+    // ##### Filters
     public void setFilters(List<FilterCriteria> filters) {
         this.filters = filters == null ? new ArrayList<>() : new ArrayList<>(List.copyOf(filters));
     }
@@ -57,6 +55,32 @@ public class SearchCriteria {
         filters.add(filter);
     }
 
+    public boolean hasFilter(String field) {
+        return filters.stream().anyMatch(filter -> Objects.equals(filter.getField(), field));
+    }
+
+    /**
+     * Multiple filters may target a field.
+     * Returns an unmodifiable list, empty if absent.
+     */
+    public List<FilterCriteria> findFilters(String field) {
+        return filters.stream().filter(filter -> Objects.equals(filter.getField(), field)).toList();
+    }
+
+    /**
+     * Removes all filters for the field from this criteria.
+     * Returns whether any were removed.
+     */
+    public boolean removeFilters(String field) {
+        return filters.removeIf(filter -> Objects.equals(filter.getField(), field));
+    }
+
+
+    // ##### Sorts
+    public void setSorts(List<SortCriteria> sorts) {
+        this.sorts = sorts == null ? new ArrayList<>() : new ArrayList<>(List.copyOf(sorts));
+    }
+
     public void addSort(SortCriteria sort) {
         Objects.requireNonNull(sort, "sort must not be null");
         if (sorts == null) {
@@ -65,8 +89,24 @@ public class SearchCriteria {
         sorts.add(sort);
     }
 
-    public void setSorts(List<SortCriteria> sorts) {
-        this.sorts = sorts == null ? new ArrayList<>() : new ArrayList<>(List.copyOf(sorts));
+    public boolean hasSort(String field) {
+        return sorts.stream().anyMatch(sort -> Objects.equals(sort.getField(), field));
+    }
+
+    /**
+     * Valid criteria allow one sort per field.
+     * Optional represents an absent sort.
+     */
+    public Optional<SortCriteria> findSort(String field) {
+        return sorts.stream().filter(sort -> Objects.equals(sort.getField(), field)).findFirst();
+    }
+
+    /**
+     * Removes the field's sort from this criteria.
+     * Returns whether any were removed.
+     */
+    public boolean removeSort(String field) {
+        return sorts.removeIf(sort -> Objects.equals(sort.getField(), field));
     }
 
 }

@@ -107,7 +107,20 @@ final class CriteriaSpecificationBuilder<T> {
                 throw invalid("Field cannot be sorted: " + sort.getField());
             }
 
-            sorts.add(new SortCriteria(sort.getField(), sort.getDirection()));
+            var customOrder = sort.getCustomOrder();
+            if (customOrder != null) {
+                if (!type.isEnum() || customOrder.isEmpty() || customOrder.size() > 100) {
+                    throw invalid("customOrder requires an enum field and 1 to 100 values");
+                }
+                var values = new HashSet<Object>();
+                for (var value : customOrder) {
+                    if (value == null || !values.add(convert(value, type))) {
+                        throw invalid("customOrder contains null or duplicate values");
+                    }
+                }
+            }
+
+            sorts.add(sort);
         }
 
         // Unique IDs are internal tie-breakers
@@ -132,6 +145,14 @@ final class CriteriaSpecificationBuilder<T> {
                 for (var sort : sorts) {
                     var path = path(root, sort.getField());
                     Expression<?> expression = path.getJavaType() == String.class ? cb.lower(path.as(String.class)) : path;
+                    if (sort.getCustomOrder() != null) {
+                        var rank = cb.<Integer>selectCase();
+                        for (int i = 0; i < sort.getCustomOrder().size(); i++) {
+                            var value = convert(sort.getCustomOrder().get(i), path.getJavaType());
+                            rank.when(cb.equal(path, value), i);
+                        }
+                        expression = rank.otherwise(sort.getCustomOrder().size());
+                    }
                     orders.add(sort.getDirection().isAscending() ? cb.asc(expression) : cb.desc(expression));
                 }
                 query.orderBy(orders);

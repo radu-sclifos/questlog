@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,5 +20,16 @@ public class SortCriteria {
 
     @NotNull
     private Sort.Direction direction;
+
+    /**
+     * Optional enum values in ascending priority order
+     * Omitted values follow them
+     * */
+    private List<String> customOrder;
+
+    public SortCriteria(String field, Sort.Direction direction) {
+        this.field = field;
+        this.direction = direction;
+    }
 
 }

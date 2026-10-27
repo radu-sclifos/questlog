@@ -29,7 +29,7 @@ export class EntryList {
 
   private readonly searchRequested = new Subject<EntrySearchCriteria>();
   private currentCriteria?: EntrySearchCriteria;
-  private readonly defaultPageSize = 10;
+  private readonly defaultPageSize = 25;
 
   protected readonly username = signal('');
   protected readonly errorMessage = signal<string | null>(null);

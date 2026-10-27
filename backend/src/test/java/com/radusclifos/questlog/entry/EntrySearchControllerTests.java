@@ -58,6 +58,28 @@ class EntrySearchControllerTests {
     }
 
     @ParameterizedTest
+    @ValueSource(strings={"ASC", "DESC"})
+    void statusSortUsesServerOrderWithoutChangingPriorityOrDirection(String direction) throws Exception {
+        mvc.perform(post("/entries/search").contentType("application/json").content("""
+            {"username":"alice","sorts":[
+              {"field":"score","direction":"DESC"},
+              {"field":"status","direction":"%s","customOrder":["UNPLAYED","PLAYING"]},
+              {"field":"title","direction":"ASC"}]}
+            """.formatted(direction)))
+            .andExpect(status().isOk());
+        verify(repository).searchWithCriteria(argThat(criteria -> {
+            var sorts = criteria.getSorts();
+            return sorts.size() == 3
+                && sorts.get(0).getField().equals("score")
+                && sorts.get(1).getField().equals("status")
+                && sorts.get(1).getDirection() == Sort.Direction.valueOf(direction)
+                && sorts.get(1).getCustomOrder().equals(List.of(
+                    "PLAYING", "ON_HOLD", "COMPLETED", "BEATEN", "ENDLESS", "DROPPED", "UNPLAYED"))
+                && sorts.get(2).getField().equals("title");
+        }));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings={
         "{\"pageNumber\":-1}", "{\"pageSize\":0}", "{\"pageSize\":101}",
         "{\"pageNumber\":null}", "{\"pageSize\":null}",
@@ -81,6 +103,22 @@ class EntrySearchControllerTests {
 
     private String withUsername(String json) {
         return "{\"username\":\"alice\"," + json.substring(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings={
+        "{\"field\":\"status\",\"customOrder\":[]}",
+        "{\"field\":\"status\",\"customOrder\":[\"INVALID\"]}",
+        "{\"field\":\"status\",\"customOrder\":[null]}",
+        "{\"field\":\"status\",\"customOrder\":[\"PLAYING\",\"PLAYING\"]}",
+        "{\"field\":\"title\",\"customOrder\":[\"PLAYING\"]}"
+    })
+    void rejectsInvalidCustomOrder(String sort) throws Exception {
+        var body = "{\"username\":\"alice\",\"sorts\":[" + sort.substring(0, sort.length() - 1)
+                + ",\"direction\":\"ASC\"}]}";
+        mvc.perform(post("/entries/search").contentType("application/json").content(body))
+            .andExpect(status().isBadRequest());
+        verify(repository, never()).searchWithCriteria(any());
     }
 
     @ParameterizedTest

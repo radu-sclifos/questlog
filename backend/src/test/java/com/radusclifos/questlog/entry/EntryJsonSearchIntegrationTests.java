@@ -19,6 +19,43 @@ class EntryJsonSearchIntegrationTests {
     @Autowired UserRepository users;
     @Autowired EntryRepository entries;
 
+    @Test void customStatusOrderIsAppliedBeforePaging() throws Exception {
+        var user = users.save(new User("custom-sort", "Custom", "hash"));
+        for (var entryStatus : EntryStatus.values()) {
+            var entry = new Entry(entryStatus.name());
+            entry.setUser(user);
+            entry.setStatus(entryStatus);
+            entries.save(entry);
+        }
+        entries.flush();
+        var mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        var request = """
+            {"username":"custom-sort","pageSize":2,"pageNumber":%d,
+             "sorts":[{"field":"status","direction":"%s",
+             "customOrder":["PLAYING","ON_HOLD","COMPLETED","BEATEN","ENDLESS","DROPPED","UNPLAYED"]}]}
+            """;
+        mvc.perform(post("/entries/search").contentType("application/json").content(request.formatted(0, "ASC")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(7))
+            .andExpect(jsonPath("$.items[0].status").value("PLAYING"))
+            .andExpect(jsonPath("$.items[1].status").value("ON_HOLD"));
+        mvc.perform(post("/entries/search").contentType("application/json").content(request.formatted(1, "ASC")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].status").value("COMPLETED"))
+            .andExpect(jsonPath("$.items[1].status").value("BEATEN"));
+        mvc.perform(post("/entries/search").contentType("application/json").content(request.formatted(0, "DESC")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].status").value("UNPLAYED"))
+            .andExpect(jsonPath("$.items[1].status").value("DROPPED"));
+        mvc.perform(post("/entries/search").contentType("application/json").content("""
+            {"username":"custom-sort","sorts":[
+              {"field":"status","direction":"ASC","customOrder":["PLAYING"]},
+              {"field":"title","direction":"ASC"}]}
+            """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].status").value("PLAYING"))
+            .andExpect(jsonPath("$.items[1].status").value("BEATEN"));
+    }
+
     @Test void selectedLibraryIsFilteredAndPagedBeforeReturningResults() throws Exception {
         var alice=users.save(new User("json-alice","Alice","hash"));
         var bob=users.save(new User("json-bob","Bob","hash"));
