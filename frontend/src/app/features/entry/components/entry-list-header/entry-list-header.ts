@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValueChangeEvent } from '@angular/forms';
 import { filter, of, switchMap, timer } from 'rxjs';
@@ -16,7 +16,6 @@ import { FilterOperator } from '../../../../shared/search/filter-criteria';
 })
 export class EntryListHeader {
   readonly criteriaChange = output<SearchCriteria>();
-  readonly resultCount = input.required<number>();
 
   private readonly fb = inject(FormBuilder).nonNullable;
   protected readonly form = this.fb.group({

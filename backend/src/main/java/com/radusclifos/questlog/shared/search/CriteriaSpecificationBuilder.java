@@ -47,7 +47,7 @@ final class CriteriaSpecificationBuilder<T> {
     }
 
     Specification<T> build(SearchCriteria criteria) {
-        if (criteria == null || criteria.getPageNumber() < 0 || criteria.getPageSize() < 5 || criteria.getPageSize() > 100) {
+        if (criteria == null || criteria.getPageNumber() < 0 || criteria.getPageSize() < 1 || criteria.getPageSize() > 100) {
             throw invalid("pageNumber must be >= 0 and pageSize between 5 and 100");
         }
         if (criteria.getFilters().size() > 20 || criteria.getSorts().size() > 5) {

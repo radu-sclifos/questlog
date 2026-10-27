@@ -23,7 +23,7 @@ public class SearchCriteria {
     @Min(0)
     private int pageNumber = 0;
 
-    @Min(5)
+    @Min(1)
     private int pageSize = 100;
 
     @Valid

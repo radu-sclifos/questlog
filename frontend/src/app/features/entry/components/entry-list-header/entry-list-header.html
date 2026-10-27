@@ -23,8 +23,7 @@
 
   <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-3">
-      <span class="text-sm text-base-content/60">{{ resultCount() }} {{ resultCount() === 1 ? 'game' : 'games' }}
-        found</span>
+      <ng-content select="[pagination]" />
       @if (hasFilters()) {
         <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">Clear filters</button>
       }
