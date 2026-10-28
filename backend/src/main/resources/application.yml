@@ -5,6 +5,11 @@ server:
 spring:
   application:
     name: nome-questlog
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -14,3 +19,12 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
+questlog:
+  igdb:
+    enabled: ${IGDB_ENABLED:false}
+    client-id: ${IGDB_CLIENT_ID:}
+    client-secret: ${IGDB_CLIENT_SECRET:}
+    verify-on-startup: ${IGDB_VERIFY_ON_STARTUP:false}
+    connect-timeout: 5s
+    read-timeout: 15s

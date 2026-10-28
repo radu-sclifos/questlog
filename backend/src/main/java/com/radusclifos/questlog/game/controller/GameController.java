@@ -44,6 +44,6 @@ public class GameController {
     }
 
     private static GameResponse toResponse(Game game) {
-        return new GameResponse(game.getId(), game.getTitle(), game.getCoverUrl());
+        return new GameResponse(game.getId(), game.getName(), game.getCoverUrl());
     }
 }

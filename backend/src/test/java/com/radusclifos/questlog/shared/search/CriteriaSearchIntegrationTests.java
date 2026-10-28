@@ -99,7 +99,7 @@ class CriteriaSearchIntegrationTests {
         var first = repository.save(new Game("Criteria Beta", null));
         repository.save(new Game("Criteria Alpha", null));
         var criteria = new SearchCriteria(List.of(new FilterCriteria("id", FilterOperator.EQUAL, first.getId().toString())),
-            List.of(new SortCriteria("title", Sort.Direction.DESC)));
+            List.of(new SortCriteria("name", Sort.Direction.DESC)));
         var page = repository.searchWithCriteria(criteria);
         assertEquals(List.of(first.getId()), page.map(Game::getId).getContent());
     }
