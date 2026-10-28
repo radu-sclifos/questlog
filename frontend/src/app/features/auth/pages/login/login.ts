@@ -4,13 +4,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { Logo } from '../../../../shared/logo/logo';
 
 import { EntryStatusBadge } from '../../../entry/components/entry-status-badge/entry-status-badge';
 import { EntryStatus } from '../../../entry/models/entry';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, EntryStatusBadge],
+  imports: [ReactiveFormsModule, EntryStatusBadge, Logo],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

@@ -1,0 +1,12 @@
+@if (link(); as destination) {
+  <a [routerLink]="destination" class="block">
+    <ng-container *ngTemplateOutlet="image" />
+  </a>
+} @else {
+  <ng-container *ngTemplateOutlet="image" />
+}
+
+<ng-template #image>
+  <img src="/images/branding/questlog-logo.svg" alt="QuestLog" width="1532" height="434"
+       class="block h-auto w-full">
+</ng-template>
