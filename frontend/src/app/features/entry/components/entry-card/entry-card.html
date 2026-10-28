@@ -4,8 +4,6 @@
     <button
       type="button"
       class="entry-card__toggle transition-colors"
-      [attr.aria-expanded]="expanded()"
-      [attr.aria-controls]="'entry-details-' + entry().id"
       (click)="toggleExpanded()">
       <span class="entry-card__cover rounded-lg bg-base-300 text-base-content/40">
         <span class="text-center text-[10px] uppercase tracking-wider">Coming<br />soon</span>
@@ -27,8 +25,7 @@
       <app-entry-status-badge class="hidden sm:inline-flex justify-self-center" [status]="entry().status" />
       <!-- Arrow svg -->
       <svg class="size-5 text-base-content/50 transition-transform motion-reduce:transition-none justify-self-center"
-           [class.rotate-180]="expanded()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-           aria-hidden="true">
+           [class.rotate-180]="expanded()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>

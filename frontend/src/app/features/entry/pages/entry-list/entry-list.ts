@@ -14,10 +14,11 @@ import { EntryPage } from '../../models/entry-page';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { EntrySearchCriteria } from '../../models/entry-search-criteria';
 import { SearchCriteria } from '../../../../shared/search/search-criteria';
+import { Logo } from '../../../../shared/logo/logo';
 
 @Component({
   selector: 'app-entry-list',
-  imports: [EntryListHeader, EntryCard, EntryNavbar, EntryEditorDialog, EntryDeleteDialog],
+  imports: [EntryListHeader, EntryCard, EntryNavbar, EntryEditorDialog, EntryDeleteDialog, Logo],
   templateUrl: './entry-list.html',
   styleUrl: './entry-list.scss',
 })

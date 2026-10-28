@@ -1,4 +1,4 @@
-<dialog #dialog class="modal" aria-labelledby="entry-editor-title" (cancel)="onCancel($event)">
+<dialog #dialog class="modal" (cancel)="onCancel($event)">
   <div class="modal-box max-w-xl">
     <h2 id="entry-editor-title" class="text-xl font-bold" tabindex="-1" autofocus>
       {{ editingEntry() ? 'Edit game' : 'Add a game' }}
@@ -61,7 +61,7 @@
       </fieldset>
 
       @if (errorMessage(); as message) {
-        <div class="alert alert-error mt-4" role="alert">{{ message }}</div>
+        <div class="alert alert-error mt-4">{{ message }}</div>
       }
 
       <div class="modal-action">

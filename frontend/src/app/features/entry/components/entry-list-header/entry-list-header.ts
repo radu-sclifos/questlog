@@ -47,6 +47,10 @@ export class EntryListHeader {
     return !!(search.trim() || status);
   }
 
+  reset(): void {
+    this.form.reset();
+  }
+
   protected reverseOrder(): void {
     const control = this.form.controls.sortDirection;
     control.setValue(control.value === SortDirection.ASC ? SortDirection.DESC : SortDirection.ASC);
