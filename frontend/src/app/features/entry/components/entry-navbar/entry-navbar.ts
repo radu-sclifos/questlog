@@ -1,11 +1,12 @@
 import { Component, inject, input, output, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ToastService } from '../../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-entry-navbar',
+  imports: [RouterLink],
   templateUrl: './entry-navbar.html',
   styleUrl: './entry-navbar.scss',
 })

@@ -14,12 +14,22 @@
     </svg>
   </button>
   }
-  @if (user()) {
+  @if (user(); as currentUser) {
+  @if (!canEdit()) {
+  <a class="entry-sidebar__button tooltip tooltip-right tooltip-primary" data-tip="My library" [routerLink]="['/list', currentUser.username]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+      <path d="M9 6h12M9 12h12M9 18h12M3 6h1M3 12h1M3 18h1" />
+      <path d="m14 17 4-3 4 3v5h-8z" fill="var(--color-base-200, #292e38)" stroke="var(--color-base-200, #292e38)" stroke-width="5" />
+      <path d="m14 17 4-3 4 3v5h-8zM17 22v-3h2v3" stroke-width="1.5" />
+    </svg>
+  </a>
+  } @else {
   <button type="button" class="entry-sidebar__button tooltip tooltip-right tooltip-primary" data-tip="Sign out" (click)="logout()" [disabled]="signingOut()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
     </svg>
   </button>
+  }
   } @else {
   <button type="button" class="entry-sidebar__button tooltip tooltip-right tooltip-primary" data-tip="Sign in" (click)="login()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
