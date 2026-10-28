@@ -1,4 +1,4 @@
-<dialog #dialog class="modal" aria-labelledby="entry-delete-title" aria-describedby="entry-delete-description"
+<dialog #dialog class="modal"
         (cancel)="onCancel($event)">
   <div class="modal-box max-w-md">
     <h2 id="entry-delete-title" class="text-xl font-bold">Delete game?</h2>
@@ -7,20 +7,20 @@
     </p>
 
     @if (errorMessage(); as message) {
-      <div class="alert alert-error mt-4" role="alert">{{ message }}</div>
+      <div class="alert alert-error mt-4">{{ message }}</div>
     }
 
     <div class="modal-action">
       <button type="button" class="btn btn-ghost" autofocus [disabled]="deleting()" (click)="close()">Cancel</button>
       <button type="button" class="btn btn-error" [disabled]="deleting()" (click)="confirm()">
         @if (deleting()) {
-          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          <span class="loading loading-spinner loading-sm"></span>
         }
         {{ deleting() ? 'Deleting…' : 'Delete' }}
       </button>
     </div>
   </div>
   <div class="modal-backdrop">
-    <button type="button" aria-label="Close delete confirmation" [disabled]="deleting()" (click)="close()">Close</button>
+    <button type="button" [disabled]="deleting()" (click)="close()">Close</button>
   </div>
 </dialog>
