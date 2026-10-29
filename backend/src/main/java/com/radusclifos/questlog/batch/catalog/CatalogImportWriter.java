@@ -1,24 +1,24 @@
 package com.radusclifos.questlog.batch.catalog;
 
-import com.radusclifos.questlog.game.*;
-import com.radusclifos.questlog.game.repository.GameRepository;
+import com.radusclifos.questlog.batch.catalog.repository.PendingGameRelationRepository;
+import com.radusclifos.questlog.game.Game;
+import com.radusclifos.questlog.game.GameCompany;
+import com.radusclifos.questlog.game.GameRelation;
+import com.radusclifos.questlog.game.GameRelationType;
 import com.radusclifos.questlog.game.repository.GameCompanyRepository;
 import com.radusclifos.questlog.game.repository.GameRelationRepository;
-import com.radusclifos.questlog.batch.catalog.repository.PendingGameRelationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
+import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 public class CatalogImportWriter {
@@ -46,9 +46,27 @@ public class CatalogImportWriter {
         this.references = references;
     }
 
+    // Returns the number of saved games
     public int writePage(List<IgdbGame> games) {
         return Objects.requireNonNull(transactionTemplate.execute(status -> {
             int saved = 0;
+
+            // Filtering the games for import
+            var eligible = games.stream().filter(game -> game.exclusionReason() == null).toList();
+
+            // Preloading properties during a single transaction for performance’s sake
+            var pageReferences = references.preload(eligible);
+
+            // Include existing relation targets too, newly inserted games enter this map as they get created
+            var ids = new HashSet<Long>();
+            for (var game : eligible) {
+                ids.add(game.id());
+                game.links().forEach(link -> ids.add(link.targetIgdbId()));
+            }
+            Map<Long, Game> pageGames = new HashMap<>();
+            if (!ids.isEmpty()) {
+                this.games.findAllByIgdbIdIn(ids).forEach(game -> pageGames.put(game.getIgdbId(), game));
+            }
 
             for (var game : games) {
                 var exclusion = game.exclusionReason();
@@ -57,7 +75,7 @@ public class CatalogImportWriter {
                     continue;
                 }
 
-                saveGame(game);
+                saveGame(game, pageGames, pageReferences);
                 saved++;
             }
 
@@ -67,20 +85,21 @@ public class CatalogImportWriter {
         }));
     }
 
-    private void saveGame(IgdbGame sourceGame) {
+    private void saveGame(IgdbGame sourceGame, Map<Long, Game> pageGames, PageReferences pageReferences) {
         if (sourceGame.id() == null || sourceGame.id() <= 0
                 || sourceGame.name() == null || sourceGame.name().isBlank() || sourceGame.name().strip().length() > 200) {
             throw new IllegalArgumentException("Invalid IGDB game identity/name: " + sourceGame.id());
         }
 
         // Look for an already existing Game
-        var game = games.findByIgdbId(sourceGame.id()).orElse(null);
+        var game = pageGames.get(sourceGame.id());
 
         // Game gets created if it couldn't be found
         if (game == null) {
             game = new Game(sourceGame.name(), null);
             game.setIgdbId(sourceGame.id());
             games.save(game);
+            pageGames.put(sourceGame.id(), game);
         } else {
             game.rename(sourceGame.name());
         }
@@ -98,7 +117,7 @@ public class CatalogImportWriter {
         game.setGameType(references.gameType(sourceGame.gameType()));
         game.getPlatforms().clear();
         for (var item : safe(sourceGame.platforms())) {
-            game.getPlatforms().add(references.platform(item));
+            game.getPlatforms().add(references.platform(item, pageReferences));
         }
         game.getGenres().clear();
         for (var item : safe(sourceGame.genres())) {
@@ -107,11 +126,11 @@ public class CatalogImportWriter {
         }
         game.getEngines().clear();
         for (var item : safe(sourceGame.engines())) {
-            game.getEngines().add(references.engine(item));
+            game.getEngines().add(references.engine(item, pageReferences));
         }
         game.getFranchises().clear();
         for (var item : safe(sourceGame.franchises())) {
-            game.getFranchises().add(references.franchise(item));
+            game.getFranchises().add(references.franchise(item, pageReferences));
         }
 
         // Collections are intentionally not loaded: they get replace/overwritten
@@ -119,10 +138,10 @@ public class CatalogImportWriter {
         gameCompanies.deleteForGame(game);
         Map<Long, GameCompany> involvements = new LinkedHashMap<>();
         for (var item : safe(sourceGame.involvedCompanies())) {
-            if (item.company() == null){
+            if (item.company() == null) {
                 throw new IllegalArgumentException("Missing company in IGDB game " + sourceGame.id());
             }
-            var company = references.company(item.company());
+            var company = references.company(item.company(), pageReferences);
             var involvement = involvements.get(item.company().id());
             if (involvement == null) {
                 involvement = new GameCompany(game, company);
@@ -137,7 +156,7 @@ public class CatalogImportWriter {
         relations.deleteForSource(game);
         pendingRelations.deleteForSource(game);
         for (var link : sourceGame.links()) {
-            var target = games.findByIgdbId(link.targetIgdbId()).orElse(null);
+            var target = pageGames.get(link.targetIgdbId());
             if (target == null) {
                 pendingRelations.save(new PendingGameRelation(game, link.targetIgdbId(), link.gameRelationType()));
             } else {

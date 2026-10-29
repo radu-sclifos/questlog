@@ -2,14 +2,15 @@ package com.radusclifos.questlog.batch.catalog;
 
 import com.radusclifos.questlog.game.*;
 import com.radusclifos.questlog.game.repository.*;
+import com.radusclifos.questlog.integration.igdb.IgdbGame;
 import com.radusclifos.questlog.integration.igdb.IgdbReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Finds shared catalog records, such as platforms and companies, using the IGDB ID from a IgdbReference.
@@ -71,11 +72,47 @@ public class CatalogReferenceResolver {
         gameTypeCache = Map.copyOf(loadedGameTypes);
     }
 
-    public Platform platform(IgdbReference source) {
+    public PageReferences preload(List<IgdbGame> page) {
+        Set<Long> platformIds = new HashSet<>();
+        Set<Long> engineIds = new HashSet<>();
+        Set<Long> franchiseIds = new HashSet<>();
+        Set<Long> companyIds = new HashSet<>();
+        for (var game : page) {
+            collectIds(game.platforms(), platformIds);
+            collectIds(game.engines(), engineIds);
+            collectIds(game.franchises(), franchiseIds);
+            if (game.involvedCompanies() != null) {
+                for (var involvement : game.involvedCompanies()) {
+                    if (involvement.company() != null) companyIds.add(involvement.company().id());
+                }
+            }
+        }
+        return new PageReferences(
+                platformIds.isEmpty() ? new HashMap<>() : index(platforms.findAllByIgdbIdIn(platformIds), Platform::getIgdbId),
+                engineIds.isEmpty() ? new HashMap<>() : index(engines.findAllByIgdbIdIn(engineIds), Engine::getIgdbId),
+                franchiseIds.isEmpty() ? new HashMap<>() : index(franchises.findAllByIgdbIdIn(franchiseIds), Franchise::getIgdbId),
+                companyIds.isEmpty() ? new HashMap<>() : index(companies.findAllByIgdbIdIn(companyIds), Company::getIgdbId));
+    }
+
+    private static void collectIds(List<IgdbReference> sources, Set<Long> ids) {
+        if (sources != null) {
+            for (var source : sources) {
+                if (source != null && source.id() != null) {
+                    ids.add(source.id());
+                }
+            }
+        }
+    }
+
+    private static <T> Map<Long, T> index(List<T> entities, Function<T, Long> id) {
+        return entities.stream().collect(Collectors.toMap(id, Function.identity()));
+    }
+
+    public Platform platform(IgdbReference source, PageReferences page) {
         if (source == null) return null;
         validate(source, "Platform");
 
-        var platform = platforms.findByIgdbId(source.id()).orElseGet(() -> {
+        var platform = page.platforms().computeIfAbsent(source.id(), ignored -> {
             // Add if not found
             var created = new Platform(source.name());
             created.setIgdbId(source.id());
@@ -86,11 +123,11 @@ public class CatalogReferenceResolver {
         return platform;
     }
 
-    public Engine engine(IgdbReference source) {
+    public Engine engine(IgdbReference source, PageReferences page) {
         if (source == null) return null;
         validate(source, "Engine");
 
-        var engine = engines.findByIgdbId(source.id()).orElseGet(() -> {
+        var engine = page.engines().computeIfAbsent(source.id(), ignored -> {
             var created = new Engine(source.name());
             created.setIgdbId(source.id());
             return engines.save(created);
@@ -99,11 +136,11 @@ public class CatalogReferenceResolver {
         return engine;
     }
 
-    public Franchise franchise(IgdbReference source) {
+    public Franchise franchise(IgdbReference source, PageReferences page) {
         if (source == null) return null;
         validate(source, "Franchise");
 
-        var franchise = franchises.findByIgdbId(source.id()).orElseGet(() -> {
+        var franchise = page.franchises().computeIfAbsent(source.id(), ignored -> {
             var created = new Franchise(source.name());
             created.setIgdbId(source.id());
             return franchises.save(created);
@@ -112,11 +149,11 @@ public class CatalogReferenceResolver {
         return franchise;
     }
 
-    public Company company(IgdbReference source) {
+    public Company company(IgdbReference source, PageReferences page) {
         if (source == null) return null;
         validate(source, "Company");
 
-        var company = companies.findByIgdbId(source.id()).orElseGet(() -> {
+        var company = page.companies().computeIfAbsent(source.id(), ignored -> {
             var created = new Company(source.name());
             created.setIgdbId(source.id());
             return companies.save(created);

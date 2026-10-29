@@ -10,6 +10,8 @@ import org.springframework.batch.core.step.StepContribution;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Imports catalog pages and keeps track of the last processed game ID.
  */
@@ -36,7 +38,8 @@ public class CatalogImportGamesTasklet implements Tasklet {
         var parameters = CatalogImportParameters.from(execution.getJobExecution().getJobParameters());
 
         if (execution.getExecutionContext().getLong("pagesProcessed", 0L) == 0) {
-            // Fetch outside the database transaction, once before the first game page.
+            // Fetch outside the database transaction, ONCE before the first game page
+            // Refreshes the small directories and caches them (Genre and GameType)
             references.refresh(client.fetchGenres(), client.fetchGameTypes());
         }
 
@@ -61,14 +64,21 @@ public class CatalogImportGamesTasklet implements Tasklet {
 
         // last ID imported
         long lastGameId = context.getLong("lastGameId", 0L);
+        // Includes HTTP, client throttling, retries and response deserialization.
+        long pageStarted = System.nanoTime();
         var games = client.fetchCatalogGames(parameters.syncSince(), parameters.syncStartedAt(), lastGameId, parameters.pageSize());
+        long igdbMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pageStarted);
         if (games.isEmpty()) {
+            log.info("Catalog execution {}: no more games after cursor {}, igdbMs={}.",
+                    execution.getJobExecution().getId(), lastGameId, igdbMs);
             return RepeatStatus.FINISHED;
         }
 
+        // Includes page preloading, persistence, flush and transaction commit.
+        long writeStarted = System.nanoTime();
         int saved = writer.writePage(games);
+        long dbMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - writeStarted);
         context.putLong("lastGameId", games.getLast().id());
-        // Count successfully processed provider pages, including pages whose games were all filtered out.
         context.putLong("pagesProcessed", context.getLong("pagesProcessed", 0L) + 1);
 
         // Update Batch statistics
@@ -81,9 +91,10 @@ public class CatalogImportGamesTasklet implements Tasklet {
         // Count games excluded by our import filters (like bundles, special editions...)
         contribution.incrementFilterCount(games.size() - saved);
 
-        log.info("Catalog execution {}: cursor {}, saved {}, filtered {} (window {} to {}).",
-                execution.getJobExecution().getId(), games.getLast().id(), saved, games.size() - saved,
-                parameters.syncSince(), parameters.syncStartedAt());
+        long pageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pageStarted);
+        log.info("Catalog execution {}: cursor {}, fetched {}, saved {}, filtered {} | igdbMs={}, dbMs={}, pageMs={}.",
+                execution.getJobExecution().getId(), games.getLast().id(), games.size(), saved, games.size() - saved,
+                igdbMs, dbMs, pageMs);
 
         return RepeatStatus.CONTINUABLE;
     }

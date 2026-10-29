@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import com.radusclifos.questlog.game.repository.*;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -34,6 +36,11 @@ class CatalogImportJobTests {
     @Autowired CatalogSyncHistory history;
     @Autowired JdbcTemplate jdbc;
     @MockitoBean IgdbClient client;
+    @MockitoSpyBean GameRepository games;
+    @MockitoSpyBean PlatformRepository platforms;
+    @MockitoSpyBean EngineRepository engines;
+    @MockitoSpyBean FranchiseRepository franchises;
+    @MockitoSpyBean CompanyRepository companies;
 
     @BeforeEach
     void clearCatalog() {
@@ -47,6 +54,54 @@ class CatalogImportJobTests {
                 "engines", "platforms", "genres", "franchises", "game_types", "companies")) {
             jdbc.update("delete from " + table);
         }
+    }
+
+    @Test
+    void preloadsOneQueryPerEntityTypeEvenWhenEveryCompanyIsDifferent() {
+        var page = java.util.stream.IntStream.range(1, 21).mapToObj(id -> game(id, "Game " + id, """
+                ,"platforms":[{"id":6,"name":"PC"}],
+                "game_engines":[{"id":4,"name":"Engine"}],
+                "franchises":[{"id":8,"name":"Franchise"}],
+                "involved_companies":[{"company":{"id":%d,"name":"Company %d"},"developer":true}]
+                """.formatted(1000 + id, id))).toList();
+        assertEquals(20, writer.writePage(page));
+        verify(games).findAllByIgdbIdIn(anyCollection());
+        verify(platforms).findAllByIgdbIdIn(anyCollection());
+        verify(engines).findAllByIgdbIdIn(anyCollection());
+        verify(franchises).findAllByIgdbIdIn(anyCollection());
+        verify(companies).findAllByIgdbIdIn(anyCollection());
+        verify(games, never()).findByIgdbId(anyLong());
+        verify(platforms, never()).findByIgdbId(anyLong());
+        verify(engines, never()).findByIgdbId(anyLong());
+        verify(franchises, never()).findByIgdbId(anyLong());
+        verify(companies, never()).findByIgdbId(anyLong());
+        assertEquals(20, count("companies"));
+        assertEquals(20, count("game_companies"));
+        assertEquals(1, count("platforms"));
+
+        var companyId = jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class);
+        writer.writePage(List.of(game(1, "Updated", """
+                ,"involved_companies":[{"company":{"id":1001,"name":"Renamed"},"publisher":true}]
+                """)));
+        assertEquals(companyId, jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class));
+        assertEquals("Renamed", jdbc.queryForObject("select name from companies where igdb_id=1001", String.class));
+        assertEquals(20, count("game_companies"));
+        assertEquals(19, count("game_platforms"));
+        assertEquals(Boolean.TRUE, jdbc.queryForObject("select publisher from game_companies where company_id=?", Boolean.class, companyId));
+        assertEquals(Boolean.FALSE, jdbc.queryForObject("select developer from game_companies where company_id=?", Boolean.class, companyId));
+    }
+
+    @Test
+    void failedPageDoesNotRetainNewReferenceEntitiesForTheNextAttempt() {
+        var valid = game(101, "Valid", ",\"platforms\":[{\"id\":6,\"name\":\"PC\"}]");
+        var invalid = game(102, "Invalid", ",\"game_engines\":[{\"id\":4}]");
+        assertThrows(IllegalArgumentException.class, () -> writer.writePage(List.of(valid, invalid)));
+        assertEquals(0, count("games"));
+        assertEquals(0, count("platforms"));
+        writer.writePage(List.of(valid));
+        assertEquals(1, count("games"));
+        assertEquals(1, count("platforms"));
+        assertEquals(1, count("game_platforms"));
     }
 
     @Test

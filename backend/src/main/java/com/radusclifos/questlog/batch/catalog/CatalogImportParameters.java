@@ -18,8 +18,8 @@ public record CatalogImportParameters(
             throw new IllegalArgumentException("maxPages must be between 0 and " + Integer.MAX_VALUE);
         }
 
-        long size = parameters.getLong("pageSize", 25L);
-        if (size < 1 || size > 100) {
+        long size = parameters.getLong("pageSize", 100L);
+        if (size < 10 || size > 500) {
             throw new IllegalArgumentException("pageSize must be between 1 and 100");
         }
 

@@ -93,7 +93,7 @@ public class IgdbClient {
      * Fetches a released-game page using an ID cursor and a frozen sync window.
      */
     public List<IgdbGame> fetchCatalogGames(long since, long until, long afterId, int pageSize) {
-        if (since < 0 || until <= 0 || since > until || afterId < 0 || pageSize < 1 || pageSize > 100) {
+        if (since < 0 || until <= 0 || since > until || afterId < 0 || pageSize < 10 || pageSize > 500) {
             throw new IllegalArgumentException("Invalid catalog sync window or page cursor");
         }
 
