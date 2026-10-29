@@ -57,6 +57,70 @@ class CatalogImportJobTests {
     }
 
     @Test
+    void bulkReplacementPreservesFilteredSourcesAndRelationOnlyTargets() {
+        writer.writePage(List.of(game(101, "First", ",\"dlcs\":[102],\"remakes\":[999]"),
+                game(102, "Second", ",\"dlcs\":[101],\"remakes\":[998]"),
+                game(103, "Third", ",\"dlcs\":[101],\"remakes\":[997]")));
+        writer.resolvePage(0, 100);
+        writer.writePage(List.of(game(101, "Updated", ",\"dlcs\":[102]"),
+                game(102, "Filtered", ",\"version_title\":\"Special edition\"")));
+        assertEquals(3, count("game_relations"));
+        assertEquals(2, count("pending_game_relations"));
+        assertEquals(0, jdbc.queryForObject("select count(*) from pending_game_relations where target_igdb_id=999", Integer.class));
+        assertEquals("Second", jdbc.queryForObject("select name from games where igdb_id=102", String.class));
+        assertEquals("Third", jdbc.queryForObject("select name from games where igdb_id=103", String.class));
+    }
+
+    @Test
+    void failedReplacementRestoresAllDeletedLinksAndCompanyRoles() {
+        writer.writePage(List.of(game(102, "Target", "")));
+        writer.writePage(List.of(game(101, "Original", """
+                ,"dlcs":[102],"remakes":[999],
+                "involved_companies":[{"company":{"id":20,"name":"Studio"},"developer":true}]
+                """)));
+        assertThrows(IllegalArgumentException.class, () -> writer.writePage(List.of(
+                game(101, "Changed", ""), game(102, "Invalid", ",\"platforms\":[{\"id\":6}]"))));
+        assertEquals("Original", jdbc.queryForObject("select name from games where igdb_id=101", String.class));
+        assertEquals(1, count("game_companies"));
+        assertEquals(Boolean.TRUE, jdbc.queryForObject("select developer from game_companies", Boolean.class));
+        assertEquals(1, count("game_relations"));
+        assertEquals(1, count("pending_game_relations"));
+        writer.writePage(List.of(game(101, "Retried", "")));
+        assertEquals(0, count("game_companies"));
+        assertEquals(0, count("game_relations"));
+        assertEquals(0, count("pending_game_relations"));
+    }
+
+    @Test
+    void replacesBothSourcesWithoutDeletingRelationsCreatedEarlierInThePage() {
+        var first = game(101, "First", ",\"dlcs\":[102],\"remakes\":[999]");
+        var second = game(102, "Second", ",\"dlcs\":[101],\"remakes\":[998]");
+        writer.writePage(List.of(first, second));
+        writer.resolvePage(0, 100);
+        writer.writePage(List.of(first, second));
+        assertEquals(2, count("game_relations"));
+        assertEquals(2, count("pending_game_relations"));
+    }
+
+    @Test
+    void pageReplacementNoLongerForcesThreeFlushesPerGame() {
+        var page = java.util.stream.IntStream.range(1, 21)
+                .mapToObj(id -> game(id, "Game " + id, "")).toList();
+        writer.writePage(page);
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean enabled = stats.isStatisticsEnabled();
+        stats.setStatisticsEnabled(true);
+        try {
+            long before = stats.getFlushCount();
+            writer.writePage(page);
+            long flushes = stats.getFlushCount() - before;
+            assertTrue(flushes >= 1 && flushes <= 3, "Expected page-level flushes, got " + flushes);
+        } finally {
+            stats.setStatisticsEnabled(enabled);
+        }
+    }
+
+    @Test
     void preloadsOneQueryPerEntityTypeEvenWhenEveryCompanyIsDifferent() {
         var page = java.util.stream.IntStream.range(1, 21).mapToObj(id -> game(id, "Game " + id, """
                 ,"platforms":[{"id":6,"name":"PC"}],
@@ -114,22 +178,22 @@ class CatalogImportJobTests {
             assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
             return List.of(new IgdbReference(0L, "Main game"));
         });
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1))).thenReturn(
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10))).thenReturn(
                 List.of(game(101, "First", ",\"genres\":[{\"id\":12}]")));
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1))).thenReturn(
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(
                 List.of(game(102, "Second", ",\"genres\":[{\"id\":12}]")));
-        assertEquals(BatchStatus.COMPLETED, launcher.start(1, 2).getStatus());
+        assertEquals(BatchStatus.COMPLETED, launcher.start(10, 2).getStatus());
         var order = inOrder(client);
         order.verify(client).fetchGenres();
         order.verify(client).fetchGameTypes();
-        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1));
-        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1));
+        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10));
+        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10));
         verify(client, times(1)).fetchGenres();
         verify(client, times(1)).fetchGameTypes();
         assertEquals(2, count("game_genres"));
 
         when(client.fetchGenres()).thenReturn(List.of(new IgdbReference(12L, "Renamed")));
-        assertEquals(BatchStatus.COMPLETED, launcher.start(1, 2).getStatus());
+        assertEquals(BatchStatus.COMPLETED, launcher.start(10, 2).getStatus());
         verify(client, times(2)).fetchGenres();
         verify(client, times(2)).fetchGameTypes();
         assertEquals("Renamed", jdbc.queryForObject("select name from genres where igdb_id=12", String.class));
@@ -251,19 +315,19 @@ class CatalogImportJobTests {
 
     @Test
     void newAttemptReplaysCommittedPagesAndRollsBackPartialWrites() throws Exception {
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1))).thenReturn(List.of(game(101, "First page", "")));
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1))).thenReturn(List.of(game(102, "Second page", """
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10))).thenReturn(List.of(game(101, "First page", "")));
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(List.of(game(102, "Second page", """
                 ,"platforms":[{"id":6}]
                 """)));
-        var failed = launcher.start(1, 0);
+        var failed = launcher.start(10, 0);
         assertEquals(BatchStatus.FAILED, failed.getStatus());
         assertEquals(1, count("games"));
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1))).thenReturn(List.of(game(102, "Recovered", "")));
-        var retried = launcher.start(1, 0);
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(List.of(game(102, "Recovered", "")));
+        var retried = launcher.start(10, 0);
         assertEquals(BatchStatus.COMPLETED, retried.getStatus(), retried.getAllFailureExceptions().toString());
         assertEquals(2, count("games"));
-        verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1));
-        verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1));
+        verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10));
+        verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10));
     }
 
     @Test
@@ -377,44 +441,44 @@ class CatalogImportJobTests {
 
     @Test
     void failedCatalogRunIsRetriedFromTheBeginningWithoutAdvancingHistory() throws Exception {
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1))).thenReturn(List.of(
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10))).thenReturn(List.of(
                 game(101, "First", ",\"first_release_date\":1709164800")));
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1)))
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10)))
                 .thenThrow(new IgdbIntegrationException("Unavailable"));
-        var failed = launcher.start(1, 0);
+        var failed = launcher.start(10, 0);
         assertEquals(BatchStatus.FAILED, failed.getStatus());
         assertNull(history.lastSuccessfulStart());
         assertEquals(1, count("games"));
-        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1))).thenReturn(List.of());
-        var retried = launcher.start(1, 0);
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(List.of());
+        var retried = launcher.start(10, 0);
         assertEquals(BatchStatus.COMPLETED, retried.getStatus());
         assertNotEquals(failed.getJobParameters().getString("run.id"), retried.getJobParameters().getString("run.id"));
         assertEquals(0L, retried.getJobParameters().getLong("syncSince"));
         assertEquals(retried.getJobParameters().getLong("syncStartedAt"), history.lastSuccessfulStart());
         assertEquals(1, count("games"));
-        verify(client, times(2)).fetchCatalogGames(eq(0L), anyLong(), eq(0L), eq(1));
-        verify(client, times(2)).fetchCatalogGames(eq(0L), anyLong(), eq(101L), eq(1));
+        verify(client, times(2)).fetchCatalogGames(eq(0L), anyLong(), eq(0L), eq(10));
+        verify(client, times(2)).fetchCatalogGames(eq(0L), anyLong(), eq(101L), eq(10));
     }
 
     @Test
     void stopsAfterTwentyPagesWithoutRequestingAnotherAndStillResolvesRelations() throws Exception {
-        when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(1))).thenAnswer(invocation -> {
+        when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(10))).thenAnswer(invocation -> {
             assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
             long id = invocation.<Long>getArgument(2) + 1;
             return List.of(game(id, "Game " + id, id == 1 ? ",\"dlcs\":[2]" : ""));
         });
-        var limited = launcher.start(1, 20);
+        var limited = launcher.start(10, 20);
         assertEquals(BatchStatus.COMPLETED, limited.getStatus(), limited.getAllFailureExceptions().toString());
         assertEquals(20, count("games"));
         assertEquals(1, count("game_relations"));
         assertEquals(0, count("pending_game_relations"));
         assertEquals(2, limited.getStepExecutions().size());
-        verify(client, times(20)).fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(1));
-        verify(client, never()).fetchCatalogGames(anyLong(), anyLong(), eq(20L), eq(1));
+        verify(client, times(20)).fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(10));
+        verify(client, never()).fetchCatalogGames(anyLong(), anyLong(), eq(20L), eq(10));
         assertNull(history.lastSuccessfulStart());
 
-        when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(1))).thenReturn(List.of());
-        var full = launcher.start(1, 0);
+        when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(10))).thenReturn(List.of());
+        var full = launcher.start(10, 0);
         assertEquals(BatchStatus.COMPLETED, full.getStatus());
         assertEquals(0L, full.getJobParameters().getLong("syncSince"));
         assertEquals(full.getJobParameters().getLong("syncStartedAt"), history.lastSuccessfulStart());

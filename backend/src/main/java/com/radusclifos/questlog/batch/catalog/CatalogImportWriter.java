@@ -10,7 +10,6 @@ import com.radusclifos.questlog.game.repository.GameRelationRepository;
 import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -20,7 +19,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 
-@Slf4j
 public class CatalogImportWriter {
 
     private final EntityManager em;
@@ -68,13 +66,16 @@ public class CatalogImportWriter {
                 this.games.findAllByIgdbIdIn(ids).forEach(game -> pageGames.put(game.getIgdbId(), game));
             }
 
-            for (var game : games) {
-                var exclusion = game.exclusionReason();
-                if (exclusion != null) {
-                    log.warn("Skipping IGDB {} {}: {}.", exclusion, game.id(), game.name());
-                    continue;
-                }
+            // Delete existing outgoing links in bulk before rebuilding them from the imported data
+            var existingSourceIds = eligible.stream().map(game -> pageGames.get(game.id()))
+                    .filter(Objects::nonNull).map(Game::getId).distinct().toList();
+            if (!existingSourceIds.isEmpty()) {
+                gameCompanies.deleteForGames(existingSourceIds);
+                relations.deleteForSources(existingSourceIds);
+                pendingRelations.deleteForSources(existingSourceIds);
+            }
 
+            for (var game : eligible) {
                 saveGame(game, pageGames, pageReferences);
                 saved++;
             }
@@ -135,7 +136,6 @@ public class CatalogImportWriter {
 
         // Collections are intentionally not loaded: they get replace/overwritten
         // This allows to keep collections always updated and not forget any old entry
-        gameCompanies.deleteForGame(game);
         Map<Long, GameCompany> involvements = new LinkedHashMap<>();
         for (var item : safe(sourceGame.involvedCompanies())) {
             if (item.company() == null) {
@@ -153,8 +153,6 @@ public class CatalogImportWriter {
             involvement.setSupporting(involvement.isSupporting() || item.supporting());
         }
         gameCompanies.saveAll(involvements.values());
-        relations.deleteForSource(game);
-        pendingRelations.deleteForSource(game);
         for (var link : sourceGame.links()) {
             var target = pageGames.get(link.targetIgdbId());
             if (target == null) {
@@ -175,7 +173,9 @@ public class CatalogImportWriter {
             for (var link : links) {
                 cursor = link.getId();
                 var target = games.findByIgdbId(link.getTargetIgdbId()).orElse(null);
-                if (target == null) continue;
+                if (target == null) {
+                    continue;
+                }
                 ensureRelation(link.getSource(), target, link.getType());
                 pendingRelations.delete(link);
             }
