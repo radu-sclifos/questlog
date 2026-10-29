@@ -10,7 +10,7 @@ public record CatalogImportProperties(
 ) {
     public CatalogImportProperties {
         maxPages = maxPages == null ? 0 : maxPages;
-        pageSize = pageSize == null ? 100 : pageSize;
+        pageSize = pageSize == null ? 250 : pageSize;
         if (maxPages < 0) {
             throw new IllegalArgumentException("Catalog max-pages cannot be negative; use 0 for no limit");
         }
