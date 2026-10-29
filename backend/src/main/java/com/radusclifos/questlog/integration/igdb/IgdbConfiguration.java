@@ -1,6 +1,6 @@
 package com.radusclifos.questlog.integration.igdb;
 
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Clock;
 
+@Slf4j
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(IgdbProperties.class)
 public class IgdbConfiguration {
@@ -35,8 +36,7 @@ public class IgdbConfiguration {
         ApplicationRunner igdbAuthenticationCheck(IgdbClient client) {
             return args -> {
                 client.verifyAuthentication();
-                LoggerFactory.getLogger(IgdbConfiguration.class)
-                        .info("IGDB authentication verified successfully; no games imported.");
+                log.info("IGDB authentication verified successfully; no games imported.");
             };
         }
 

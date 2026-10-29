@@ -21,6 +21,12 @@ spring:
     open-in-view: false
 
 questlog:
+  catalog-import:
+    on-startup: ${CATALOG_IMPORT_ON_STARTUP:false}
+    scheduled: ${CATALOG_IMPORT_SCHEDULED:false}
+    page-size: ${CATALOG_IMPORT_PAGE_SIZE:}
+    # Limit for test purposes, 0 processes all matching pages
+    max-pages: ${CATALOG_IMPORT_MAX_PAGES:0}
   igdb:
     enabled: ${IGDB_ENABLED:false}
     client-id: ${IGDB_CLIENT_ID:}

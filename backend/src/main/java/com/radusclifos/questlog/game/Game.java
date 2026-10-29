@@ -53,11 +53,6 @@ public class Game {
     @Column(name = "version_title", columnDefinition = "text")
     private String versionTitle;
 
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "main_franchise_id")
-    private Franchise mainFranchise;
-
     @ManyToMany
     @JoinTable(name = "game_platforms", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "platform_id"))
@@ -98,12 +93,9 @@ public class Game {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name = "cover_url", length = 2048)
-    private String coverUrl;
-
-    public Game(String title, String coverUrl) {
+    public Game(String title, String coverImageId) {
         rename(title);
-        this.coverUrl = coverUrl;
+        this.coverImageId = coverImageId;
     }
 
     public void rename(String title) {

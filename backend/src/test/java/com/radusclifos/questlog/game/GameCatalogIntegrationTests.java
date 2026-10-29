@@ -35,7 +35,6 @@ class GameCatalogIntegrationTests {
         game.setStoryline("Story premise");
         game.setCoverImageId("co_example");
         game.setGameType(type);
-        game.setMainFranchise(franchise);
         game.setSourceUpdatedAt(Instant.parse("2026-10-28T01:00:00Z"));
         game.setLastSyncedAt(Instant.parse("2026-10-28T03:00:00Z"));
         game.getPlatforms().add(platform);
@@ -50,7 +49,7 @@ class GameCatalogIntegrationTests {
         involvement.setDeveloper(true);
         involvement.setPublisher(true);
         em.persist(involvement);
-        em.persist(new GameRelation(game, remake, GameRelationType.HAS_REMAKE));
+        em.persist(new GameRelation(game, remake, GameRelationType.REMAKE));
         em.flush();
         var id = game.getId();
         em.clear();
@@ -66,12 +65,12 @@ class GameCatalogIntegrationTests {
         assertEquals(1, loaded.getGenres().size());
         assertEquals(1, loaded.getEngines().size());
         assertEquals(1, loaded.getFranchises().size());
-        assertEquals("Example Franchise", loaded.getMainFranchise().getName());
+        assertEquals("Example Franchise", loaded.getFranchises().iterator().next().getName());
         var linkedCompany = loaded.getInvolvedCompanies().iterator().next();
         assertTrue(linkedCompany.isDeveloper());
         assertTrue(linkedCompany.isPublisher());
         var relation = loaded.getRelations().iterator().next();
-        assertEquals(GameRelationType.HAS_REMAKE, relation.getRelationType());
+        assertEquals(GameRelationType.REMAKE, relation.getRelationType());
         assertEquals(remake.getId(), relation.getTargetGame().getId());
         assertNotNull(loaded.getCreatedAt());
         assertNotNull(loaded.getUpdatedAt());

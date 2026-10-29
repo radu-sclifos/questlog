@@ -239,9 +239,9 @@ final class CriteriaSpecificationBuilder<T> {
                 else if (type == Float.class) converted = number.floatValue();
                 else if (type == java.math.BigDecimal.class) converted = number;
                 else if (type == java.math.BigInteger.class) converted = number.toBigIntegerExact();
-                else throw invalid("Unsupported numeric type");
+                else throw invalid("Unsupported numeric gameRelationType");
             } else {
-                throw invalid("Invalid value type; expected " + type.getSimpleName());
+                throw invalid("Invalid value gameRelationType; expected " + type.getSimpleName());
             }
 
             if (converted instanceof Double number && !Double.isFinite(number)) {

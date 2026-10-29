@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClient;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
@@ -38,6 +39,31 @@ class IgdbAuthenticationTests {
         when(clock.instant()).thenReturn(Instant.parse("2026-10-28T03:00:00Z"));
         tokens = new TwitchAppTokenProvider(twitchBuilder.build(), properties, clock);
         client = new IgdbClient(igdbBuilder.build(), properties, tokens);
+    }
+
+    @Test
+    void queriesCreatedUpdatedAndNewlyReleasedGamesInAFrozenWindow() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "where id > 42 & first_release_date != null & first_release_date <= 2000")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "((created_at >= 1000 & created_at <= 2000) | (updated_at >= 1000 & updated_at <= 2000) | first_release_date >= 1000)")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("sort id asc; limit 25;")))
+                .andRespond(withSuccess("[{\"id\":43,\"name\":\"Game\",\"first_release_date\":1500}]", MediaType.APPLICATION_JSON));
+        assertEquals(43L, client.fetchCatalogGames(1000, 2000, 42, 25).getFirst().id());
+        igdb.verify();
+    }
+
+    @Test
+    void firstCatalogImportOnlyFiltersReleasedGamesAndRejectsUnorderedPages() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("created_at >="))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("first_release_date <= 2000")))
+                .andRespond(withSuccess("[{\"id\":2,\"first_release_date\":1000},{\"id\":1,\"first_release_date\":1000}]", MediaType.APPLICATION_JSON));
+        assertThrows(IgdbIntegrationException.class, () -> client.fetchCatalogGames(0, 2000, 0, 25));
+        igdb.verify();
     }
 
     @Test
@@ -170,9 +196,76 @@ class IgdbAuthenticationTests {
         igdb.verify();
     }
 
+    @Test
+    void reportsStructuredBadRequestDetailsWithoutExposingCredentials() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("""
+                                [{"title":"Invalid field","cause":"Unknown field example; token-one secret-value client-id",
+                                  "debug":"must-not-appear"}]
+                                """));
+        var error = assertThrows(IgdbIntegrationException.class,
+                () -> client.fetchGames(List.of(1942L)));
+        assertTrue(error.getMessage().contains("Invalid field"));
+        assertTrue(error.getMessage().contains("Unknown field example"));
+        for (var hidden : List.of("token-one", "secret-value", "client-id", "must-not-appear")) {
+            assertFalse(error.getMessage().contains(hidden));
+        }
+        assertNull(error.getCause());
+        igdb.verify();
+    }
+
     private void expectToken(String token, long lifetime) {
         expectTokenResponse(token, lifetime);
         expectValidation(token, "client-id", lifetime);
+    }
+
+    @Test
+    void fetchesExpandedMetadataAndDefaultsMissingCompanyFlags() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andExpect(header("Client-ID", "client-id"))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer token-one"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("where id = (1942);")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("game_engines.name")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("game_type.type")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("game_type.name"))))
+                .andRespond(withSuccess("""
+                        [{"id":1942,"name":"Example","game_type":{"id":0,"type":"Main Game"},
+                          "cover":{"image_id":"co_example"},
+                          "involved_companies":[{"id":10,"company":{"id":20,"name":"Studio"},"developer":true}]}]
+                        """, MediaType.APPLICATION_JSON));
+        var games = client.fetchGames(List.of(1942L));
+        assertEquals("co_example", games.getFirst().cover().imageId());
+        assertEquals("Main Game", games.getFirst().gameType().name());
+        assertTrue(games.getFirst().involvedCompanies().getFirst().developer());
+        assertFalse(games.getFirst().involvedCompanies().getFirst().publisher());
+        twitch.verify();
+        igdb.verify();
+    }
+
+    @Test
+    void refusesIncompleteGameResponses() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+        assertThrows(IgdbIntegrationException.class, () -> client.fetchGames(List.of(1942L)));
+        igdb.verify();
+    }
+
+    @Test
+    void retriesTransientCatalogFailureWithinABound() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andRespond(withSuccess("[{\"id\":1942,\"name\":\"Example\"}]", MediaType.APPLICATION_JSON));
+        assertEquals(1942L, client.fetchGames(List.of(1942L)).getFirst().id());
+        twitch.verify();
+        igdb.verify();
     }
 
     private void expectTokenResponse(String token, long lifetime) {

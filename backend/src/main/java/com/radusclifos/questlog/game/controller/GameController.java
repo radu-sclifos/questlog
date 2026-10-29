@@ -39,11 +39,11 @@ public class GameController {
 
     @PostMapping
     public ResponseEntity<GameResponse> create(@Valid @RequestBody CreateGameRequest request) {
-        var game = gameRepository.save(new Game(request.title(), request.coverUrl()));
+        var game = gameRepository.save(new Game(request.title(), request.coverImageId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(game));
     }
 
     private static GameResponse toResponse(Game game) {
-        return new GameResponse(game.getId(), game.getName(), game.getCoverUrl());
+        return new GameResponse(game.getId(), game.getName(), game.getCoverImageId());
     }
 }

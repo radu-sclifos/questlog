@@ -37,9 +37,8 @@ class BatchInfrastructureTests {
                             .doesNotHaveBean("jobLauncherApplicationRunner");
                     var dataSource = ctx.getBean(DataSource.class);
                     // Exercise the exact production metadata migration, not Hibernate DDL.
-                    new ResourceDatabasePopulator(new ClassPathResource("db/migration/V1__baseline.sql"),
-                            new ClassPathResource(
-                            "db/migration/V2__spring_batch_metadata.sql")).execute(dataSource);
+                    new ResourceDatabasePopulator(new ClassPathResource(
+                            "db/migration/V1__baseline.sql")).execute(dataSource);
                     var repository = ctx.getBean(JobRepository.class);
                     var instance = repository.createJobInstance("infrastructure-check", new JobParameters());
                     assertEquals(instance.getId(), repository.getLastJobInstance("infrastructure-check").getId());

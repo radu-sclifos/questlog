@@ -36,22 +36,25 @@ class GameControllerTests {
         });
 
         mvc.perform(post("/games").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"Hollow Knight\",\"coverUrl\":null}"))
+                        .content("{\"title\":\"Hollow Knight\",\"coverImageId\":\"co_example\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.id").value(1));
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.coverImageId").value("co_example"))
+                .andExpect(jsonPath("$.coverUrl").doesNotExist());
     }
 
     @Test
     void readsGamesUsingNumericIds() throws Exception {
-        Game game = new Game("Hollow Knight", null);
+        Game game = new Game("Hollow Knight", "co_example");
         ReflectionTestUtils.setField(game, "id", 1L);
         when(repository.findAll()).thenReturn(List.of(game));
         when(repository.findById(1L)).thenReturn(Optional.of(game));
 
         mvc.perform(get("/games"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1));
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].coverImageId").value("co_example"));
         mvc.perform(get("/games/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
