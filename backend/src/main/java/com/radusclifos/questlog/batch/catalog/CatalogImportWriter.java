@@ -102,7 +102,8 @@ public class CatalogImportWriter {
         }
         game.getGenres().clear();
         for (var item : safe(sourceGame.genres())) {
-            game.getGenres().add(references.genre(item));
+            var genre = references.genre(item);
+            if (genre != null) game.getGenres().add(genre);
         }
         game.getEngines().clear();
         for (var item : safe(sourceGame.engines())) {

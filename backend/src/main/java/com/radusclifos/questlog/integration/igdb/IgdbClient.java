@@ -62,6 +62,33 @@ public class IgdbClient {
         return List.of(response);
     }
 
+    public List<IgdbReference> fetchGenres() {
+        return fetchDictionary("genres", "name");
+    }
+
+    public List<IgdbReference> fetchGameTypes() {
+        return fetchDictionary("game_types", "type");
+    }
+
+    // Reminder: IGDB permits a maximum of 500 records per request
+    private List<IgdbReference> fetchDictionary(String path, String nameField) {
+        var result = new java.util.ArrayList<IgdbReference>();
+        int offset = 0;
+        while (true) {
+            var page = request(path, "fields %s; sort id asc; limit 500; offset %d;".formatted(nameField, offset),
+                    IgdbReference[].class);
+            if (page == null || page.length > 500 || Arrays.stream(page).anyMatch(item -> item == null
+                    || item.id() == null || item.id() < 0 || item.name() == null || item.name().isBlank())) {
+                throw new IgdbIntegrationException("IGDB returned an invalid " + path + " dictionary");
+            }
+            result.addAll(List.of(page));
+            if (page.length < 500) {
+                return List.copyOf(result);
+            }
+            offset += page.length;
+        }
+    }
+
     /**
      * Fetches a released-game page using an ID cursor and a frozen sync window.
      */
@@ -112,7 +139,8 @@ public class IgdbClient {
                         continue;
                     }
                 }
-                if (path.equals("games") && retryable(exception.getStatusCode()) && transientRetries++ < 2) {
+                if ((path.equals("games") || path.equals("genres") || path.equals("game_types"))
+                        && retryable(exception.getStatusCode()) && transientRetries++ < 2) {
                     pause(retryDelay(exception, transientRetries));
                     continue;
                 }

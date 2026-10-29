@@ -107,18 +107,18 @@ public class CatalogImportConfiguration {
         @Bean
         CatalogReferenceResolver catalogReferenceResolver(PlatformRepository platforms, GenreRepository genres,
                                                           EngineRepository engines, FranchiseRepository franchises, CompanyRepository companies,
-                                                          GameTypeRepository gameTypes) {
-            return new CatalogReferenceResolver(platforms, genres, engines, franchises, companies, gameTypes);
+                                                          GameTypeRepository gameTypes, PlatformTransactionManager manager) {
+            return new CatalogReferenceResolver(platforms, genres, engines, franchises, companies, gameTypes, manager);
         }
 
         @Bean
         Step catalogImportGames(JobRepository repository, PlatformTransactionManager manager,
-                                IgdbClient client, CatalogImportWriter writer) {
+                                IgdbClient client, CatalogImportWriter writer, CatalogReferenceResolver references) {
             var noTransaction = new DefaultTransactionAttribute();
             noTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
 
             return new StepBuilder("catalogImportGames", repository)
-                    .tasklet(new CatalogImportGamesTasklet(client, writer))
+                    .tasklet(new CatalogImportGamesTasklet(client, writer, references))
                     .transactionManager(manager)
                     .transactionAttribute(noTransaction)
                     .build();

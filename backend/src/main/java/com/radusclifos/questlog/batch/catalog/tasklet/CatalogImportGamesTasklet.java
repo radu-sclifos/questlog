@@ -2,6 +2,7 @@ package com.radusclifos.questlog.batch.catalog.tasklet;
 
 import com.radusclifos.questlog.batch.catalog.CatalogImportParameters;
 import com.radusclifos.questlog.batch.catalog.CatalogImportWriter;
+import com.radusclifos.questlog.batch.catalog.CatalogReferenceResolver;
 import com.radusclifos.questlog.integration.igdb.IgdbClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -17,10 +18,12 @@ public class CatalogImportGamesTasklet implements Tasklet {
 
     private final IgdbClient client;
     private final CatalogImportWriter writer;
+    private final CatalogReferenceResolver references;
 
-    public CatalogImportGamesTasklet(IgdbClient client, CatalogImportWriter writer) {
+    public CatalogImportGamesTasklet(IgdbClient client, CatalogImportWriter writer, CatalogReferenceResolver references) {
         this.client = client;
         this.writer = writer;
+        this.references = references;
     }
 
     /**
@@ -31,6 +34,11 @@ public class CatalogImportGamesTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         var execution = contribution.getStepExecution();
         var parameters = CatalogImportParameters.from(execution.getJobExecution().getJobParameters());
+
+        if (execution.getExecutionContext().getLong("pagesProcessed", 0L) == 0) {
+            // Fetch outside the database transaction, once before the first game page.
+            references.refresh(client.fetchGenres(), client.fetchGameTypes());
+        }
 
         var result = importCatalogPage(contribution, parameters);
 

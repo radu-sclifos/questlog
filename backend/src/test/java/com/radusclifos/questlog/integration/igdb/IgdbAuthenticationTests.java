@@ -42,6 +42,48 @@ class IgdbAuthenticationTests {
     }
 
     @Test
+    void paginatesDictionariesIfTheyOutgrowOneResponse() {
+        expectToken("token-one", 7200);
+        var firstPage = IntStream.range(1, 501)
+                .mapToObj(id -> "{\"id\":" + id + ",\"name\":\"Genre " + id + "\"}")
+                .collect(java.util.stream.Collectors.joining(",", "[", "]"));
+        igdb.expect(requestTo("https://api.igdb.com/v4/genres"))
+                .andExpect(content().string("fields name; sort id asc; limit 500; offset 0;"))
+                .andRespond(withSuccess(firstPage, MediaType.APPLICATION_JSON));
+        igdb.expect(requestTo("https://api.igdb.com/v4/genres"))
+                .andExpect(content().string("fields name; sort id asc; limit 500; offset 500;"))
+                .andRespond(withSuccess("[{\"id\":501,\"name\":\"Last genre\"}]", MediaType.APPLICATION_JSON));
+        var genres = client.fetchGenres();
+        assertEquals(501, genres.size());
+        assertEquals(501L, genres.getLast().id());
+        igdb.verify();
+    }
+
+    @Test
+    void rejectsDictionaryRecordsWithoutNames() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/game_types"))
+                .andRespond(withSuccess("[{\"id\":0}]", MediaType.APPLICATION_JSON));
+        assertThrows(IgdbIntegrationException.class, client::fetchGameTypes);
+        igdb.verify();
+    }
+
+    @Test
+    void fetchesCompleteSmallDictionariesIncludingGameTypeZero() {
+        expectToken("token-one", 7200);
+        igdb.expect(requestTo("https://api.igdb.com/v4/genres"))
+                .andExpect(content().string("fields name; sort id asc; limit 500; offset 0;"))
+                .andRespond(withSuccess("[{\"id\":12,\"name\":\"RPG\"}]", MediaType.APPLICATION_JSON));
+        igdb.expect(requestTo("https://api.igdb.com/v4/game_types"))
+                .andExpect(content().string("fields type; sort id asc; limit 500; offset 0;"))
+                .andRespond(withSuccess("[{\"id\":0,\"type\":\"Main game\"}]", MediaType.APPLICATION_JSON));
+        assertEquals(List.of(new IgdbReference(12L, "RPG")), client.fetchGenres());
+        assertEquals(List.of(new IgdbReference(0L, "Main game")), client.fetchGameTypes());
+        igdb.verify();
+        twitch.verify();
+    }
+
+    @Test
     void queriesCreatedUpdatedAndNewlyReleasedGamesInAFrozenWindow() {
         expectToken("token-one", 7200);
         igdb.expect(requestTo("https://api.igdb.com/v4/games"))

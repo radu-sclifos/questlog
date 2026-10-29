@@ -4,11 +4,17 @@ import com.radusclifos.questlog.game.*;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbReference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Finds shared catalog records, such as platforms and companies, using the IGDB ID from a IgdbReference.
- * Creates missing records, updates existing names from IGDB, and returns the local entity to associate with a game,
- * preserving its internal ID.
+ * Genres and game types are synchronized before the first game page and resolved from memory.
+ * Other references are created or updated as games arrive, preserving their internal IDs.
  */
 @RequiredArgsConstructor
 public class CatalogReferenceResolver {
@@ -19,6 +25,51 @@ public class CatalogReferenceResolver {
     private final FranchiseRepository franchises;
     private final CompanyRepository companies;
     private final GameTypeRepository gameTypes;
+
+    private final PlatformTransactionManager transactionManager;
+
+    private Map<Long, Genre> genreCache = Map.of();
+    private Map<Long, GameType> gameTypeCache = Map.of();
+
+    /**
+     * Synchronize the small dictionaries once per import and then publish only committed records.
+     */
+    public void refresh(List<IgdbReference> sourceGenres, List<IgdbReference> sourceGameTypes) {
+        var loadedGenres = new HashMap<Long, Genre>();
+        var loadedGameTypes = new HashMap<Long, GameType>();
+
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            var existingGenres = new HashMap<Long, Genre>();
+            genres.findAll().forEach(genre -> existingGenres.put(genre.getIgdbId(), genre));
+            for (var source : sourceGenres) {
+                validate(source, "Genre");
+                var genre = existingGenres.get(source.id());
+                if (genre == null) {
+                    genre = new Genre(source.name());
+                    genre.setIgdbId(source.id());
+                }
+                genre.setName(source.name().strip());
+                loadedGenres.put(source.id(), genres.save(genre));
+            }
+
+            var existingGameTypes = new HashMap<Long, GameType>();
+            gameTypes.findAll().forEach(type -> existingGameTypes.put(type.getIgdbId(), type));
+            for (var source : sourceGameTypes) {
+                validate(source, "GameType");
+                var type = existingGameTypes.get(source.id());
+                if (type == null) {
+                    type = new GameType(source.name());
+                    type.setIgdbId(source.id());
+                }
+                type.setName(source.name().strip());
+                loadedGameTypes.put(source.id(), gameTypes.save(type));
+            }
+        });
+
+        // These entities are used only for associations by ID and never modified during page writes
+        genreCache = Map.copyOf(loadedGenres);
+        gameTypeCache = Map.copyOf(loadedGameTypes);
+    }
 
     public Platform platform(IgdbReference source) {
         if (source == null) return null;
@@ -33,19 +84,6 @@ public class CatalogReferenceResolver {
         // Update name
         platform.setName(source.name().strip());
         return platform;
-    }
-
-    public Genre genre(IgdbReference source) {
-        if (source == null) return null;
-        validate(source, "Genre");
-
-        var genre = genres.findByIgdbId(source.id()).orElseGet(() -> {
-            var created = new Genre(source.name());
-            created.setIgdbId(source.id());
-            return genres.save(created);
-        });
-        genre.setName(source.name().strip());
-        return genre;
     }
 
     public Engine engine(IgdbReference source) {
@@ -87,17 +125,12 @@ public class CatalogReferenceResolver {
         return company;
     }
 
-    public GameType gameType(IgdbReference source) {
-        if (source == null) return null;
-        validate(source, "GameType");
+    public Genre genre(IgdbReference source) {
+        return source == null || source.id() == null ? null : genreCache.get(source.id());
+    }
 
-        var gameType = gameTypes.findByIgdbId(source.id()).orElseGet(() -> {
-            var created = new GameType(source.name());
-            created.setIgdbId(source.id());
-            return gameTypes.save(created);
-        });
-        gameType.setName(source.name().strip());
-        return gameType;
+    public GameType gameType(IgdbReference source) {
+        return source == null || source.id() == null ? null : gameTypeCache.get(source.id());
     }
 
     private void validate(IgdbReference source, String type) {

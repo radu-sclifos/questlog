@@ -29,12 +29,17 @@ import org.springframework.batch.core.BatchStatus;
 class CatalogImportJobTests {
     @Autowired CatalogImportLauncher launcher;
     @Autowired CatalogImportWriter writer;
+    @Autowired CatalogReferenceResolver references;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
     @Autowired CatalogSyncHistory history;
     @Autowired JdbcTemplate jdbc;
     @MockitoBean IgdbClient client;
 
     @BeforeEach
     void clearCatalog() {
+        references.refresh(List.of(), List.of());
+        when(client.fetchGenres()).thenReturn(List.of(new IgdbReference(12L, "RPG")));
+        when(client.fetchGameTypes()).thenReturn(List.of(new IgdbReference(0L, "Main game")));
         when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(List.of());
         jdbc.update("delete from BATCH_JOB_EXECUTION_PARAMS where PARAMETER_NAME = 'syncMode'");
         for (var table : List.of("game_relations", "pending_game_relations", "game_companies",
@@ -44,6 +49,92 @@ class CatalogImportJobTests {
         }
     }
 
+    @Test
+    void loadsDictionariesOnceBeforeGamePagesAndRefreshesThemOnTheNextRun() throws Exception {
+        when(client.fetchGenres()).thenAnswer(invocation -> {
+            assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
+            return List.of(new IgdbReference(12L, "RPG"));
+        });
+        when(client.fetchGameTypes()).thenAnswer(invocation -> {
+            assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
+            return List.of(new IgdbReference(0L, "Main game"));
+        });
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1))).thenReturn(
+                List.of(game(101, "First", ",\"genres\":[{\"id\":12}]")));
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1))).thenReturn(
+                List.of(game(102, "Second", ",\"genres\":[{\"id\":12}]")));
+        assertEquals(BatchStatus.COMPLETED, launcher.start(1, 2).getStatus());
+        var order = inOrder(client);
+        order.verify(client).fetchGenres();
+        order.verify(client).fetchGameTypes();
+        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(1));
+        order.verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(1));
+        verify(client, times(1)).fetchGenres();
+        verify(client, times(1)).fetchGameTypes();
+        assertEquals(2, count("game_genres"));
+
+        when(client.fetchGenres()).thenReturn(List.of(new IgdbReference(12L, "Renamed")));
+        assertEquals(BatchStatus.COMPLETED, launcher.start(1, 2).getStatus());
+        verify(client, times(2)).fetchGenres();
+        verify(client, times(2)).fetchGameTypes();
+        assertEquals("Renamed", jdbc.queryForObject("select name from genres where igdb_id=12", String.class));
+    }
+
+    @Test
+    void dictionaryFetchFailureStopsBeforeImportingGames() throws Exception {
+        when(client.fetchGameTypes()).thenThrow(new IgdbIntegrationException("Dictionary unavailable"));
+        assertEquals(BatchStatus.FAILED, launcher.start(25, 0).getStatus());
+        verify(client, never()).fetchCatalogGames(anyLong(), anyLong(), anyLong(), anyInt());
+        assertEquals(0, count("games"));
+        assertEquals(0, count("genres"));
+        assertEquals(0, count("game_types"));
+        assertNull(history.lastSuccessfulStart());
+    }
+
+    @Test
+    void preloadsDictionariesAndReusesThemAcrossPagesWithoutQueries() {
+        references.refresh(List.of(new IgdbReference(12L, "RPG")), List.of(new IgdbReference(0L, "Main game")));
+        var genreId = references.genre(new IgdbReference(12L, "Ignored expanded name")).getId();
+        var typeId = references.gameType(new IgdbReference(0L, "Ignored expanded type")).getId();
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean enabled = stats.isStatisticsEnabled();
+        stats.setStatisticsEnabled(true);
+        try {
+            long statements = stats.getPrepareStatementCount();
+            assertEquals(genreId, references.genre(new IgdbReference(12L, null)).getId());
+            assertEquals(typeId, references.gameType(new IgdbReference(0L, null)).getId());
+            assertNull(references.genre(new IgdbReference(999L, "Unknown")));
+            assertNull(references.gameType(new IgdbReference(999L, "Unknown")));
+            assertEquals(statements, stats.getPrepareStatementCount());
+        } finally {
+            stats.setStatisticsEnabled(enabled);
+        }
+        for (int id : List.of(101, 102)) {
+            writer.writePage(List.of(game(id, "Game " + id,
+                    ",\"genres\":[{\"id\":12},{\"id\":999}],\"game_type\":{\"id\":0,\"type\":\"Main game\"}")));
+        }
+        assertEquals(2, count("game_genres"));
+        assertEquals(2, jdbc.queryForObject("select count(*) from games where game_type_id=?", Integer.class, typeId));
+        references.refresh(List.of(new IgdbReference(12L, "Role-playing")), List.of(new IgdbReference(0L, "Main")));
+        assertEquals(genreId, references.genre(new IgdbReference(12L, null)).getId());
+        assertEquals(typeId, references.gameType(new IgdbReference(0L, null)).getId());
+        assertEquals("Role-playing", jdbc.queryForObject("select name from genres where igdb_id=12", String.class));
+        assertEquals("Main", jdbc.queryForObject("select name from game_types where igdb_id=0", String.class));
+        writer.writePage(List.of(game(103, "Unknown type", ",\"game_type\":{\"id\":999,\"type\":\"Unknown\"}")));
+        assertNull(jdbc.queryForObject("select game_type_id from games where igdb_id=103", Long.class));
+    }
+
+    @Test
+    void dictionaryRefreshPublishesOnlyAfterBothDictionariesCommit() {
+        references.refresh(List.of(new IgdbReference(12L, "RPG")), List.of(new IgdbReference(0L, "Main game")));
+        assertThrows(IllegalArgumentException.class, () -> references.refresh(
+                List.of(new IgdbReference(12L, "Rolled back"), new IgdbReference(13L, "New")),
+                List.of(new IgdbReference(0L, ""))));
+        assertEquals("RPG", references.genre(new IgdbReference(12L, null)).getName());
+        assertNull(references.genre(new IgdbReference(13L, null)));
+        assertEquals("RPG", jdbc.queryForObject("select name from genres where igdb_id=12", String.class));
+        assertEquals(1, count("genres"));
+    }
     @Test
     void importsMetadataAndUpdatesWithoutDuplicatingSharedReferences() throws Exception {
         var original = game(101, "Original", """
@@ -129,7 +220,8 @@ class CatalogImportJobTests {
         assertEquals(BatchStatus.COMPLETED, execution.getStatus());
         assertEquals(1, count("games"));
         assertEquals("Standalone game", jdbc.queryForObject("select name from games", String.class));
-        assertEquals(0, count("game_types"));
+        assertEquals(1, count("game_types")); // Preloaded independently of the games being imported.
+        assertEquals(0, jdbc.queryForObject("select count(*) from game_types where igdb_id=77", Integer.class));
         var step = execution.getStepExecutions().stream()
                 .filter(item -> item.getStepName().equals("catalogImportGames")).findFirst().orElseThrow();
         assertEquals(1, step.getWriteCount());
