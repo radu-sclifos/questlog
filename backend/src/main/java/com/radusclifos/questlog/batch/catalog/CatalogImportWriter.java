@@ -192,6 +192,10 @@ public class CatalogImportWriter {
         for (var item : safe(sourceGame.franchises())) {
             game.getFranchises().add(references.franchise(item, pageReferences));
         }
+        game.getSeries().clear();
+        for (var item : safe(sourceGame.collections())) {
+            game.getSeries().add(references.series(item, pageReferences));
+        }
 
         // Collections are intentionally not loaded: they get replace/overwritten
         // This allows to keep collections always updated and not forget any old entry

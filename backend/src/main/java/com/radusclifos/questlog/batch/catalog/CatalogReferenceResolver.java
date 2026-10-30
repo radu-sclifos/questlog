@@ -24,6 +24,7 @@ public class CatalogReferenceResolver {
     private final GenreRepository genres;
     private final EngineRepository engines;
     private final FranchiseRepository franchises;
+    private final SeriesRepository series;
     private final CompanyRepository companies;
     private final GameTypeRepository gameTypes;
 
@@ -76,11 +77,13 @@ public class CatalogReferenceResolver {
         Set<Long> platformIds = new HashSet<>();
         Set<Long> engineIds = new HashSet<>();
         Set<Long> franchiseIds = new HashSet<>();
+        Set<Long> seriesIds = new HashSet<>();
         Set<Long> companyIds = new HashSet<>();
         for (var game : page) {
             collectIds(game.platforms(), platformIds);
             collectIds(game.engines(), engineIds);
             collectIds(game.franchises(), franchiseIds);
+            collectIds(game.collections(), seriesIds);
             if (game.involvedCompanies() != null) {
                 for (var involvement : game.involvedCompanies()) {
                     if (involvement.company() != null) companyIds.add(involvement.company().id());
@@ -91,6 +94,7 @@ public class CatalogReferenceResolver {
                 platformIds.isEmpty() ? new HashMap<>() : index(platforms.findAllByIgdbIdIn(platformIds), Platform::getIgdbId),
                 engineIds.isEmpty() ? new HashMap<>() : index(engines.findAllByIgdbIdIn(engineIds), Engine::getIgdbId),
                 franchiseIds.isEmpty() ? new HashMap<>() : index(franchises.findAllByIgdbIdIn(franchiseIds), Franchise::getIgdbId),
+                seriesIds.isEmpty() ? new HashMap<>() : index(series.findAllByIgdbIdIn(seriesIds), Series::getIgdbId),
                 companyIds.isEmpty() ? new HashMap<>() : index(companies.findAllByIgdbIdIn(companyIds), Company::getIgdbId));
     }
 
@@ -147,6 +151,19 @@ public class CatalogReferenceResolver {
         });
         franchise.setName(source.name().strip());
         return franchise;
+    }
+
+    public Series series(IgdbReference source, PageReferences page) {
+        if (source == null) return null;
+        validate(source, "Series");
+
+        var series = page.series().computeIfAbsent(source.id(), ignored -> {
+            var created = new Series(source.name());
+            created.setIgdbId(source.id());
+            return this.series.save(created);
+        });
+        series.setName(source.name().strip());
+        return series;
     }
 
     public Company company(IgdbReference source, PageReferences page) {

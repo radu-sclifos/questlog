@@ -8,6 +8,7 @@ public record CatalogImportProperties(
         Integer maxPages,
         Integer pageSize
 ) {
+
     public CatalogImportProperties {
         maxPages = maxPages == null ? 0 : maxPages;
         pageSize = pageSize == null ? 250 : pageSize;
@@ -18,4 +19,5 @@ public record CatalogImportProperties(
             throw new IllegalArgumentException("Catalog page-size must be between 10 and 500");
         }
     }
+
 }

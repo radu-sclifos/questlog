@@ -109,9 +109,10 @@ public class CatalogImportConfiguration {
 
         @Bean
         CatalogReferenceResolver catalogReferenceResolver(PlatformRepository platforms, GenreRepository genres,
-                                                          EngineRepository engines, FranchiseRepository franchises, CompanyRepository companies,
+                                                          EngineRepository engines, FranchiseRepository franchises,
+                                                          SeriesRepository series, CompanyRepository companies,
                                                           GameTypeRepository gameTypes, PlatformTransactionManager manager) {
-            return new CatalogReferenceResolver(platforms, genres, engines, franchises, companies, gameTypes, manager);
+            return new CatalogReferenceResolver(platforms, genres, engines, franchises, series, companies, gameTypes, manager);
         }
 
         @Bean

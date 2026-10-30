@@ -87,6 +87,7 @@ class IgdbAuthenticationTests {
     void queriesCreatedAndUpdatedGamesInAFrozenWindow() {
         expectToken("token-one", 7200);
         igdb.expect(requestTo("https://api.igdb.com/v4/games"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("collections.name")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
                         "where id > 42 & (game_type")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(

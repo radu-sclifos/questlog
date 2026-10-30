@@ -22,8 +22,9 @@ class GameCatalogIntegrationTests {
         var company = new Company("Example Studio");
         var engine = new Engine("Example Engine");
         var franchise = new Franchise("Example Franchise");
+        var series = new Series("Example Series");
         var type = new GameType("Main game");
-        for (var reference : new Object[]{platform, genre, company, engine, franchise, type}) {
+        for (var reference : new Object[]{platform, genre, company, engine, franchise, series, type}) {
             em.persist(reference);
         }
 
@@ -38,6 +39,7 @@ class GameCatalogIntegrationTests {
         game.getGenres().add(genre);
         game.getEngines().add(engine);
         game.getFranchises().add(franchise);
+        game.getSeries().add(series);
         em.persist(game);
 
         var remake = new Game("Catalog example remake", null);
@@ -61,6 +63,8 @@ class GameCatalogIntegrationTests {
         assertEquals(1, loaded.getPlatforms().size());
         assertEquals(1, loaded.getGenres().size());
         assertEquals(1, loaded.getEngines().size());
+        assertEquals(1, loaded.getSeries().size());
+        assertEquals("Example Series", loaded.getSeries().iterator().next().getName());
         assertEquals(1, loaded.getFranchises().size());
         assertEquals("Example Franchise", loaded.getFranchises().iterator().next().getName());
         var linkedCompany = loaded.getInvolvedCompanies().iterator().next();

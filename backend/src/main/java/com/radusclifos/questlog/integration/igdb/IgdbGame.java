@@ -24,6 +24,7 @@ public record IgdbGame(
         List<IgdbReference> genres,
         @JsonProperty("game_engines") List<IgdbReference> engines,
         List<IgdbReference> franchises,
+        List<IgdbReference> collections, // Series
         @JsonProperty("involved_companies") List<Involvement> involvedCompanies,
         @JsonProperty("version_title") String versionTitle,
         @JsonProperty("parent_game") Long parentGame,

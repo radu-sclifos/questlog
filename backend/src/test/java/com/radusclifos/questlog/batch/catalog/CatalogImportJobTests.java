@@ -40,6 +40,7 @@ class CatalogImportJobTests {
     @MockitoSpyBean PlatformRepository platforms;
     @MockitoSpyBean EngineRepository engines;
     @MockitoSpyBean FranchiseRepository franchises;
+    @MockitoSpyBean SeriesRepository series;
     @MockitoSpyBean CompanyRepository companies;
 
     @BeforeEach
@@ -50,10 +51,31 @@ class CatalogImportJobTests {
         when(client.fetchCatalogGames(anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(List.of());
         jdbc.update("delete from BATCH_JOB_EXECUTION_PARAMS where PARAMETER_NAME = 'syncMode'");
         for (var table : List.of("game_relations", "pending_game_relations", "game_companies",
-                "game_engines", "game_platforms", "game_genres", "game_franchises", "games",
-                "engines", "platforms", "genres", "franchises", "game_types", "companies")) {
+                "game_engines", "game_platforms", "game_genres", "game_franchises", "game_series", "games",
+                "engines", "platforms", "genres", "franchises", "series", "game_types", "companies")) {
             jdbc.update("delete from " + table);
         }
+    }
+
+    @Test
+    void importsMultipleSeriesAndReusesReferencesAcrossPagesAndUpdates() {
+        var collections = ",\"collections\":[{\"id\":8,\"name\":\"Baldur's Gate\"},{\"id\":9,\"name\":\"Other series\"}]";
+        writer.writePage(List.of(game(101, "First", collections), game(102, "Second", collections)));
+        assertEquals(2, count("series"));
+        assertEquals(4, count("game_series"));
+        verify(series).findAllByIgdbIdIn(anyCollection());
+        verify(series, never()).findByIgdbId(anyLong());
+        var seriesId = jdbc.queryForObject("select id from series where igdb_id=8", Long.class);
+
+        writer.writePage(List.of(game(101, "First", ",\"collections\":[{\"id\":8,\"name\":\"Renamed series\"}]")));
+        assertEquals(seriesId, jdbc.queryForObject("select id from series where igdb_id=8", Long.class));
+        assertEquals("Renamed series", jdbc.queryForObject("select name from series where igdb_id=8", String.class));
+        assertEquals(2, count("series"));
+        assertEquals(3, count("game_series"));
+
+        writer.writePage(List.of(game(101, "First", ""), game(102, "Second", ",\"collections\":[]")));
+        assertEquals(0, count("game_series"));
+        assertEquals(2, count("series"));
     }
 
     @Test

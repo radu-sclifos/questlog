@@ -68,6 +68,11 @@ public class Game {
             inverseJoinColumns = @JoinColumn(name = "franchise_id"))
     private Set<Franchise> franchises = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(name = "game_series", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "series_id"))
+    private Set<Series> series = new HashSet<>();
+
     @OneToMany(mappedBy = "game")
     private Set<GameCompany> involvedCompanies = new HashSet<>();
 
