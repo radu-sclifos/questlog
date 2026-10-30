@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class IgdbClient {
 
     private static final String GAME_FIELDS = """
-            fields name,summary,storyline,first_release_date,updated_at,
+            fields name,summary,storyline,first_release_date,
             game_type.type,cover.image_id,platforms.name,genres.name,game_engines.name,
             franchises.name,
             involved_companies.company.name,involved_companies.developer,

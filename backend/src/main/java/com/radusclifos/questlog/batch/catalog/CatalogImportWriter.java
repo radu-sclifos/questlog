@@ -173,9 +173,6 @@ public class CatalogImportWriter {
         game.setSummary(sourceGame.summary());
         game.setStoryline(sourceGame.storyline());
         game.setCoverImageId(sourceGame.cover() == null ? null : sourceGame.cover().imageId());
-        game.setVersionTitle(sourceGame.versionTitle());
-        game.setSourceUpdatedAt(sourceGame.updatedAt() == null ? null : Instant.ofEpochSecond(sourceGame.updatedAt()));
-        game.setLastSyncedAt(Instant.now());
         // Resolve shared metadata from IGDB references
         game.setGameType(references.gameType(sourceGame.gameType()));
         game.getPlatforms().clear();

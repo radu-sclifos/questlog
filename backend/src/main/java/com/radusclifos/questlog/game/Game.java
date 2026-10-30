@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,10 +48,6 @@ public class Game {
     @Column(name = "cover_image_id", columnDefinition = "text")
     private String coverImageId;
 
-    @Setter
-    @Column(name = "version_title", columnDefinition = "text")
-    private String versionTitle;
-
     @ManyToMany
     @JoinTable(name = "game_platforms", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "platform_id"))
@@ -79,20 +74,6 @@ public class Game {
     @OneToMany(mappedBy = "sourceGame")
     private Set<GameRelation> relations = new HashSet<>();
 
-    @Setter
-    @Column(name = "source_updated_at")
-    private Instant sourceUpdatedAt;
-
-    @Setter
-    @Column(name = "last_synced_at")
-    private Instant lastSyncedAt;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     public Game(String title, String coverImageId) {
         rename(title);
         this.coverImageId = coverImageId;
@@ -104,17 +85,6 @@ public class Game {
         }
 
         this.name = title.strip();
-    }
-
-    @PrePersist
-    private void onCreate() {
-        createdAt = Instant.now();
-        updatedAt = createdAt;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = Instant.now();
     }
 
 }

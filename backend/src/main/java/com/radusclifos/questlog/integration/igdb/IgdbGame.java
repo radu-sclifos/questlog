@@ -18,7 +18,6 @@ public record IgdbGame(
         String summary,
         String storyline,
         @JsonProperty("first_release_date") Long firstReleaseDate,
-        @JsonProperty("updated_at") Long updatedAt,
         @JsonProperty("game_type") IgdbReference gameType,
         Cover cover,
         List<IgdbReference> platforms,

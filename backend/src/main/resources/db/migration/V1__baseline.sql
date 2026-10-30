@@ -52,12 +52,7 @@ CREATE TABLE games
     summary            TEXT,
     storyline          TEXT,
     game_type_id       BIGINT REFERENCES game_types (id),
-    cover_image_id     TEXT,
-    version_title      TEXT,
-    source_updated_at  TIMESTAMP WITH TIME ZONE,
-    last_synced_at     TIMESTAMP WITH TIME ZONE,
-    created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    cover_image_id     TEXT
 );
 
 CREATE INDEX games_game_type_idx ON games (game_type_id);

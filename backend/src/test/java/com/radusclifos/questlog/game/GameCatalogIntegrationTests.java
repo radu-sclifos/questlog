@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,8 +34,6 @@ class GameCatalogIntegrationTests {
         game.setStoryline("Story premise");
         game.setCoverImageId("co_example");
         game.setGameType(type);
-        game.setSourceUpdatedAt(Instant.parse("2026-10-28T01:00:00Z"));
-        game.setLastSyncedAt(Instant.parse("2026-10-28T03:00:00Z"));
         game.getPlatforms().add(platform);
         game.getGenres().add(genre);
         game.getEngines().add(engine);
@@ -72,8 +69,5 @@ class GameCatalogIntegrationTests {
         var relation = loaded.getRelations().iterator().next();
         assertEquals(GameRelationType.REMAKE, relation.getRelationType());
         assertEquals(remake.getId(), relation.getTargetGame().getId());
-        assertNotNull(loaded.getCreatedAt());
-        assertNotNull(loaded.getUpdatedAt());
-        assertNotEquals(loaded.getSourceUpdatedAt(), loaded.getLastSyncedAt());
     }
 }
