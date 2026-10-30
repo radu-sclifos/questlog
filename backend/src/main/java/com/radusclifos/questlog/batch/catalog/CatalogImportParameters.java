@@ -18,9 +18,9 @@ public record CatalogImportParameters(
             throw new IllegalArgumentException("maxPages must be between 0 and " + Integer.MAX_VALUE);
         }
 
-        long size = parameters.getLong("pageSize", 100L);
+        long size = parameters.getLong("pageSize", 250L);
         if (size < 10 || size > 500) {
-            throw new IllegalArgumentException("pageSize must be between 1 and 100");
+            throw new IllegalArgumentException("pageSize must be between 10 and 500");
         }
 
         Long started = parameters.getLong("syncStartedAt");

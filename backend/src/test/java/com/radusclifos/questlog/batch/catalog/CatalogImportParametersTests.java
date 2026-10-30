@@ -10,10 +10,11 @@ class CatalogImportParametersTests {
     void defaultsToUnlimitedPages() {
         var properties = new CatalogImportProperties(false, null, null);
         assertEquals(0, properties.maxPages());
-        assertEquals(25, properties.pageSize());
+        assertEquals(250, properties.pageSize());
         var parameters = new JobParametersBuilder().addLong("syncStartedAt", 1000L)
                 .addLong("syncSince", 0L).toJobParameters();
         assertEquals(0, CatalogImportParameters.from(parameters).maxPages());
+        assertEquals(250, CatalogImportParameters.from(parameters).pageSize());
     }
 
     @Test

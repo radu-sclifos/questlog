@@ -15,7 +15,7 @@ public record CatalogImportProperties(
             throw new IllegalArgumentException("Catalog max-pages cannot be negative; use 0 for no limit");
         }
         if (pageSize < 10 || pageSize > 500) {
-            throw new IllegalArgumentException("Catalog page-size must be between 1 and 100");
+            throw new IllegalArgumentException("Catalog page-size must be between 10 and 500");
         }
     }
 }
