@@ -9,6 +9,9 @@ import java.util.Set;
 
 import static com.radusclifos.questlog.game.GameRelationType.*;
 
+/**
+ * Record used for IGDB responses.
+ */
 public record IgdbGame(
         Long id,
         String name,

@@ -90,7 +90,7 @@ public class IgdbClient {
     }
 
     /**
-     * Fetches a released-game page using an ID cursor and a frozen sync window.
+     * Fetches a game page using an ID cursor and a frozen sync window.
      */
     public List<IgdbGame> fetchCatalogGames(long since, long until, long afterId, int pageSize) {
         if (since < 0 || until <= 0 || since > until || afterId < 0 || pageSize < 10 || pageSize > 500) {
@@ -98,10 +98,12 @@ public class IgdbClient {
         }
 
         String changes = since == 0 ? "" :
-                " & ((created_at >= %d & created_at <= %d) | (updated_at >= %d & updated_at <= %d) | first_release_date >= %d)"
-                        .formatted(since, until, since, until, since);
-        String query = GAME_FIELDS + " where id > %d & first_release_date != null & first_release_date <= %d%s; sort id asc; limit %d;"
-                .formatted(afterId, until, changes, pageSize);
+                " & ((created_at >= %d & created_at <= %d) | (updated_at >= %d & updated_at <= %d))"
+                        .formatted(since, until, since, until);
+
+        String query = GAME_FIELDS + " where id > %d%s; sort id asc; limit %d;"
+                .formatted(afterId, changes, pageSize);
+
         var response = request("games", query, IgdbGame[].class);
         if (response == null || response.length > pageSize) {
             throw new IgdbIntegrationException("IGDB returned an invalid catalog page");
@@ -109,9 +111,8 @@ public class IgdbClient {
 
         long previous = afterId;
         for (var game : response) {
-            if (game == null || game.id() == null || game.id() <= previous || game.firstReleaseDate() == null
-                    || game.firstReleaseDate() > until) {
-                throw new IgdbIntegrationException("IGDB returned an invalid catalog page order or release date");
+            if (game == null || game.id() == null || game.id() <= previous) {
+                throw new IgdbIntegrationException("IGDB returned an invalid catalog page order");
             }
             previous = game.id();
         }

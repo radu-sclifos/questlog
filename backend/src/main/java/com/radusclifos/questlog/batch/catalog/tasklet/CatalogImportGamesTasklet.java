@@ -64,6 +64,7 @@ public class CatalogImportGamesTasklet implements Tasklet {
 
         // last ID imported
         long lastGameId = context.getLong("lastGameId", 0L);
+
         // Includes HTTP, client throttling, retries and response deserialization.
         long pageStarted = System.nanoTime();
         var games = client.fetchCatalogGames(parameters.syncSince(), parameters.syncStartedAt(), lastGameId, parameters.pageSize());

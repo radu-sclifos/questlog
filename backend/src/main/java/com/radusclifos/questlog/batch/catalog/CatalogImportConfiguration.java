@@ -66,6 +66,7 @@ public class CatalogImportConfiguration {
         };
     }
 
+    // Works only if import from IGDB is enabled
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "questlog.igdb", name = "enabled", havingValue = "true")
     static class Enabled {
