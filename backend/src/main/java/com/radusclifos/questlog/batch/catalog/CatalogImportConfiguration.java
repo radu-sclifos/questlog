@@ -3,6 +3,7 @@ package com.radusclifos.questlog.batch.catalog;
 import com.radusclifos.questlog.batch.catalog.repository.PendingGameRelationRepository;
 import com.radusclifos.questlog.batch.catalog.tasklet.CatalogImportGamesTasklet;
 import com.radusclifos.questlog.batch.catalog.tasklet.CatalogImportRelationsTasklet;
+import com.radusclifos.questlog.batch.catalog.tasklet.CatalogRefreshReferencesTasklet;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbClient;
 import jakarta.persistence.EntityManager;
@@ -72,6 +73,7 @@ public class CatalogImportConfiguration {
     static class Enabled {
         @Bean
         Job catalogImportJob(JobRepository repository,
+                             @Qualifier("catalogRefreshReferences") Step references,
                              @Qualifier("catalogImportGames") Step games,
                              @Qualifier("catalogImportRelations") Step relations) {
             return new JobBuilder(JOB_NAME, repository).preventRestart().validator(parameters -> {
@@ -80,7 +82,7 @@ public class CatalogImportConfiguration {
                 } catch (RuntimeException exception) {
                     throw new InvalidJobParametersException(exception.getMessage());
                 }
-            }).start(games).next(relations).build();
+            }).start(references).next(games).next(relations).build();
         }
 
         @Bean
@@ -113,13 +115,26 @@ public class CatalogImportConfiguration {
         }
 
         @Bean
+        Step catalogRefreshReferences(JobRepository repository, PlatformTransactionManager manager,
+                                      IgdbClient client, CatalogReferenceResolver references) {
+            var noTransaction = new DefaultTransactionAttribute();
+            noTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
+
+            return new StepBuilder("catalogRefreshReferences", repository)
+                    .tasklet(new CatalogRefreshReferencesTasklet(client, references))
+                    .transactionManager(manager)
+                    .transactionAttribute(noTransaction)
+                    .build();
+        }
+
+        @Bean
         Step catalogImportGames(JobRepository repository, PlatformTransactionManager manager,
-                                IgdbClient client, CatalogImportWriter writer, CatalogReferenceResolver references) {
+                                IgdbClient client, CatalogImportWriter writer) {
             var noTransaction = new DefaultTransactionAttribute();
             noTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
 
             return new StepBuilder("catalogImportGames", repository)
-                    .tasklet(new CatalogImportGamesTasklet(client, writer, references))
+                    .tasklet(new CatalogImportGamesTasklet(client, writer))
                     .transactionManager(manager)
                     .transactionAttribute(noTransaction)
                     .build();

@@ -412,6 +412,18 @@ class CatalogImportJobTests {
     }
 
     @Test
+    void referenceRefreshFailureStopsBeforeGamesAndDoesNotAdvanceHistory() throws Exception {
+        when(client.fetchGameTypes()).thenThrow(new IgdbIntegrationException("Provider unavailable"));
+        var execution = launcher.start(25, 0);
+        assertEquals(BatchStatus.FAILED, execution.getStatus());
+        assertEquals(1, execution.getStepExecutions().size());
+        assertEquals("catalogRefreshReferences", execution.getStepExecutions().iterator().next().getStepName());
+        verify(client, never()).fetchCatalogGames(anyLong(), anyLong(), anyLong(), anyInt());
+        assertEquals(0, count("genres"));
+        assertNull(history.lastSuccessfulStart());
+    }
+
+    @Test
     void discoversTheCatalogThenUsesTheLastSuccessfulStartWithOverlap() throws Exception {
         var released = game(101, "Released", ",\"first_release_date\":1709164800");
         when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(25))).thenReturn(List.of(released));
@@ -472,7 +484,7 @@ class CatalogImportJobTests {
         assertEquals(20, count("games"));
         assertEquals(1, count("game_relations"));
         assertEquals(0, count("pending_game_relations"));
-        assertEquals(2, limited.getStepExecutions().size());
+        assertEquals(3, limited.getStepExecutions().size());
         verify(client, times(20)).fetchCatalogGames(anyLong(), anyLong(), anyLong(), eq(10));
         verify(client, never()).fetchCatalogGames(anyLong(), anyLong(), eq(20L), eq(10));
         assertNull(history.lastSuccessfulStart());
@@ -552,3 +564,4 @@ class CatalogImportJobTests {
                         + (extra.contains("first_release_date") ? "" : ",\"first_release_date\":1709164800") + extra + "}", IgdbGame.class);
     }
 }
+

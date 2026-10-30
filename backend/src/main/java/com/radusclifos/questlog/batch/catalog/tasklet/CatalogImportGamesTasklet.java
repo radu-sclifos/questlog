@@ -2,7 +2,6 @@ package com.radusclifos.questlog.batch.catalog.tasklet;
 
 import com.radusclifos.questlog.batch.catalog.CatalogImportParameters;
 import com.radusclifos.questlog.batch.catalog.CatalogImportWriter;
-import com.radusclifos.questlog.batch.catalog.CatalogReferenceResolver;
 import com.radusclifos.questlog.integration.igdb.IgdbClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -20,12 +19,10 @@ public class CatalogImportGamesTasklet implements Tasklet {
 
     private final IgdbClient client;
     private final CatalogImportWriter writer;
-    private final CatalogReferenceResolver references;
 
-    public CatalogImportGamesTasklet(IgdbClient client, CatalogImportWriter writer, CatalogReferenceResolver references) {
+    public CatalogImportGamesTasklet(IgdbClient client, CatalogImportWriter writer) {
         this.client = client;
         this.writer = writer;
-        this.references = references;
     }
 
     /**
@@ -36,12 +33,6 @@ public class CatalogImportGamesTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         var execution = contribution.getStepExecution();
         var parameters = CatalogImportParameters.from(execution.getJobExecution().getJobParameters());
-
-        if (execution.getExecutionContext().getLong("pagesProcessed", 0L) == 0) {
-            // Fetch outside the database transaction, ONCE before the first game page
-            // Refreshes the small directories and caches them (Genre and GameType)
-            references.refresh(client.fetchGenres(), client.fetchGameTypes());
-        }
 
         var result = importCatalogPage(contribution, parameters);
 
@@ -55,7 +46,7 @@ public class CatalogImportGamesTasklet implements Tasklet {
     }
 
     /**
-     * Fetches and saves the next page of released games matching the sync time window.
+     * Fetches and saves the next page of games matching the sync time window.
      * Finishes when IGDB returns no more games.
      */
     private RepeatStatus importCatalogPage(StepContribution contribution, CatalogImportParameters parameters) {
