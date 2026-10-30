@@ -314,20 +314,80 @@ class CatalogImportJobTests {
     }
 
     @Test
-    void newAttemptReplaysCommittedPagesAndRollsBackPartialWrites() throws Exception {
+    void skipsInvalidGameAdvancesCursorAndCompletesSync() throws Exception {
         when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10))).thenReturn(List.of(game(101, "First page", "")));
         when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(List.of(game(102, "Second page", """
                 ,"platforms":[{"id":6}]
                 """)));
-        var failed = launcher.start(10, 0);
-        assertEquals(BatchStatus.FAILED, failed.getStatus());
+        var completed = launcher.start(10, 0);
+        assertEquals(BatchStatus.COMPLETED, completed.getStatus());
         assertEquals(1, count("games"));
+        assertEquals(0, count("platforms"));
+        assertEquals(completed.getJobParameters().getLong("syncStartedAt"), history.lastSuccessfulStart());
+        var step = completed.getStepExecutions().stream()
+                .filter(item -> item.getStepName().equals("catalogImportGames")).findFirst().orElseThrow();
+        assertEquals(1, step.getWriteSkipCount());
+        assertEquals(1, step.getWriteCount());
+        assertEquals(0, step.getFilterCount());
+        verify(client).fetchCatalogGames(anyLong(), anyLong(), eq(102L), eq(10));
         when(client.fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10))).thenReturn(List.of(game(102, "Recovered", "")));
         var retried = launcher.start(10, 0);
         assertEquals(BatchStatus.COMPLETED, retried.getStatus(), retried.getAllFailureExceptions().toString());
         assertEquals(2, count("games"));
         verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(10));
         verify(client, times(2)).fetchCatalogGames(anyLong(), anyLong(), eq(101L), eq(10));
+    }
+
+    @Test
+    void isolatesInvalidReplacementAndKeepsItsPreviousDataAndLinks() {
+        writer.writePage(List.of(game(102, "Target", "")));
+        writer.writePage(List.of(game(101, "Original", """
+                ,"dlcs":[102],"remakes":[999],
+                "involved_companies":[{"company":{"id":20,"name":"Studio"},"developer":true}]
+                """)));
+        var result = writer.writePageSkippingInvalid(List.of(
+                game(100, "Valid before", ",\"platforms\":[{\"id\":6,\"name\":\"PC\"}]"),
+                game(101, "Broken replacement", ",\"platforms\":[{\"id\":7}]"),
+                game(103, "Valid after", ",\"platforms\":[{\"id\":6,\"name\":\"PC\"}]")));
+        assertEquals(new CatalogImportWriter.PageResult(2, 0, 1), result);
+        assertEquals(4, count("games"));
+        assertEquals("Original", jdbc.queryForObject("select name from games where igdb_id=101", String.class));
+        assertEquals(1, count("game_companies"));
+        assertEquals(1, count("game_relations"));
+        assertEquals(1, count("pending_game_relations"));
+        assertEquals(1, count("platforms"));
+        assertEquals(2, count("game_platforms"));
+    }
+
+    @Test
+    void isolatesDatabaseConstraintErrorsButPropagatesDatabaseOutages() {
+        doThrow(new org.springframework.dao.DataIntegrityViolationException("Invalid record"))
+                .when(games).save(argThat(game -> game != null && Long.valueOf(101).equals(game.getIgdbId())));
+        var result = writer.writePageSkippingInvalid(List.of(
+                game(101, "Invalid record", ""),
+                game(102, "Valid", "")));
+        assertEquals(new CatalogImportWriter.PageResult(1, 0, 1), result);
+        assertEquals(1, count("games"));
+        doThrow(new org.springframework.dao.DataAccessResourceFailureException("Database unavailable"))
+                .when(games).findAllByIgdbIdIn(anyCollection());
+        assertThrows(org.springframework.dao.DataAccessResourceFailureException.class,
+                () -> writer.writePageSkippingInvalid(List.of(game(103, "Unreachable", ""))));
+    }
+
+    @Test
+    void importsLongNamesAndCoverImageIdsWithoutSkipping() throws Exception {
+        String name = "Game ".repeat(100).strip();
+        String cover = "x".repeat(600);
+        when(client.fetchCatalogGames(anyLong(), anyLong(), eq(0L), eq(25)))
+                .thenReturn(List.of(game(101, name, ",\"cover\":{\"image_id\":\"" + cover + "\"}")));
+        var execution = launcher.start(25, 0);
+        assertEquals(BatchStatus.COMPLETED, execution.getStatus());
+        assertEquals(name, jdbc.queryForObject("select name from games where igdb_id=101", String.class));
+        assertEquals(cover, jdbc.queryForObject("select cover_image_id from games where igdb_id=101", String.class));
+        var step = execution.getStepExecutions().stream()
+                .filter(item -> item.getStepName().equals("catalogImportGames")).findFirst().orElseThrow();
+        assertEquals(0, step.getWriteSkipCount());
+        assertEquals(1, step.getWriteCount());
     }
 
     @Test

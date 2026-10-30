@@ -21,7 +21,7 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, columnDefinition = "text")
     private String name;
 
     @Setter
@@ -46,7 +46,7 @@ public class Game {
     private GameType gameType;
 
     @Setter
-    @Column(name = "cover_image_id")
+    @Column(name = "cover_image_id", columnDefinition = "text")
     private String coverImageId;
 
     @Setter
@@ -101,10 +101,6 @@ public class Game {
     public void rename(String title) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("The title is mandatory");
-        }
-
-        if (title.strip().length() > 200) {
-            throw new IllegalArgumentException("The title can't be longer than 200 characters");
         }
 
         this.name = title.strip();

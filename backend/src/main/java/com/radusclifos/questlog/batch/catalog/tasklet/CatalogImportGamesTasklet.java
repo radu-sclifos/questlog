@@ -68,7 +68,8 @@ public class CatalogImportGamesTasklet implements Tasklet {
 
         // Includes page preloading, persistence, flush and transaction commit.
         long writeStarted = System.nanoTime();
-        int saved = writer.writePage(games);
+        var result = writer.writePageSkippingInvalid(games);
+        int saved = result.saved();
         long dbMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - writeStarted);
         context.putLong("lastGameId", games.getLast().id());
         context.putLong("pagesProcessed", context.getLong("pagesProcessed", 0L) + 1);
@@ -81,11 +82,12 @@ public class CatalogImportGamesTasklet implements Tasklet {
         // Count games inserted or updated by the writer (writePage returns the number of saved records)
         contribution.incrementWriteCount(saved);
         // Count games excluded by our import filters (like bundles, special editions...)
-        contribution.incrementFilterCount(games.size() - saved);
+        contribution.incrementFilterCount(result.filtered());
+        contribution.incrementWriteSkipCount(result.skipped());
 
         long pageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pageStarted);
-        log.info("Catalog execution {}: cursor {}, fetched {}, saved {}, filtered {} | igdbMs={}, dbMs={}, pageMs={}.",
-                execution.getJobExecution().getId(), games.getLast().id(), games.size(), saved, games.size() - saved,
+        log.info("Catalog execution {}: cursor {}, fetched {}, saved {}, filtered {}, skipped {} | igdbMs={}, dbMs={}, pageMs={}.",
+                execution.getJobExecution().getId(), games.getLast().id(), games.size(), saved, result.filtered(), result.skipped(),
                 igdbMs, dbMs, pageMs);
 
         return RepeatStatus.CONTINUABLE;

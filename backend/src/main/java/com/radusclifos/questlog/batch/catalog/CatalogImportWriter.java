@@ -10,15 +10,22 @@ import com.radusclifos.questlog.game.repository.GameRelationRepository;
 import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;
 import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.DataException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 
+@Slf4j
 public class CatalogImportWriter {
 
     private final EntityManager em;
@@ -37,6 +44,7 @@ public class CatalogImportWriter {
                                CatalogReferenceResolver references) {
         this.em = em;
         this.transactionTemplate = new TransactionTemplate(manager);
+        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.games = games;
         this.gameCompanies = gameCompanies;
         this.relations = relations;
@@ -44,7 +52,61 @@ public class CatalogImportWriter {
         this.references = references;
     }
 
-    // Returns the number of saved games
+    public record PageResult(int saved, int filtered, int skipped) {
+    }
+
+    /**
+     * Save the page together when possible; retry games individually if a record has bad data.
+     */
+    public PageResult writePageSkippingInvalid(List<IgdbGame> page) {
+        // Keep games excluded by our rules separate from games skipped because of errors
+        int filtered = (int) page.stream().filter(game -> game.exclusionReason() != null).count();
+
+        try {
+            // One transaction per page keeps normal imports fast
+            return new PageResult(writePage(page), filtered, 0);
+        } catch (RuntimeException pageFailure) {
+            if (!isRecordError(pageFailure)) { // Database outages and unexpected errors still stop the import !!!
+                throw pageFailure;
+            }
+            log.warn("Catalog page rolled back due to a data error; retrying games individually.");
+        }
+
+        // If we reach this point, the page has been rolled back
+        // Each game now gets its own transaction
+        int saved = 0;
+        int skipped = 0;
+        for (var game : page) {
+            if (game.exclusionReason() != null) continue;
+            try {
+                saved += writePage(List.of(game));
+            } catch (RuntimeException failure) { // Caught the problematic record
+                if (!isRecordError(failure)) { // Database outages and unexpected errors still stop the import !!!
+                    throw failure;
+                }
+                // This game's changes were rolled back so any previous data is still there
+                skipped++;
+                log.error("Skipping catalog game igdbId={}, name={}: {}: {}",
+                        game.id(), game.name(), failure.getClass().getSimpleName(), failure.getMessage());
+            }
+        }
+        return new PageResult(saved, filtered, skipped);
+    }
+
+    // Check if the error is related to the record
+    private static boolean isRecordError(RuntimeException failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof IllegalArgumentException || cause instanceof DateTimeException
+                    || cause instanceof DataIntegrityViolationException
+                    || cause instanceof DataException
+                    || cause instanceof ConstraintViolationException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Strict atomic write, also used for each isolated retry. Returns the number of saved games.
     public int writePage(List<IgdbGame> games) {
         return Objects.requireNonNull(transactionTemplate.execute(status -> {
             int saved = 0;
@@ -88,7 +150,7 @@ public class CatalogImportWriter {
 
     private void saveGame(IgdbGame sourceGame, Map<Long, Game> pageGames, PageReferences pageReferences) {
         if (sourceGame.id() == null || sourceGame.id() <= 0
-                || sourceGame.name() == null || sourceGame.name().isBlank() || sourceGame.name().strip().length() > 200) {
+                || sourceGame.name() == null || sourceGame.name().isBlank()) {
             throw new IllegalArgumentException("Invalid IGDB game identity/name: " + sourceGame.id());
         }
 
