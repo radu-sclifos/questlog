@@ -24,6 +24,17 @@ public class IgdbClient {
             remakes,remasters,ports,expanded_games,forks;
             """.replaceAll("\\s+", " ").strip();
 
+    // Filter before pagination
+    // Kept the local eligibility check for direct ID lookups and unexpected provider data
+    private static final String CATALOG_ELIGIBILITY = """
+            (game_type = null | (
+                game_type.type != "Bundle" & game_type.type != "Mod"
+                & game_type.type != "Standalone Mod" & game_type.type != "Standalone_Mod"
+            ))
+            & (version_parent = null | version_parent = 0)
+            & (version_title = null | version_title = "")
+            """.replaceAll("\\s+", " ").strip();
+
     private final RestClient igdb;
     private final IgdbProperties properties;
     private final TwitchAppTokenProvider tokens;
@@ -101,7 +112,7 @@ public class IgdbClient {
                 " & ((created_at >= %d & created_at <= %d) | (updated_at >= %d & updated_at <= %d))"
                         .formatted(since, until, since, until);
 
-        String query = GAME_FIELDS + " where id > %d%s; sort id asc; limit %d;"
+        String query = GAME_FIELDS + (" where id > %d & " + CATALOG_ELIGIBILITY + "%s; sort id asc; limit %d;")
                 .formatted(afterId, changes, pageSize);
 
         var response = request("games", query, IgdbGame[].class);

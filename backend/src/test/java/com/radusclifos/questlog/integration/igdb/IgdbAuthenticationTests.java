@@ -88,9 +88,13 @@ class IgdbAuthenticationTests {
         expectToken("token-one", 7200);
         igdb.expect(requestTo("https://api.igdb.com/v4/games"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                        "where id > 42 & ((created_at")))
+                        "where id > 42 & (game_type")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
                         "((created_at >= 1000 & created_at <= 2000) | (updated_at >= 1000 & updated_at <= 2000))")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("game_type.type != \"Bundle\" & game_type.type != \"Mod\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("game_type.type != \"Standalone Mod\" & game_type.type != \"Standalone_Mod\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("(version_parent = null | version_parent = 0)")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("(version_title = null | version_title = \"\")")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("sort id asc; limit 25;")))
                 .andRespond(withSuccess("[{\"id\":43,\"name\":\"Game\",\"first_release_date\":1500}]", MediaType.APPLICATION_JSON));
         assertEquals(43L, client.fetchCatalogGames(1000, 2000, 42, 25).getFirst().id());
@@ -112,7 +116,7 @@ class IgdbAuthenticationTests {
     void acceptsFutureAndUndatedGames() {
         expectToken("token-one", 7200);
         igdb.expect(requestTo("https://api.igdb.com/v4/games"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("where id > 0;")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("where id > 0 & (game_type")))
                 .andRespond(withSuccess("[{\"id\":1,\"first_release_date\":3000},{\"id\":2}]", MediaType.APPLICATION_JSON));
         var games = client.fetchCatalogGames(0, 2000, 0, 25);
         assertEquals(2, games.size());
