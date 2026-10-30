@@ -93,7 +93,7 @@ class EntrySearchControllerTests {
         "{\"pageNumber\":-1}", "{\"pageSize\":0}", "{\"pageSize\":101}",
         "{\"pageNumber\":null}", "{\"pageSize\":null}",
         "{\"filters\":[{\"field\":\"userId\",\"operator\":\"EQUAL\",\"value\":20}]}",
-        "{\"filters\":[{\"field\":\"user.id\",\"operator\":\"EQUAL\",\"value\":20}]}",
+        "{\"filters\":[{\"field\":\"user.passwordHash\",\"operator\":\"CONTAINS\",\"value\":\"hash\"}]}",
         "{\"filters\":[{\"field\":\"prezzo\",\"operator\":\"CONTAINS\",\"value\":\"x\"}]}",
         "{\"filters\":[{\"field\":\"title\",\"operator\":\"UNKNOWN\",\"value\":\"x\"}]}",
         "{\"filters\":[{\"field\":\"score\",\"operator\":\"EQUAL\",\"value\":\"abc\"}]}",

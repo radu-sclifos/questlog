@@ -1,15 +1,13 @@
 package com.radusclifos.questlog.shared.search;
 
 import jakarta.persistence.criteria.*;
-import jakarta.persistence.metamodel.Attribute;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.ManagedType;
-import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.lang.reflect.AnnotatedElement;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +17,15 @@ final class CriteriaSpecificationBuilder<T> {
 
     private final EntityType<T> entity;
 
-    private record ResolvedFilter(String field, Class<?> type, FilterOperator operator, Object value) {
+    private record ResolvedField(Class<?> type, boolean collection) {
+    }
+
+    private record ResolvedFilter(
+            String field,
+            Class<?> type,
+            boolean collection,
+            FilterOperator operator,
+            Object value) {
     }
 
     CriteriaSpecificationBuilder(EntityType<T> entity) {
@@ -27,22 +33,6 @@ final class CriteriaSpecificationBuilder<T> {
     }
 
     void validateClientCriteria(SearchCriteria criteria) {
-        if (criteria == null) {
-            throw invalid("Search criteria required");
-        }
-        if (criteria.getFilters().size() > 20) {
-            throw invalid("At most 20 filters are allowed");
-        }
-
-        for (var filter : criteria.getFilters()) {
-            if (filter == null || filter.getField() == null || filter.getField().contains("."))
-                throw invalid("Client filters must reference a direct entity field");
-        }
-        for (var sort : criteria.getSorts()) {
-            if (sort == null || sort.getField() == null || sort.getField().contains("."))
-                throw invalid("Client sorts must reference a direct entity field");
-        }
-
         build(criteria);
     }
 
@@ -61,7 +51,8 @@ final class CriteriaSpecificationBuilder<T> {
                 throw invalid("Null filter");
             }
 
-            var type = fieldType(entity, filter.getField());
+            var field = resolveField(filter.getField());
+            var type = field.type();
             Object value;
 
             var operator = filter.getOperator();
@@ -91,7 +82,7 @@ final class CriteriaSpecificationBuilder<T> {
                 value = convert(filter.getValue(), type);
             }
 
-            resolvedFilters.add(new ResolvedFilter(filter.getField(), type, operator, value));
+            resolvedFilters.add(new ResolvedFilter(filter.getField(), type, field.collection(), operator, value));
         }
 
         // ## Resolving sorts
@@ -102,7 +93,11 @@ final class CriteriaSpecificationBuilder<T> {
                 throw invalid("Invalid or duplicate sort");
             }
 
-            var type = fieldType(entity, sort.getField());
+            var field = resolveField(sort.getField());
+            if (field.collection()) {
+                throw invalid("Sorting collection paths is not supported");
+            }
+            var type = field.type();
             if (!Comparable.class.isAssignableFrom(type)) {
                 throw invalid("Field cannot be sorted: " + sort.getField());
             }
@@ -134,18 +129,24 @@ final class CriteriaSpecificationBuilder<T> {
         return (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             for (var filter : resolvedFilters) {
-                predicates.add(predicate(filter, root, cb));
+                if (filter.collection()) {
+                    // Each filter can match a different element without duplicating games
+                    var subquery = query.subquery(Integer.class);
+                    var correlated = subquery.correlate(root);
+                    subquery.select(cb.literal(1)).where(predicate(filter, correlated, cb));
+                    predicates.add(cb.exists(subquery));
+                } else {
+                    predicates.add(predicate(filter, root, cb));
+                }
             }
 
-            // Spring Data may execute two queries: a SELECT and a COUNT.
-            // We don't need ORDER BY (sort) on the COUNT query.
-            // Here a ResultType of Long identifies the COUNT query so we skip sorting.
+            // Count queries do not need sorting
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 var orders = new ArrayList<Order>();
                 for (var sort : sorts) {
                     var path = path(root, sort.getField());
                     if (sort.isNullsLast()) {
-                        // Keep null placement independent of the value sort's direction.
+                        // Keep null placement independent of the sort direction
                         var nullRank = cb.<Integer>selectCase()
                                 .when(cb.isNull(path), 1)
                                 .otherwise(0);
@@ -168,7 +169,7 @@ final class CriteriaSpecificationBuilder<T> {
         };
     }
 
-    private Class<?> fieldType(ManagedType<?> entity, String name) {
+    private ResolvedField resolveField(String name) {
         if (name == null || name.isBlank()) {
             throw invalid("Missing search field");
         }
@@ -176,19 +177,31 @@ final class CriteriaSpecificationBuilder<T> {
         try {
             var parts = name.split("\\.", -1);
             ManagedType<?> current = entity;
+            boolean collection = false;
 
             for (int i = 0; i < parts.length; i++) {
                 var attribute = current.getAttribute(parts[i]);
-                if (!(attribute instanceof SingularAttribute<?, ?> singular)) {
-                    throw invalid("Collection paths are not supported");
+                if (attribute.getJavaMember() instanceof AnnotatedElement member
+                        && member.isAnnotationPresent(SearchIgnore.class)) {
+                    throw invalid("Field is not searchable: " + name);
                 }
+
                 if (i == parts.length - 1) {
+                    // Check if search path ends with a BASIC attribute (string, number, etc.)
                     if (attribute.getPersistentAttributeType() != Attribute.PersistentAttributeType.BASIC) {
                         throw invalid("Search field must be a basic attribute");
                     }
-                    return wrapper(attribute.getJavaType());
+                    return new ResolvedField(wrapper(attribute.getJavaType()), collection);
                 }
-                if (!(singular.getType() instanceof ManagedType<?> managed)) {
+
+                var nextType = attribute instanceof PluralAttribute<?, ?, ?> plural
+                        ? plural.getElementType()
+                        : ((SingularAttribute<?, ?>) attribute).getType();
+
+                // Boolean OR
+                collection = collection | attribute.isCollection();
+                // Check if it's @Entity in this case
+                if (!(nextType instanceof ManagedType<?> managed)) {
                     throw invalid("Invalid field path: " + name);
                 }
                 current = managed;
@@ -212,6 +225,19 @@ final class CriteriaSpecificationBuilder<T> {
 
     private static Path<?> path(Path<?> root, String name) {
         for (String part : name.split("\\.")) {
+            if (root instanceof From<?, ?> from) {
+                var attribute = (Attribute<?, ?>) from.get(part).getModel();
+                if (attribute.isAssociation() || attribute.isCollection()) {
+                    // Reuse joins for singular paths and keep missing optional relations
+                    var joinType = attribute.isCollection() ? JoinType.INNER : JoinType.LEFT;
+                    var join = from.getJoins().stream()
+                            .filter(existing -> existing.getAttribute().getName().equals(part)
+                                    && existing.getJoinType() == joinType)
+                            .findFirst().orElse(null);
+                    root = join == null ? from.join(part, joinType) : join;
+                    continue;
+                }
+            }
             root = root.get(part);
         }
         return root;

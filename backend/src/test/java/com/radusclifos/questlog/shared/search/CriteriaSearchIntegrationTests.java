@@ -4,7 +4,7 @@ import com.radusclifos.questlog.entry.*;
 import com.radusclifos.questlog.entry.repository.*;
 import com.radusclifos.questlog.user.User;
 import com.radusclifos.questlog.user.repository.UserRepository;
-import com.radusclifos.questlog.game.Game;
+import com.radusclifos.questlog.game.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,72 @@ class CriteriaSearchIntegrationTests {
     @Autowired UserRepository users;
     @Autowired EntityManager em;
     @Autowired GameRepository games;
+
+    @Test void collectionFiltersKeepPagesUniqueAndCanMatchDifferentElements() {
+        var rpg = new Genre("RPG");
+        var adventure = new Genre("Adventure");
+        var pc = new Platform("PC");
+        var type = new GameType("Main Game");
+        for (var reference : List.of(rpg, adventure, pc, type)) em.persist(reference);
+        var first = new Game("First", null);
+        var second = new Game("Second", null);
+        var third = new Game("Third", null);
+        for (var game : List.of(first, second, third)) {
+            game.getGenres().add(rpg);
+            game.getPlatforms().add(pc);
+            game.setGameType(type);
+            em.persist(game);
+        }
+        first.getGenres().add(adventure);
+        second.getGenres().add(adventure);
+        em.flush();
+        em.clear();
+
+        var anyGenre = new FilterCriteria("genres.id", FilterOperator.IN, null, List.of(rpg.getId(), adventure.getId()));
+        var criteria = new SearchCriteria(List.of(anyGenre), List.of(), 0, 1);
+        games.validateCriteria(criteria);
+        var page = games.searchWithCriteria(criteria);
+        assertEquals(3, page.getTotalElements());
+        assertEquals(List.of(first.getId()), page.map(Game::getId).getContent());
+        var next = games.searchWithCriteria(new SearchCriteria(List.of(anyGenre), List.of(), 1, 1));
+        assertEquals(List.of(second.getId()), next.map(Game::getId).getContent());
+
+        var both = new SearchCriteria(List.of(
+                new FilterCriteria("genres.id", FilterOperator.EQUAL, rpg.getId()),
+                new FilterCriteria("genres.id", FilterOperator.EQUAL, adventure.getId()),
+                new FilterCriteria("platforms.name", FilterOperator.EQUAL, "pc"),
+                new FilterCriteria("gameType.name", FilterOperator.CONTAINS, "MAIN")),
+                List.of(new SortCriteria("gameType.name", Sort.Direction.ASC)));
+        games.validateCriteria(both);
+        assertEquals(List.of(first.getId(), second.getId()), games.searchWithCriteria(both).map(Game::getId).getContent());
+    }
+
+    @Test void optionalSingularPathsKeepNullRelationsAndCollectionSortsAreRejected() {
+        var type = new GameType("Main Game");
+        em.persist(type);
+        var missing = games.save(new Game("Missing", null));
+        var present = new Game("Present", null);
+        present.setGameType(type);
+        games.saveAndFlush(present);
+        var criteria = new SearchCriteria(List.of(new FilterCriteria("gameType.name", FilterOperator.IS_NULL, null)),
+                List.of(new SortCriteria("gameType.name", Sort.Direction.ASC)));
+        assertEquals(List.of(missing.getId()), games.searchWithCriteria(criteria).map(Game::getId).getContent());
+        for (var field : List.of("genres", "genres.unknown", "genres..id", "name.id")) {
+            assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                    () -> games.validateCriteria(new SearchCriteria(List.of(new FilterCriteria(field, FilterOperator.EQUAL, 1)), List.of())));
+        }
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> games.validateCriteria(new SearchCriteria(List.of(), List.of(new SortCriteria("genres.name", Sort.Direction.ASC)))));
+    }
+
+    @Test void privateFieldsCannotBeFilteredOrSortedThroughRelationships() {
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> entries.validateCriteria(new SearchCriteria(List.of(
+                        new FilterCriteria("user.passwordHash", FilterOperator.CONTAINS, "hash")), List.of())));
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> entries.validateCriteria(new SearchCriteria(List.of(),
+                        List.of(new SortCriteria("user.passwordHash", Sort.Direction.ASC)))));
+    }
 
     private Entry entry(User user, String title, Double score, EntryStatus status) {
         var entry = new Entry(title); entry.setUser(user); entry.setScore(score); entry.setStatus(status);
@@ -67,12 +133,12 @@ class CriteriaSearchIntegrationTests {
         assertEquals(1, entries.searchWithCriteria(forUser(equal, user.getId())).getTotalElements());
     }
 
-    @Test void repositoryRejectsNonexistentFieldsAndDisallowedAccess() {
+    @Test void repositoryRejectsNonexistentFieldsAndAcceptsRelationshipPaths() {
         var criteria = new SearchCriteria(List.of(new FilterCriteria("prezzo", FilterOperator.EQUAL, 10)), List.of());
         var error = assertThrows(org.springframework.web.server.ResponseStatusException.class,
             () -> entries.searchWithCriteria(criteria));
         assertEquals(400, error.getStatusCode().value());
-        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        assertDoesNotThrow(
             () -> entries.validateCriteria(new SearchCriteria(List.of(new FilterCriteria("user.id", FilterOperator.EQUAL, 1L)), List.of())));
     }
 
