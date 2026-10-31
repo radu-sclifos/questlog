@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { Entry } from '../../models/entry';
 import { ENTRY_OWNERSHIP_LABELS } from '../../models/entry-labels';
 
@@ -19,6 +19,18 @@ export class EntryCard {
 
   protected readonly expanded = signal(false);
   protected readonly ownershipLabels = ENTRY_OWNERSHIP_LABELS;
+
+  private readonly failedCoverId = signal<string | null>(null);
+  protected readonly coverUrl = computed(() => {
+    const imageId = this.entry().game.coverImageId;
+    return imageId && imageId !== this.failedCoverId()
+      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${encodeURIComponent(imageId)}.jpg`
+      : null;
+  });
+
+  protected onCoverError(): void {
+    this.failedCoverId.set(this.entry().game.coverImageId);
+  }
 
   protected toggleExpanded(): void {
     this.expanded.update((value) => !value);

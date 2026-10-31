@@ -141,7 +141,7 @@ Il vincolo SQL per username è `^[a-z0-9][a-z0-9_-]{2,39}$`: 3–40 caratteri, m
 | --- | --- |
 | `id` | PK |
 | `user` | `ManyToOne LAZY`, obbligatorio; FK `user_id`, indice dedicato |
-| `title` | obbligatorio, massimo 200 caratteri; `rename` controlla e applica `strip()` |
+| `game` | ManyToOne lazy obbligatorio, FK `game_id`; nome e immagine provengono dal catalogo |
 | `score` | opzionale, `Double`; richiesta validata tra 0 e 10 |
 | `notes` | opzionale, massimo 2000 caratteri |
 | `status` | enum stringa, obbligatorio; default `UNPLAYED` anche se impostato a null |
@@ -156,7 +156,7 @@ Il database controlla i valori degli enum tramite CHECK. Non ci sono vincoli SQL
 
 ### Game → games
 
-Campi: `id`, `title` obbligatorio (200), `coverUrl` opzionale (`cover_url`, 2048). Nessuna FK da Entry a Game: ogni entry mantiene il proprio titolo.
+Campi: `id`, `title` obbligatorio (200), `coverUrl` opzionale (`cover_url`, 2048). Entry usa una FK obbligatoria a Game e non salva un titolo proprio.
 
 `Game.rename` verifica il titolo usando anche `strip()` per la lunghezza ma salva la stringa originale; differisce da `Entry.rename`.
 
@@ -188,7 +188,7 @@ Non esiste un handler GET per l'elenco `/api/entries`: usare la ricerca POST. No
 
 `UserResponse`: solo `username`, `displayName`.
 
-`SaveEntryRequest`: `title`, `score`, `notes`, `status`, `ownership`, `playtime`. L'ID e il proprietario non sono campi modificabili della richiesta. Il PUT sostituisce i campi editabili; i null cancellano i valori opzionali e riportano status a `UNPLAYED`.
+`SaveEntryRequest`: `gameId` obbligatorio e positivo, `score`, `notes`, `status`, `ownership`, `playtime`. L'ID e il proprietario non sono campi modificabili della richiesta. Il PUT sostituisce i campi editabili; i null cancellano i valori opzionali e riportano status a `UNPLAYED`.
 
 `EntryDto`: gli stessi campi editabili più `id`. `GameResponse`: `id`, `title`, `coverUrl`.
 

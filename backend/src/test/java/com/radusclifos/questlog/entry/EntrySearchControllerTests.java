@@ -34,7 +34,7 @@ class EntrySearchControllerTests {
         when(repository.searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
             .thenAnswer(invocation -> new PageImpl<Entry>(List.of(), PageRequest.of(((com.radusclifos.questlog.shared.search.SearchCriteria) invocation.getArgument(0)).getPageNumber(), ((com.radusclifos.questlog.shared.search.SearchCriteria) invocation.getArgument(0)).getPageSize()), 0));
         mvc=MockMvcBuilders.standaloneSetup(new EntryController(
-            new EntryService(repository,Mappers.getMapper(EntryMapper.class),users))).build();
+            new EntryService(repository,Mappers.getMapper(EntryMapper.class),users,mock(com.radusclifos.questlog.game.repository.GameRepository.class)))).build();
     }
 
     @Test void emptyCriteriaUsesDefaults() throws Exception {
@@ -48,10 +48,10 @@ class EntrySearchControllerTests {
     @Test void acceptsTypedCriteriaAndMultipleSorts() throws Exception {
         mvc.perform(post("/entries/search").contentType("application/json").content("""
             {"username":"alice","pageNumber":2,"pageSize":100,"filters":[
-              {"field":"title","operator":"CONTAINS","value":"Hollow"},
+              {"field":"game.name","operator":"CONTAINS","value":"Hollow"},
               {"field":"status","operator":"IN","valueList":["UNPLAYED","COMPLETED"]},
               {"field":"score","operator":"GREATER_THAN","value":8}],
-             "sorts":[{"field":"score","direction":"DESC"},{"field":"title","direction":"ASC"}]}
+             "sorts":[{"field":"score","direction":"DESC"},{"field":"game.name","direction":"ASC"}]}
             """))
             .andExpect(status().isOk());
         verify(repository).searchWithCriteria(argThat(criteria -> criteria.getPageNumber() == 2 && criteria.getPageSize() == 100));
@@ -73,7 +73,7 @@ class EntrySearchControllerTests {
             {"username":"alice","sorts":[
               {"field":"score","direction":"DESC"},
               {"field":"status","direction":"%s","customOrder":["UNPLAYED","PLAYING"]},
-              {"field":"title","direction":"ASC"}]}
+              {"field":"game.name","direction":"ASC"}]}
             """.formatted(direction)))
             .andExpect(status().isOk());
         verify(repository).searchWithCriteria(argThat(criteria -> {
@@ -84,7 +84,7 @@ class EntrySearchControllerTests {
                 && sorts.get(1).getDirection() == Sort.Direction.valueOf(direction)
                 && sorts.get(1).getCustomOrder().equals(List.of(
                     "PLAYING", "ON_HOLD", "COMPLETED", "BEATEN", "ENDLESS", "DROPPED", "UNPLAYED"))
-                && sorts.get(2).getField().equals("title");
+                && sorts.get(2).getField().equals("game.name");
         }));
     }
 
@@ -95,14 +95,14 @@ class EntrySearchControllerTests {
         "{\"filters\":[{\"field\":\"userId\",\"operator\":\"EQUAL\",\"value\":20}]}",
         "{\"filters\":[{\"field\":\"user.passwordHash\",\"operator\":\"CONTAINS\",\"value\":\"hash\"}]}",
         "{\"filters\":[{\"field\":\"prezzo\",\"operator\":\"CONTAINS\",\"value\":\"x\"}]}",
-        "{\"filters\":[{\"field\":\"title\",\"operator\":\"UNKNOWN\",\"value\":\"x\"}]}",
+        "{\"filters\":[{\"field\":\"game.name\",\"operator\":\"UNKNOWN\",\"value\":\"x\"}]}",
         "{\"filters\":[{\"field\":\"score\",\"operator\":\"EQUAL\",\"value\":\"abc\"}]}",
         "{\"filters\":[{\"field\":\"status\",\"operator\":\"EQUAL\",\"value\":\"INVALID\"}]}",
-        "{\"filters\":[{\"field\":\"title\",\"value\":\"x\"}]}",
+        "{\"filters\":[{\"field\":\"game.name\",\"value\":\"x\"}]}",
         "{\"filters\":[null]}", "{\"sorts\":[null]}",
         "{\"sorts\":[{\"field\":\"userId\",\"direction\":\"ASC\"}]}",
-        "{\"sorts\":[{\"field\":\"title\",\"direction\":\"INVALID\"}]}",
-        "{\"sorts\":[{\"field\":\"title\",\"direction\":\"ASC\"},{\"field\":\"title\",\"direction\":\"DESC\"}]}"
+        "{\"sorts\":[{\"field\":\"game.name\",\"direction\":\"INVALID\"}]}",
+        "{\"sorts\":[{\"field\":\"game.name\",\"direction\":\"ASC\"},{\"field\":\"game.name\",\"direction\":\"DESC\"}]}"
     })
     void rejectsInvalidJsonCriteriaBeforeSearching(String body) throws Exception {
         mvc.perform(post("/entries/search").contentType("application/json").content(withUsername(body)))
@@ -120,7 +120,7 @@ class EntrySearchControllerTests {
         "{\"field\":\"status\",\"customOrder\":[\"INVALID\"]}",
         "{\"field\":\"status\",\"customOrder\":[null]}",
         "{\"field\":\"status\",\"customOrder\":[\"PLAYING\",\"PLAYING\"]}",
-        "{\"field\":\"title\",\"customOrder\":[\"PLAYING\"]}"
+        "{\"field\":\"game.name\",\"customOrder\":[\"PLAYING\"]}"
     })
     void rejectsInvalidCustomOrder(String sort) throws Exception {
         var body = "{\"username\":\"alice\",\"sorts\":[" + sort.substring(0, sort.length() - 1)

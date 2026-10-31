@@ -105,7 +105,8 @@ class CriteriaSearchIntegrationTests {
     }
 
     private Entry entry(User user, String title, Double score, EntryStatus status) {
-        var entry = new Entry(title); entry.setUser(user); entry.setScore(score); entry.setStatus(status);
+        var entry = new Entry(new com.radusclifos.questlog.game.Game(title, null)); entry.setUser(user); entry.setScore(score); entry.setStatus(status);
+        em.persist(entry.getGame());
         return entries.saveAndFlush(entry);
     }
 
@@ -124,11 +125,11 @@ class CriteriaSearchIntegrationTests {
         entry(user, "Hollow completed", 10.0, EntryStatus.COMPLETED);
         entry(other, "Hollow foreign", 9.5, null);
         var criteria = new SearchCriteria(List.of(
-            new FilterCriteria("title", FilterOperator.CONTAINS, "HOLLOW"),
+            new FilterCriteria("game.name", FilterOperator.CONTAINS, "HOLLOW"),
             new FilterCriteria("status", FilterOperator.IN, null, List.of("UNPLAYED")),
             new FilterCriteria("score", FilterOperator.GREATER_THAN, "8"),
             new FilterCriteria("score", FilterOperator.LESS_THAN, 10)),
-            List.of(new SortCriteria("score", Sort.Direction.DESC), new SortCriteria("title", Sort.Direction.ASC)), 0, 1);
+            List.of(new SortCriteria("score", Sort.Direction.DESC), new SortCriteria("game.name", Sort.Direction.ASC)), 0, 1);
         criteria = forUser(criteria, user.getId());
         var page = entries.searchWithCriteria(criteria);
         assertEquals(2, page.getTotalElements()); assertEquals(first.getId(), page.getContent().getFirst().getId());
@@ -141,7 +142,7 @@ class CriteriaSearchIntegrationTests {
         var special = entry(user, "100%_! Game", null, null);
         entry(user, "100abc Game", 8.0, EntryStatus.COMPLETED);
         var criteria = new SearchCriteria(List.of(
-            new FilterCriteria("title", FilterOperator.CONTAINS, "%_!"),
+            new FilterCriteria("game.name", FilterOperator.CONTAINS, "%_!"),
             new FilterCriteria("score", FilterOperator.IS_NULL, null)), List.of());
         var page = entries.searchWithCriteria(criteria);
         assertEquals(List.of(special.getId()), page.map(Entry::getId).getContent());

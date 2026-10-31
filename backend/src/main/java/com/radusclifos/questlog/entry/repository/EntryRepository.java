@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface EntryRepository extends SearchRepository<Entry, Long> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "game")
     Optional<Entry> findByIdAndUserId(Long id, Long userId);
 
 }

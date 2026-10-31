@@ -26,7 +26,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 - Tailwind CSS 4 + daisyUI 5; tema `night` configurato in `src/tailwind.css`.
   Usare classi e colori semantici esistenti; SCSS locale per layout personalizzati.
 - Testi dell'interfaccia in inglese. Asset statici in `public/`, loghi in
-  `public/images/branding/`. Nessun catalogo esterno di giochi integrato al momento.
+  `public/images/branding/`. Le entry ricevono game (id, name, coverImageId) dal catalogo IGDB locale.
 
 ## Mappa rapida (percorsi relativi a frontend/)
 
@@ -59,7 +59,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 - Login: `returnUrl` accettato solo con prefisso `/list/`; altrimenti apre la
   libreria dell'utente. La password viene ripulita dopo il successo.
 - Ricerca entry: `POST /api/entries/search` con `EntrySearchCriteria(username)`;
-  filtri e ordinamenti sono eseguiti dal backend. `switchMap` sostituisce richieste
+  filtri e ordinamenti sono eseguiti dal backend; il nome usa il percorso game.name. `switchMap` sostituisce richieste
   precedenti. Pagina iniziale 0, dimensione UI 25; cambio filtri azzera la pagina.
   Dopo eliminazione dell'ultimo elemento si recupera l'ultima pagina valida.
 - Layout libreria: navbar laterale sinistra; paginazione sticky verticale su desktop,
@@ -68,7 +68,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
   Durante il salvataggio/eliminazione sono bloccati invii ripetuti e chiusura.
 - Entry: titolo obbligatorio non vuoto, massimo 200 caratteri; voto opzionale 0–10;
   playtime opzionale intero non negativo; note massimo 2000 caratteri.
-  Titolo e note vengono ripuliti con `trim()`, note vuote inviate come `null`.
+  Il testo per i suggerimenti usa trim(); note vuote inviate come null.
   Stato e possesso sono enum opzionali; etichette in `entry-labels.ts`.
 - I dialog emettono eventi al padre, che ricarica la ricerca corrente e mostra toast.
 
@@ -87,3 +87,15 @@ Eseguire dalla directory `frontend/`:
 
 Il README principale è parzialmente obsoleto: autenticazione e librerie per username
 sono già implementate. Controllare i sorgenti prima di usare la roadmap come stato attuale.
+
+## Contratto di lettura delle entry
+
+Entry � indipendente da SaveEntryRequest e contiene EntryGame (id, name,
+coverImageId). Card, dialog e conferma eliminazione leggono il nome da game.name.
+Le cover usano il CDN IGDB con formato t_cover_big, caricamento lazy e fallback
+No cover per immagini assenti o non disponibili.
+L'editor cerca GET /api/games/suggestions?name=... dopo 3 caratteri e 300 ms.
+Una selezione imposta gameId e il nome ufficiale; digitare nuovamente cancella
+subito gameId e annulla richieste obsolete. Solo una selezione valida consente
+il salvataggio. In modifica il gioco attuale � preselezionato. POST e PUT inviano
+gameId e campi personali, senza title. Chiusura e selezione annullano la ricerca.

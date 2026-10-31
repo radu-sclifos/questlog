@@ -21,7 +21,7 @@ export class EntryListHeader {
   protected readonly form = this.fb.group({
     search: '',
     status: this.fb.control<EntryStatus | ''>(''),
-    sortBy: this.fb.control<'status' | 'title' | 'score'>('status'),
+    sortBy: this.fb.control<'status' | 'game.name' | 'score'>('status'),
     sortDirection: SortDirection.ASC,
   });
 
@@ -66,7 +66,7 @@ export class EntryListHeader {
 
     if (search.trim()) {
       criteria.addFilter({
-        field: 'title',
+        field: 'game.name',
         operator: FilterOperator.CONTAINS,
         value: search.trim(),
       });
@@ -94,9 +94,9 @@ export class EntryListHeader {
       nullsLast: sortBy === 'score',
     });
 
-    if (sortBy !== 'title') {
+    if (sortBy !== 'game.name') {
       criteria.addSort({
-        field: 'title',
+        field: 'game.name',
         direction: SortDirection.ASC,
       });
     }

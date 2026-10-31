@@ -2,10 +2,7 @@ package com.radusclifos.questlog.entry.dto;
 
 import com.radusclifos.questlog.entry.EntryOwnership;
 import com.radusclifos.questlog.entry.EntryStatus;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,9 +14,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SaveEntryRequest {
 
-    @NotBlank
-    @Size(max = 200)
-    private String title;
+    @NotNull
+    @Positive
+    private Long gameId;
 
     @DecimalMin("0.0")
     @DecimalMax("10.0")

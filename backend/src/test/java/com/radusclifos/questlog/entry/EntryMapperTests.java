@@ -1,71 +1,39 @@
 package com.radusclifos.questlog.entry;
 
-import com.radusclifos.questlog.entry.dto.EntryDto;
 import com.radusclifos.questlog.entry.dto.SaveEntryRequest;
 import com.radusclifos.questlog.entry.mapper.EntryMapper;
+import com.radusclifos.questlog.game.Game;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class EntryMapperTests {
-
     private final EntryMapper mapper = Mappers.getMapper(EntryMapper.class);
 
-    @Test
-    void createsEntryThroughDomainConstructorAndMapsDetails() {
-        SaveEntryRequest request = new SaveEntryRequest( "  Celeste  ", 9.0, "Notes", EntryStatus.COMPLETED, EntryOwnership.OWN, null);
-
-        Entry entry = mapper.toEntity(request);
-
-        assertNull(entry.getId());
-        assertEquals("Celeste", entry.getTitle());
-        EntryDto result = mapper.toDto(entry);
-        assertEquals(request.getScore(), result.getScore());
-        assertEquals(request.getNotes(), result.getNotes());
-        assertEquals(request.getStatus(), result.getStatus());
-        assertThrows(IllegalArgumentException.class,
-                () -> mapper.toEntity(new SaveEntryRequest(" ", null, null, null, null, null)));
+    @Test void mapsCatalogDataWithoutCopyingItIntoEntry() {
+        var game = new Game("Celeste", "co_example");
+        var request = new SaveEntryRequest(1L, 9.0, "Notes", EntryStatus.COMPLETED, EntryOwnership.OWN, 12);
+        var entry = mapper.toEntity(request, game);
+        assertSame(game, entry.getGame());
+        assertEquals("Celeste", mapper.toDto(entry).getGame().getName());
+        var dto = mapper.toDto(entry);
+        assertEquals("co_example", dto.getGame().getCoverImageId());
+        assertEquals(9.0, dto.getScore());
+        game.rename("Updated title");
+        assertEquals("Updated title", mapper.toDto(entry).getGame().getName());
     }
 
-    @Test
-    void updatesPreserveIdentityAndReplaceNullableFields() {
-        Entry entry = new Entry("Celeste");
-        ReflectionTestUtils.setField(entry, "id", 1L);
+    @Test void replacesPersonalDetailsWithoutModifyingTheCatalog() {
+        var game = new Game("Celeste", null);
+        var entry = new Entry(game);
         entry.setScore(9.0);
-        entry.setNotes("Old notes");
-        entry.setStatus(EntryStatus.COMPLETED);
-
-        mapper.updateEntity(new SaveEntryRequest("  Hollow Knight  ", null, null, null, null, null), entry);
-
-        EntryDto result = mapper.toDto(entry);
-        assertEquals(1L, result.getId());
-        assertEquals("Hollow Knight", result.getTitle());
-        assertNull(result.getScore());
-        assertNull(result.getNotes());
-        assertEquals(EntryStatus.UNPLAYED, result.getStatus());
-        assertThrows(IllegalArgumentException.class,
-                () -> mapper.updateEntity(new SaveEntryRequest(" ", null, null, null, null, null), entry));
-        assertEquals("Hollow Knight", entry.getTitle());
-    }
-
-    @Test
-    void defaultsMissingAndExplicitNullStatusToUnplayed() {
-        assertEquals(EntryStatus.UNPLAYED, new Entry("Default").getStatus());
-        var entry = mapper.toEntity(new SaveEntryRequest("Created", null, null, null, null, null));
+        mapper.updateEntity(new SaveEntryRequest(1L, null, null, null, null, null), entry);
+        assertNull(entry.getScore());
+        assertSame(game, entry.getGame());
+        assertEquals("Celeste", game.getName());
         assertEquals(EntryStatus.UNPLAYED, entry.getStatus());
-        entry.setStatus(EntryStatus.COMPLETED);
-        entry.setStatus(null);
-        assertEquals(EntryStatus.UNPLAYED, entry.getStatus());
-    }
-
-    @Test
-    void preservesNullHandling() {
+        assertThrows(NullPointerException.class, () -> new Entry(null));
         assertNull(mapper.toDto(null));
-        assertNull(mapper.toEntity(null));
-        assertThrows(NullPointerException.class, () -> mapper.updateEntity(null, new Entry("Celeste")));
-        assertThrows(NullPointerException.class,
-                () -> mapper.updateEntity(new SaveEntryRequest("Celeste", null, null, null, null, null), null));
+        assertNull(mapper.toEntity(null, game));
     }
 }

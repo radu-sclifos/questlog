@@ -13,11 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class EntryStatusMigrationTests {
     @Autowired UserRepository users;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.radusclifos.questlog.game.repository.GameRepository games;
 
     @Test void currentSchemaDefaultsStatusAndRejectsNull() {
         var user=users.saveAndFlush(new User("status-default-test","Test","hash"));
-        String status=jdbc.queryForObject("INSERT INTO entries(user_id,title) VALUES(?,?) RETURNING status",
-            String.class,user.getId(),"Default status");
+        var game = games.saveAndFlush(new com.radusclifos.questlog.game.Game("Default status", null));
+        jdbc.update("INSERT INTO entries(user_id,game_id) VALUES(?,?)", user.getId(), game.getId());
+        String status=jdbc.queryForObject("SELECT status FROM entries WHERE user_id=?", String.class, user.getId());
         assertEquals("UNPLAYED",status);
         assertEquals("NO",jdbc.queryForObject("SELECT is_nullable FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='entries' AND column_name='status'",String.class));
     }

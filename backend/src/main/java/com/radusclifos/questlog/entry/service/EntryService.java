@@ -7,6 +7,8 @@ import com.radusclifos.questlog.entry.dto.EntrySearchCriteria;
 import com.radusclifos.questlog.entry.dto.SaveEntryRequest;
 import com.radusclifos.questlog.entry.mapper.EntryMapper;
 import com.radusclifos.questlog.entry.repository.EntryRepository;
+import com.radusclifos.questlog.game.Game;
+import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.shared.search.FilterCriteria;
 import com.radusclifos.questlog.shared.search.FilterOperator;
 import com.radusclifos.questlog.user.service.UserService;
@@ -26,12 +28,14 @@ public class EntryService {
     private final EntryRepository entryRepository;
     private final EntryMapper entryMapper;
     private final UserService userService;
+    private final GameRepository games;
 
     @Autowired
-    public EntryService(EntryRepository entryRepository, EntryMapper entryMapper, UserService userService) {
+    public EntryService(EntryRepository entryRepository, EntryMapper entryMapper, UserService userService, GameRepository games) {
         this.entryRepository = entryRepository;
         this.entryMapper = entryMapper;
         this.userService = userService;
+        this.games = games;
     }
 
     public EntryPage search(EntrySearchCriteria criteria) {
@@ -69,7 +73,7 @@ public class EntryService {
     @Transactional
     public EntryDto create(Principal principal, SaveEntryRequest request) {
         var user = userService.current(principal);
-        var entry = entryMapper.toEntity(request);
+        var entry = entryMapper.toEntity(request, findGame(request.getGameId()));
         entry.setUser(user);
         return entryMapper.toDto(entryRepository.save(entry));
     }
@@ -77,8 +81,17 @@ public class EntryService {
     @Transactional
     public EntryDto update(Principal principal, Long id, SaveEntryRequest request) {
         var entry = owned(principal, id);
+        entry.setGame(findGame(request.getGameId()));
         entryMapper.updateEntity(request, entry);
         return entryMapper.toDto(entryRepository.save(entry));
+    }
+
+    private Game findGame(Long id) {
+        if (id == null || id < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid gameId is required");
+        }
+        return games.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
     }
 
     @Transactional
