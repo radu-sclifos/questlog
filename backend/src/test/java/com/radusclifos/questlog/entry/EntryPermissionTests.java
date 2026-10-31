@@ -16,7 +16,8 @@ class EntryPermissionTests {
     private final EntryRepository repository=mock(EntryRepository.class);
     private final UserService users=mock(UserService.class);
     private final EntryMapper mapper=mock(EntryMapper.class);
-    private final EntryService service=new EntryService(repository,mapper,users);
+    private final com.radusclifos.questlog.game.repository.GameRepository games=mock(com.radusclifos.questlog.game.repository.GameRepository.class);
+    private final EntryService service=new EntryService(repository,mapper,users,games);
     private final Principal principal=()->"alice";
     @BeforeEach void setup() {
         com.radusclifos.questlog.shared.search.SearchTestSupport.configure(repository);
@@ -26,13 +27,14 @@ class EntryPermissionTests {
     @Test void foreignEntriesCannotBeReadUpdatedOrDeleted() {
         when(repository.findByIdAndUserId(99L,10L)).thenReturn(Optional.empty());
         assertEquals(404,assertThrows(ResponseStatusException.class,()->service.get(principal,99L)).getStatusCode().value());
-        assertThrows(ResponseStatusException.class,()->service.update(principal,99L,new SaveEntryRequest("Title",null,null,null,null,null)));
+        assertThrows(ResponseStatusException.class,()->service.update(principal,99L,new SaveEntryRequest(1L,null,null,null,null,null)));
         assertThrows(ResponseStatusException.class,()->service.delete(principal,99L));
         verify(repository,never()).save(any()); verify(repository,never()).delete(any(com.radusclifos.questlog.entry.Entry.class)); verifyNoInteractions(mapper);
     }
     @Test void creationAssignsAuthenticatedOwner() {
-        var request=new SaveEntryRequest("Title",null,null,null,null,null);
-        var entry=new Entry("Title"); when(mapper.toEntity(request)).thenReturn(entry);
+        var request=new SaveEntryRequest(1L,null,null,null,null,null);
+        var entry=new Entry(new com.radusclifos.questlog.game.Game("Title", null)); when(games.findById(1L)).thenReturn(Optional.of(entry.getGame()));
+        when(mapper.toEntity(request, entry.getGame())).thenReturn(entry);
         when(repository.save(entry)).thenReturn(entry);
         service.create(principal,request);
         assertEquals(10L,entry.getUser().getId());

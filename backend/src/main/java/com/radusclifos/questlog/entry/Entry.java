@@ -1,6 +1,7 @@
 package com.radusclifos.questlog.entry;
 
 import com.radusclifos.questlog.user.User;
+import com.radusclifos.questlog.game.Game;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,7 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "entries")
+@Table(name = "entries", uniqueConstraints = @UniqueConstraint(
+        name = "entries_user_game_unique", columnNames = {"user_id", "game_id"}))
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -20,12 +22,12 @@ public class Entry {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "game_id", nullable = false)
+    private Game game;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(nullable = false, length = 200)
-    @Setter(AccessLevel.NONE)
-    private String title;
 
     @Column
     private Double score;
@@ -44,23 +46,16 @@ public class Entry {
     @Column
     private Integer playtime;
 
-    public Entry(String title) {
-        rename(title);
+    public Entry(Game game) {
+        setGame(game);
+    }
+
+    public void setGame(Game game) {
+        this.game = java.util.Objects.requireNonNull(game, "A game is required");
     }
 
     public void setStatus(EntryStatus status) {
         this.status = status == null ? EntryStatus.UNPLAYED : status;
-    }
-
-    public void rename(String title) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("The title is mandatory");
-        }
-        if (title.length() > 200) {
-            throw new IllegalArgumentException("The title can't be longer than 200 characters");
-        }
-
-        this.title = title.strip();
     }
 
 }

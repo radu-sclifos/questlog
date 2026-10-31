@@ -1,3 +1,5 @@
+import { EntryGame } from './entry-game';
+
 export enum EntryStatus {
   BEATEN = 'BEATEN',
   COMPLETED = 'COMPLETED',
@@ -17,7 +19,7 @@ export enum EntryOwnership {
 }
 
 export interface SaveEntryRequest {
-  title: string;
+  gameId: number;
   score: number | null;
   notes: string | null;
   status: EntryStatus | null;
@@ -25,6 +27,12 @@ export interface SaveEntryRequest {
   playtime: number | null;
 }
 
-export interface Entry extends SaveEntryRequest {
+export interface Entry {
   id: number;
+  game: EntryGame;
+  score: number | null;
+  notes: string | null;
+  status: EntryStatus;
+  ownership: EntryOwnership | null;
+  playtime: number | null;
 }

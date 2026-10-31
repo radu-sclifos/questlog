@@ -1,11 +1,18 @@
 package com.radusclifos.questlog.game;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
+@BatchSize(size = 100)
 @Table(name = "games")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) //Requested for JPA (Jakarta Persistence)
@@ -15,15 +22,75 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200)
-    private String title;
+    @Column(nullable = false, columnDefinition = "text")
+    private String name;
 
-    @Column(name = "cover_url", length = 2048)
-    private String coverUrl;
+    @Setter
+    @Column(name = "igdb_id", unique = true)
+    private Long igdbId;
 
-    public Game(String title, String coverUrl) {
+    @Setter
+    @Column(name = "first_release_date")
+    private LocalDate firstReleaseDate;
+
+    @Setter
+    @Column(columnDefinition = "text")
+    private String summary;
+
+    @Setter
+    @Column(columnDefinition = "text")
+    private String storyline;
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "game_type_id")
+    private GameType gameType;
+
+    @Setter
+    @Column(name = "cover_image_id", columnDefinition = "text")
+    private String coverImageId;
+
+    @BatchSize(size = 100)
+    @ManyToMany
+    @JoinTable(name = "game_platforms", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "platform_id"))
+    private Set<Platform> platforms = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @ManyToMany
+    @JoinTable(name = "game_genres", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id"))
+    private Set<Genre> genres = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @ManyToMany
+    @JoinTable(name = "game_engines", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "engine_id"))
+    private Set<Engine> engines = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @ManyToMany
+    @JoinTable(name = "game_franchises", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "franchise_id"))
+    private Set<Franchise> franchises = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @ManyToMany
+    @JoinTable(name = "game_series", joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "series_id"))
+    private Set<Series> series = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "game")
+    private Set<GameCompany> involvedCompanies = new HashSet<>();
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "sourceGame")
+    private Set<GameRelation> relations = new HashSet<>();
+
+    public Game(String title, String coverImageId) {
         rename(title);
-        this.coverUrl = coverUrl;
+        this.coverImageId = coverImageId;
     }
 
     public void rename(String title) {
@@ -31,10 +98,7 @@ public class Game {
             throw new IllegalArgumentException("The title is mandatory");
         }
 
-        if (title.strip().length() > 200) {
-            throw new IllegalArgumentException("The title can't be longer than 200 characters");
-        }
-
-        this.title = title;
+        this.name = title.strip();
     }
+
 }

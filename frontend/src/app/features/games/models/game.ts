@@ -4,7 +4,7 @@ export interface Game {
   id: number;
   title: string;
   platform: string;
-  coverUrl: string | null;
+  coverImageId: string | null;
   rating: number | null;
   status: GameStatus;
   genre: string;

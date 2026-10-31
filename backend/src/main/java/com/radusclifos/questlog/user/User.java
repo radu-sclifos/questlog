@@ -1,6 +1,7 @@
 package com.radusclifos.questlog.user;
 
 import jakarta.persistence.*;
+import com.radusclifos.questlog.shared.search.SearchIgnore;
 import lombok.*;
 
 import java.time.Instant;
@@ -22,6 +23,7 @@ public class User {
     private String displayName;
 
     @Column(nullable = false)
+    @SearchIgnore
     private String passwordHash;
 
     @Column(nullable = false)

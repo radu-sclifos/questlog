@@ -9,13 +9,41 @@
 
     <form class="mt-6" [formGroup]="form" (ngSubmit)="submit()">
       <fieldset class="grid gap-4 sm:grid-cols-2" [disabled]="saving()">
-        <label class="fieldset sm:col-span-2">
-          <span class="fieldset-legend">Title *</span>
-          <input class="input w-full" formControlName="title" placeholder="Game title" maxlength="200" required />
-          @if (form.controls.title.touched && form.controls.title.invalid) {
-            <span id="entry-title-error" class="text-error">Enter a title (up to 200 characters).</span>
+        <div class="fieldset sm:col-span-2" (focusout)="onTitleFocusOut($event)">
+          <label for="entry-game-title" class="fieldset-legend">Title *</label>
+          <div class="relative">
+            <input id="entry-game-title" class="input w-full" formControlName="title" [readOnly]="!!editingEntry()" placeholder="Type at least 3 characters"
+                   autocomplete="off" required (focus)="titleFocused.set(true)" (input)="titleFocused.set(true)"
+                   (keydown)="onTitleKeydown($event)" />
+            @if (!editingEntry() && titleFocused() && !form.controls.gameId.value && form.controls.title.value.trim().length >= 3) {
+              <div class="absolute top-full left-0 z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-box border border-base-content/15 bg-base-100 shadow-xl">
+                @if (suggestionsLoading()) {
+                  <p class="p-3 text-sm text-base-content/60">Searching games...</p>
+                } @else if (suggestionsError()) {
+                  <p class="p-3 text-sm text-error">Unable to load suggestions. Try typing again.</p>
+                } @else if (suggestions().length) {
+                  <ul class="menu w-full p-1">
+                    @for (game of suggestions(); track game.id; let index = $index) {
+                      <li>
+                        <button type="button" class="whitespace-normal text-left" [class.bg-base-300]="highlightedIndex() === index"
+                                (click)="selectGame(game)">{{ game.name }}</button>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="p-3 text-sm text-base-content/60">No matching games.</p>
+                }
+              </div>
+            }
+          </div>
+          @if (editingEntry()) {
+            <span class="text-base-content/60">The game cannot be changed after adding it to your library.</span>
+          } @else if (form.controls.gameId.value) {
+            <span class="text-success">Game selected</span>
+          } @else {
+            <span [class.text-error]="form.controls.gameId.touched">Select a game from the suggestions to continue.</span>
           }
-        </label>
+        </div>
 
         <label class="fieldset">
           <span class="fieldset-legend">Status</span>
@@ -61,12 +89,12 @@
       </fieldset>
 
       @if (errorMessage(); as message) {
-        <div class="alert alert-error mt-4">{{ message }}</div>
+        <div class="alert alert-error mt-4 font-bold">{{ message }}</div>
       }
 
       <div class="modal-action">
         <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="close()">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
           @if (saving()) {
             <span class="loading loading-spinner loading-sm"></span>
           }

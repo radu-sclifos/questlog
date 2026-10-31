@@ -1,49 +1,37 @@
 package com.radusclifos.questlog.game.controller;
 
-import com.radusclifos.questlog.game.Game;
-import com.radusclifos.questlog.game.dto.CreateGameRequest;
-import com.radusclifos.questlog.game.dto.GameResponse;
-import com.radusclifos.questlog.game.repository.GameRepository;
+import com.radusclifos.questlog.game.dto.GameDto;
+import com.radusclifos.questlog.game.dto.GamePage;
+import com.radusclifos.questlog.game.dto.GameSuggestion;
+import com.radusclifos.questlog.game.service.GameService;
+import com.radusclifos.questlog.shared.search.SearchCriteria;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/games")
+@RequiredArgsConstructor
 public class GameController {
 
-    private final GameRepository gameRepository;
+    private final GameService games;
 
-    public GameController(GameRepository gameRepository) {
-        this.gameRepository = gameRepository;
+    @PostMapping("/search")
+    public GamePage search(@Valid @RequestBody SearchCriteria criteria) {
+        return games.search(criteria);
     }
 
-    @GetMapping
-    public List<GameResponse> findAll() {
-        return gameRepository.findAll().stream()
-                .map(GameController::toResponse)
-                .toList();
+    @GetMapping("/suggestions")
+    public List<GameSuggestion> suggestions(@RequestParam String name,
+                                            @RequestParam(defaultValue = "10") int limit) {
+        return games.suggestions(name, limit);
     }
 
     @GetMapping("/{id}")
-    public GameResponse findById(@PathVariable Long id) {
-        var game = gameRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Game not found"));
-
-        return toResponse(game);
+    public GameDto findById(@PathVariable Long id) {
+        return games.findById(id);
     }
 
-    @PostMapping
-    public ResponseEntity<GameResponse> create(@Valid @RequestBody CreateGameRequest request) {
-        var game = gameRepository.save(new Game(request.title(), request.coverUrl()));
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(game));
-    }
-
-    private static GameResponse toResponse(Game game) {
-        return new GameResponse(game.getId(), game.getTitle(), game.getCoverUrl());
-    }
 }

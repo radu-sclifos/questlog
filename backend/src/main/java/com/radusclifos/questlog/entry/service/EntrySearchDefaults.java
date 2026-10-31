@@ -6,7 +6,9 @@ import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
-/** Default sorting rules for entry searches without explicit sorts. */
+/**
+ * Default sorting rules for entry searches without explicit sorts.
+ */
 public final class EntrySearchDefaults {
 
     private EntrySearchDefaults() {
@@ -31,7 +33,7 @@ public final class EntrySearchDefaults {
     }
 
     public static List<SortCriteria> sorts() {
-        return List.of(statusSort(), new SortCriteria("title", Sort.Direction.ASC));
+        return List.of(statusSort(), new SortCriteria("game.name", Sort.Direction.ASC));
     }
-    
+
 }

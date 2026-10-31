@@ -31,7 +31,7 @@ class SecurityTests {
             return repository;
         }
         @Bean EntryService entries(com.radusclifos.questlog.entry.repository.EntryRepository repository, UserService users) {
-            return new EntryService(repository, org.mapstruct.factory.Mappers.getMapper(com.radusclifos.questlog.entry.mapper.EntryMapper.class), users);
+            return new EntryService(repository, org.mapstruct.factory.Mappers.getMapper(com.radusclifos.questlog.entry.mapper.EntryMapper.class), users, mock(com.radusclifos.questlog.game.repository.GameRepository.class));
         }
     }
     AnnotationConfigWebApplicationContext context;
@@ -57,9 +57,9 @@ class SecurityTests {
     @Test void anonymousVisitorsCanReadSelectedLibrary() throws Exception {
         var repository=context.getBean(com.radusclifos.questlog.entry.repository.EntryRepository.class);
         when(repository.searchWithCriteria(any(com.radusclifos.questlog.shared.search.SearchCriteria.class)))
-            .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(new com.radusclifos.questlog.entry.Entry("Celeste")), org.springframework.data.domain.PageRequest.of(0,100),1));
+            .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(new com.radusclifos.questlog.entry.Entry(new com.radusclifos.questlog.game.Game("Celeste", null))), org.springframework.data.domain.PageRequest.of(0,100),1));
         mvc.perform(post("/entries/search").contentType("application/json").content("{\"username\":\"alice\"}"))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].title").value("Celeste"));
+            .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].game.name").value("Celeste"));
     }
     @Test void selectedLibraryDoesNotDependOnViewerIdentity() throws Exception {
         mvc.perform(post("/entries/search").with(user("bob")).contentType("application/json").content("{\"username\":\"alice\"}"))

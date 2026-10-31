@@ -5,6 +5,11 @@ server:
 spring:
   application:
     name: nome-questlog
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -14,3 +19,18 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
+questlog:
+  catalog-import:
+    on-startup: ${CATALOG_IMPORT_ON_STARTUP:false}
+    scheduled: ${CATALOG_IMPORT_SCHEDULED:false}
+    page-size: ${CATALOG_IMPORT_PAGE_SIZE:}
+    # Limit for test purposes, 0 processes all matching pages
+    max-pages: ${CATALOG_IMPORT_MAX_PAGES:0}
+  igdb:
+    enabled: ${IGDB_ENABLED:false}
+    client-id: ${IGDB_CLIENT_ID:}
+    client-secret: ${IGDB_CLIENT_SECRET:}
+    verify-on-startup: ${IGDB_VERIFY_ON_STARTUP:false}
+    connect-timeout: 5s
+    read-timeout: 15s

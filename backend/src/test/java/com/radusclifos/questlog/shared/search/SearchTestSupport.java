@@ -44,6 +44,7 @@ public final class SearchTestSupport {
                 if (Modifier.isStatic(field.getModifiers())) continue;
                 var attribute = mock(SingularAttribute.class);
                 when(attribute.getName()).thenReturn(field.getName());
+                when(attribute.getJavaMember()).thenReturn(field);
                 doReturn(field.getType()).when(attribute).getJavaType();
                 when(attribute.isId()).thenReturn(field.isAnnotationPresent(Id.class));
                 when(attribute.getPersistentAttributeType()).thenReturn(field.isAnnotationPresent(ManyToOne.class)

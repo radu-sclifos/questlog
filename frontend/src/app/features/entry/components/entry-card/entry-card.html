@@ -6,11 +6,15 @@
       class="entry-card__toggle transition-colors"
       (click)="toggleExpanded()">
       <span class="entry-card__cover rounded-lg bg-base-300 text-base-content/40">
-        <span class="text-center text-[10px] uppercase tracking-wider">Coming<br />soon</span>
+        @if (coverUrl(); as url) {
+          <img [src]="url" alt="" class="h-full w-full object-cover" loading="lazy" (error)="onCoverError()" />
+        } @else {
+          <span class="text-center text-[10px] uppercase tracking-wider">No cover</span>
+        }
       </span>
 
       <span class="min-w-0">
-        <span class="block wrap-break-word text-lg font-semibold sm:text-xl">{{ entry().title }}</span>
+        <span class="block wrap-break-word text-lg font-semibold sm:text-xl">{{ entry().game.name }}</span>
         <span class="mt-1 block text-xs font-normal text-base-content/50">Coming soon</span>
         <span class="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
           <app-entry-status-badge [status]="entry().status" size="sm" />
