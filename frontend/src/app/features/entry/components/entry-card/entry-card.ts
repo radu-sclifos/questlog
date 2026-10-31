@@ -21,10 +21,11 @@ export class EntryCard {
   protected readonly ownershipLabels = ENTRY_OWNERSHIP_LABELS;
 
   private readonly failedCoverId = signal<string | null>(null);
+
   protected readonly coverUrl = computed(() => {
     const imageId = this.entry().game.coverImageId;
     return imageId && imageId !== this.failedCoverId()
-      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${encodeURIComponent(imageId)}.jpg`
+      ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${encodeURIComponent(imageId)}.jpg`
       : null;
   });
 
