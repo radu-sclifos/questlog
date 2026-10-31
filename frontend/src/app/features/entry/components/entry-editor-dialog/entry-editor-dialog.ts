@@ -85,8 +85,7 @@ export class EntryEditorDialog {
       )
       .subscribe((games) => this.suggestions.set(games));
 
-    this.form.controls.title.valueChanges.pipe(takeUntilDestroyed())
-      .subscribe((name) => {
+    this.form.controls.title.valueChanges.pipe(takeUntilDestroyed()).subscribe((name) => {
       // Typed text is not a selection, even when it matches the old name
       this.form.controls.gameId.setValue(null);
       this.suggestionQueries.next(name.trim());
@@ -105,20 +104,26 @@ export class EntryEditorDialog {
   }
 
   protected onTitleKeydown(event: KeyboardEvent): void {
-    const games = this.suggestions();
-    if (!this.titleFocused()) return;
+    const suggestedGames = this.suggestions();
+
+    if (!this.titleFocused()) {
+      return;
+    }
+
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
       this.titleFocused.set(false);
-    } else if (games.length && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+    } else if (suggestedGames.length && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
-      this.highlightedIndex.update((index) => (index + step + games.length) % games.length);
-    } else if (event.key === 'Enter' && games.length) {
+      this.highlightedIndex.update((index) => (index + step + suggestedGames.length) % suggestedGames.length);
+    } else if (event.key === 'Enter' && suggestedGames.length) {
       event.preventDefault();
-      const game = games[this.highlightedIndex()];
-      if (game) this.selectGame(game);
+      const game = suggestedGames[Math.max(0, this.highlightedIndex())];
+      if (game) {
+        this.selectGame(game);
+      }
     }
   }
 
