@@ -1,6 +1,7 @@
 package com.radusclifos.questlog.game;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@BatchSize(size = 100)
 @Table(name = "games")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) //Requested for JPA (Jakarta Persistence)
@@ -48,34 +50,41 @@ public class Game {
     @Column(name = "cover_image_id", columnDefinition = "text")
     private String coverImageId;
 
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(name = "game_platforms", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "platform_id"))
     private Set<Platform> platforms = new HashSet<>();
 
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(name = "game_genres", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id"))
     private Set<Genre> genres = new HashSet<>();
 
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(name = "game_engines", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "engine_id"))
     private Set<Engine> engines = new HashSet<>();
 
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(name = "game_franchises", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "franchise_id"))
     private Set<Franchise> franchises = new HashSet<>();
 
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(name = "game_series", joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "series_id"))
     private Set<Series> series = new HashSet<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "game")
     private Set<GameCompany> involvedCompanies = new HashSet<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "sourceGame")
     private Set<GameRelation> relations = new HashSet<>();
 

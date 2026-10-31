@@ -1,12 +1,14 @@
 package com.radusclifos.questlog.game;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@BatchSize(size = 100)
 @Table(name = "game_types")
 @Getter
 @Setter

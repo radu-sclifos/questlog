@@ -1,19 +1,16 @@
 package com.radusclifos.questlog.game.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GameResponse {
+public class FranchiseDto {
 
     private Long id;
-    private String title;
-    private String coverImageId;
+    private Long igdbId;
+    private String name;
 
 }

@@ -81,7 +81,7 @@ backend/
 │   │   ├── Game.java
 │   │   ├── controller/GameController.java
 │   │   ├── repository/GameRepository.java
-│   │   └── dto/{GameResponse,CreateGameRequest}.java
+│   │   └── dto/{GameDto,GameSuggestion,GamePage}.java
 │   └── shared/search/
 │       ├── SearchCriteria.java
 │       ├── FilterCriteria.java / FilterOperator.java
@@ -183,7 +183,6 @@ Tutti i percorsi della tabella includono il context path `/api`.
 | DELETE | `/api/entries/{id}` | 204 | proprietario, CSRF |
 | GET | `/api/games` | lista di `GameResponse` | fuori dalla chain configurata |
 | GET | `/api/games/{id}` | `GameResponse` | fuori dalla chain configurata |
-| POST | `/api/games` | `CreateGameRequest` → `GameResponse`, 201 | fuori dalla chain configurata |
 
 Non esiste un handler GET per l'elenco `/api/entries`: usare la ricerca POST. Non esiste la vecchia ricerca `/api/users/{username}/entries`.
 

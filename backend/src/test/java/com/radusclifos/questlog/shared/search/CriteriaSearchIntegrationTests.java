@@ -88,6 +88,22 @@ class CriteriaSearchIntegrationTests {
                         List.of(new SortCriteria("user.passwordHash", Sort.Direction.ASC)))));
     }
 
+    @Test void nameSuggestionsMatchSubstringsIgnoreCaseAndEscapeWildcards() {
+        games.save(new Game("Hollow Knight", null));
+        games.save(new Game("The hOLLow", null));
+        games.save(new Game("Unrelated", null));
+        var literal = games.saveAndFlush(new Game("100%_Complete", null));
+        var sort = Sort.by(Sort.Order.asc("name").ignoreCase(), Sort.Order.asc("id"));
+        var page = org.springframework.data.domain.PageRequest.of(0, 10, sort);
+        assertEquals(List.of("Hollow Knight", "The hOLLow"),
+                games.findByNameContainingIgnoreCase("hOLL", page).stream().map(com.radusclifos.questlog.game.dto.GameSuggestion::name).toList());
+        assertEquals(1, games.findByNameContainingIgnoreCase("holl",
+                org.springframework.data.domain.PageRequest.of(0, 1, sort)).size());
+        assertEquals(List.of(literal.getId()), games.findByNameContainingIgnoreCase("%_", page)
+                .stream().map(com.radusclifos.questlog.game.dto.GameSuggestion::id).toList());
+        assertTrue(games.findByNameContainingIgnoreCase("not present", page).isEmpty());
+    }
+
     private Entry entry(User user, String title, Double score, EntryStatus status) {
         var entry = new Entry(title); entry.setUser(user); entry.setScore(score); entry.setStatus(status);
         return entries.saveAndFlush(entry);
