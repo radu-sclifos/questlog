@@ -45,7 +45,11 @@ export class EntryEditorDialog {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
     }),
-    score: new FormControl<number | null>(null, [Validators.min(0), Validators.max(10)]),
+    score: new FormControl<number | null>(null, [
+      Validators.min(0),
+      Validators.max(10),
+      Validators.pattern(/^\d+(?:\.5)?$/),
+    ]),
     status: new FormControl<EntryStatus | null>(null),
     ownership: new FormControl<EntryOwnership | null>(null),
     playtime: new FormControl<number | null>(null, [
@@ -177,6 +181,13 @@ export class EntryEditorDialog {
       event.preventDefault();
     } else {
       this.suggestionQueries.next(null);
+    }
+  }
+
+  protected normalizeScore(): void {
+    const control = this.form.controls.score;
+    if (control.value !== null) {
+      control.setValue(Math.max(0, Math.min(10, Math.floor(control.value * 2) / 2)));
     }
   }
 
