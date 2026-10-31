@@ -87,6 +87,10 @@ export class EntryEditorDialog {
       .subscribe((games) => this.suggestions.set(games));
 
     this.form.controls.title.valueChanges.pipe(takeUntilDestroyed()).subscribe((name) => {
+      if (this.editingEntry()) { // Can't search for games if editing
+        return;
+      }
+
       // Typed text is not a selection, even when it matches the old name
       this.form.controls.gameId.setValue(null);
       this.suggestionQueries.next(name.trim());
@@ -94,6 +98,10 @@ export class EntryEditorDialog {
   }
 
   protected selectGame(game: GameSuggestion): void {
+    if (this.editingEntry()) { // Can't select game if editing
+      return;
+    }
+
     this.suggestionQueries.next(null);
     this.form.patchValue({ title: game.name, gameId: game.id }, { emitEvent: false });
     this.titleFocused.set(false);
@@ -105,6 +113,10 @@ export class EntryEditorDialog {
   }
 
   protected onTitleKeydown(event: KeyboardEvent): void {
+    if (this.editingEntry()) { // Can't change title if editing
+      return;
+    }
+
     const suggestedGames = this.suggestions();
 
     if (!this.titleFocused()) {

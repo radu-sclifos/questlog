@@ -58,7 +58,7 @@ class EntryGameIntegrationTests {
         service.delete(() -> "entry-game-owner", first.getId());
         assertTrue(games.existsById(game.getId()));
     }
-    @Test void rejectsDuplicateCreatesAndUpdatesButAllowsSavingTheSameEntry() {
+    @Test void rejectsDuplicateCreatesAndGameChangesButAllowsSavingTheSameEntry() {
         users.save(new User("duplicate-owner", "Owner", "hash"));
         var firstGame = games.save(new Game("First", null));
         var otherGame = games.save(new Game("Other", null));
@@ -73,7 +73,8 @@ class EntryGameIntegrationTests {
                 new SaveEntryRequest(otherGame.getId(), null, null, null, null, null));
         var conflict = assertThrows(org.springframework.web.server.ResponseStatusException.class,
                 () -> service.update(() -> "duplicate-owner", other.getId(), request));
-        assertEquals(409, conflict.getStatusCode().value());
+        assertEquals(400, conflict.getStatusCode().value());
+        assertEquals("The game associated with an entry cannot be changed", conflict.getReason());
         assertEquals(otherGame.getId(), service.get(() -> "duplicate-owner", other.getId()).getGame().getId());
     }
 }

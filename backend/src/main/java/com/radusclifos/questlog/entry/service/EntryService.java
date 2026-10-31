@@ -84,7 +84,10 @@ public class EntryService {
     @Transactional
     public EntryDto update(Principal principal, Long id, SaveEntryRequest request) {
         var entry = owned(principal, id);
-        entry.setGame(findGame(request.getGameId()));
+        if (!entry.getGame().getId().equals(request.getGameId())) {
+            // Error if trying to change gameId (title)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The game associated with an entry cannot be changed");
+        }
         entryMapper.updateEntity(request, entry);
         return entryMapper.toDto(save(entry));
     }

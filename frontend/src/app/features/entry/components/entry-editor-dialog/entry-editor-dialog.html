@@ -12,10 +12,10 @@
         <div class="fieldset sm:col-span-2" (focusout)="onTitleFocusOut($event)">
           <label for="entry-game-title" class="fieldset-legend">Title *</label>
           <div class="relative">
-            <input id="entry-game-title" class="input w-full" formControlName="title" placeholder="Type at least 3 characters"
+            <input id="entry-game-title" class="input w-full" formControlName="title" [readOnly]="!!editingEntry()" placeholder="Type at least 3 characters"
                    autocomplete="off" required (focus)="titleFocused.set(true)" (input)="titleFocused.set(true)"
                    (keydown)="onTitleKeydown($event)" />
-            @if (titleFocused() && !form.controls.gameId.value && form.controls.title.value.trim().length >= 3) {
+            @if (!editingEntry() && titleFocused() && !form.controls.gameId.value && form.controls.title.value.trim().length >= 3) {
               <div class="absolute top-full left-0 z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-box border border-base-content/15 bg-base-100 shadow-xl">
                 @if (suggestionsLoading()) {
                   <p class="p-3 text-sm text-base-content/60">Searching games...</p>
@@ -36,7 +36,9 @@
               </div>
             }
           </div>
-          @if (form.controls.gameId.value) {
+          @if (editingEntry()) {
+            <span class="text-base-content/60">The game cannot be changed after adding it to your library.</span>
+          } @else if (form.controls.gameId.value) {
             <span class="text-success">Game selected</span>
           } @else {
             <span [class.text-error]="form.controls.gameId.touched">Select a game from the suggestions to continue.</span>
