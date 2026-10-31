@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, finalize, of, Subject, switchMap, timer } from 'rxjs';
@@ -199,11 +200,13 @@ export class EntryEditorDialog {
         this.dialog().nativeElement.close();
         this.savedEntry.emit(entry);
       },
-      error: () =>
+      error: (error: unknown) =>
         this.errorMessage.set(
-          entry
-            ? 'Unable to update the game. Please try again.'
-            : 'Unable to add the game. Please try again.',
+          error instanceof HttpErrorResponse && error.status === 409
+            ? 'This game is already in your library.'
+            : entry
+              ? 'Unable to update the game. Please try again.'
+              : 'Unable to add the game. Please try again.',
         ),
     });
   }

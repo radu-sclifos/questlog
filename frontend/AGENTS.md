@@ -99,3 +99,6 @@ Una selezione imposta gameId e il nome ufficiale; digitare nuovamente cancella
 subito gameId e annulla richieste obsolete. Solo una selezione valida consente
 il salvataggio. In modifica il gioco attuale è preselezionato. POST e PUT inviano
 gameId e campi personali, senza title. Chiusura e selezione annullano la ricerca.
+
+Il salvataggio dell'editor gestisce HTTP 409 mostrando "This game is already in
+your library." e lascia il dialog aperto con i dati inseriti.

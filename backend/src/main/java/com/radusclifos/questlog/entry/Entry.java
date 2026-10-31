@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "entries")
+@Table(name = "entries", uniqueConstraints = @UniqueConstraint(
+        name = "entries_user_game_unique", columnNames = {"user_id", "game_id"}))
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

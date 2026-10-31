@@ -36,7 +36,8 @@ class EntryGameIntegrationTests {
         var game = games.save(new Game("Original", "co_original"));
         var request = new SaveEntryRequest(game.getId(), 9.0, "Notes", null, null, null);
         var first = service.create(() -> "entry-game-owner", request);
-        var second = service.create(() -> "entry-game-owner", request);
+        users.save(new User("entry-game-other", "Other", "hash"));
+        var second = service.create(() -> "entry-game-other", request);
         assertNotEquals(first.getId(), second.getId());
         assertEquals(first.getGame().getId(), second.getGame().getId());
         new TransactionTemplate(transactions).executeWithoutResult(status -> {
@@ -56,5 +57,23 @@ class EntryGameIntegrationTests {
                 () -> jdbc.update("insert into entries(user_id) values (?)", users.findByUsername("entry-game-owner").orElseThrow().getId()));
         service.delete(() -> "entry-game-owner", first.getId());
         assertTrue(games.existsById(game.getId()));
+    }
+    @Test void rejectsDuplicateCreatesAndUpdatesButAllowsSavingTheSameEntry() {
+        users.save(new User("duplicate-owner", "Owner", "hash"));
+        var firstGame = games.save(new Game("First", null));
+        var otherGame = games.save(new Game("Other", null));
+        var request = new SaveEntryRequest(firstGame.getId(), null, null, null, null, null);
+        var first = service.create(() -> "duplicate-owner", request);
+        var duplicate = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.create(() -> "duplicate-owner", request));
+        assertEquals(409, duplicate.getStatusCode().value());
+        assertEquals("This game is already in your library", duplicate.getReason());
+        service.update(() -> "duplicate-owner", first.getId(), request);
+        var other = service.create(() -> "duplicate-owner",
+                new SaveEntryRequest(otherGame.getId(), null, null, null, null, null));
+        var conflict = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.update(() -> "duplicate-owner", other.getId(), request));
+        assertEquals(409, conflict.getStatusCode().value());
+        assertEquals(otherGame.getId(), service.get(() -> "duplicate-owner", other.getId()).getGame().getId());
     }
 }
