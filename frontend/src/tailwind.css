@@ -32,3 +32,13 @@
 .select-highlight option::checkmark {
   display: none;
 }
+
+/* Prefer below the field; flip above only when the menu would overflow. */
+.select-below::picker(select) {
+  inset: auto;
+  position-area: bottom span-right;
+  margin: 0.5rem 0;
+  translate: none;
+  position-try-order: normal;
+  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+}
