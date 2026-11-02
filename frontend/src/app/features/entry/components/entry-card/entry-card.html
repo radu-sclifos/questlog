@@ -42,6 +42,10 @@
           <dd class="mt-1 text-sm font-medium">{{ entry().platform?.name ?? '—' }}</dd>
         </div>
         <div>
+          <dt class="text-xs text-base-content/50">Playtime</dt>
+          <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
+        </div>
+        <div>
           <dt class="text-xs text-base-content/50">Ownership</dt>
           <dd class="mt-1 text-sm font-medium">
             @if (entry().ownership; as ownership) {
@@ -50,10 +54,6 @@
               —
             }
           </dd>
-        </div>
-        <div>
-          <dt class="text-xs text-base-content/50">Playtime</dt>
-          <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
         </div>
         <div>
           <dt class="text-xs text-base-content/50">Achievements</dt>
