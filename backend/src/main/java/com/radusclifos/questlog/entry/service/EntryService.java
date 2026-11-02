@@ -101,7 +101,7 @@ public class EntryService {
         } catch (DataIntegrityViolationException exception) {
             for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
                 if (cause instanceof ConstraintViolationException violation) {
-                    // Constrait violetions management
+                    // Constrait violations management
                     if (isDuplicateGameConstraint(violation.getConstraintName())) {
                         throw new ResponseStatusException(HttpStatus.CONFLICT,
                                 "This game is already in your library", exception);
