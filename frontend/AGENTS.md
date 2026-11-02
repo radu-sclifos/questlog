@@ -7,6 +7,8 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 
 ## Preferenze esplicite dell'utente
 
+- Preferire i componenti e le classi daisyUI quando disponibili per gli elementi dell'interfaccia.
+
 - Evitare gli attributi ARIA (`aria-*`, inclusi i binding `[attr.aria-*]`).
 - L'utente conosce l'importanza dell'accessibilità, ma non intende implementare
   funzionalità dedicate agli screen reader in questo progetto. Non aggiungere
@@ -90,14 +92,14 @@ sono già implementate. Controllare i sorgenti prima di usare la roadmap come st
 
 ## Contratto di lettura delle entry
 
-Entry � indipendente da SaveEntryRequest e contiene EntryGame (id, name,
+Entry � indipendente da SaveEntryRequest e contiene EntryGame (id, name,
 coverImageId). Card, dialog e conferma eliminazione leggono il nome da game.name.
 Le cover usano il CDN IGDB con formato t_cover_big, caricamento lazy e fallback
 No cover per immagini assenti o non disponibili.
 L'editor cerca GET /api/games/suggestions?name=... dopo 3 caratteri e 300 ms.
 Una selezione imposta gameId e il nome ufficiale; digitare nuovamente cancella
 subito gameId e annulla richieste obsolete. Solo una selezione valida consente
-il salvataggio. In modifica il titolo � read-only e i suggerimenti sono disattivati. POST e PUT inviano
+il salvataggio. In modifica il titolo � read-only e i suggerimenti sono disattivati. POST e PUT inviano
 gameId e campi personali, senza title. Chiusura e selezione annullano la ricerca.
 
 Il salvataggio dell'editor gestisce HTTP 409 mostrando "This game is already in
