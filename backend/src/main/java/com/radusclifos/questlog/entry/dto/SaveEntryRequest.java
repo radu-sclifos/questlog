@@ -29,6 +29,12 @@ public class SaveEntryRequest {
 
     private Integer playtime;
 
+    @PositiveOrZero
+    private Integer achievementsUnlocked;
+
+    @PositiveOrZero
+    private Integer achievementsTotal;
+
     @Positive
     private Long platformId;
 

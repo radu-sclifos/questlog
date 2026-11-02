@@ -135,6 +135,28 @@
                 </select>
               </label>
 
+              <div class="fieldset">
+                <span class="fieldset-legend">Achievements</span>
+                <div class="flex items-end gap-2">
+                  <label class="min-w-0 flex-1">
+                    <input class="input w-full placeholder:text-base-content/50" type="number" formControlName="achievementsUnlocked"
+                           min="0" max="2147483647" step="1" placeholder="Unlocked" />
+                  </label>
+                  <span class="self-center text-base-content/50">/</span>
+                  <label class="min-w-0 flex-1">
+                    <input class="input w-full placeholder:text-base-content/50" type="number" formControlName="achievementsTotal"
+                           min="0" max="2147483647" step="1" placeholder="Total" />
+                  </label>
+                </div>
+                @if (form.controls.achievementsUnlocked.touched || form.controls.achievementsTotal.touched) {
+                  @if (form.controls.achievementsUnlocked.invalid || form.controls.achievementsTotal.invalid) {
+                    <span class="text-error">Enter whole numbers between 0 and 2147483647.</span>
+                  } @else if (form.hasError('achievementsOrder')) {
+                    <span class="text-error">Unlocked achievements cannot exceed the total.</span>
+                  }
+                }
+              </div>
+
               <label class="fieldset sm:col-span-2">
                 <span class="fieldset-legend">Notes</span>
                 <textarea class="textarea w-full" formControlName="notes" rows="3" maxlength="2000"

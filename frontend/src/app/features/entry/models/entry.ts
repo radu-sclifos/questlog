@@ -27,6 +27,8 @@ export interface SaveEntryRequest {
   status: EntryStatus | null;
   ownership: EntryOwnership | null;
   playtime: number | null;
+  achievementsUnlocked: number | null;
+  achievementsTotal: number | null;
 }
 
 export interface Entry {
@@ -38,4 +40,6 @@ export interface Entry {
   status: EntryStatus;
   ownership: EntryOwnership | null;
   playtime: number | null;
+  achievementsUnlocked: number | null;
+  achievementsTotal: number | null;
 }

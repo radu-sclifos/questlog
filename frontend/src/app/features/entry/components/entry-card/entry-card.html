@@ -56,9 +56,9 @@
           <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
         </div>
         <div>
-          <dt class="text-xs text-base-content/50">Achievement</dt>
+          <dt class="text-xs text-base-content/50">Achievements</dt>
           <dd class="mt-1 text-sm font-medium">
-            Coming soon
+            {{ entry().achievementsUnlocked ?? '—' }} / {{ entry().achievementsTotal ?? '—' }}
           </dd>
         </div>
       </dl>

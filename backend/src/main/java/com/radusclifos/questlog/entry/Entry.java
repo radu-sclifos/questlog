@@ -51,6 +51,10 @@ public class Entry {
     @Column
     private Integer playtime;
 
+    private Integer achievementsUnlocked;
+
+    private Integer achievementsTotal;
+
     public Entry(Game game) {
         setGame(game);
     }

@@ -64,8 +64,18 @@ export class EntryEditorDialog {
       Validators.min(0),
       Validators.pattern(/^\d+$/),
     ]),
+    achievementsUnlocked: new FormControl<number | null>(null, [
+      Validators.min(0), Validators.max(2147483647), Validators.pattern(/^\d+$/),
+    ]),
+    achievementsTotal: new FormControl<number | null>(null, [
+      Validators.min(0), Validators.max(2147483647), Validators.pattern(/^\d+$/),
+    ]),
     notes: new FormControl('', { nonNullable: true, validators: Validators.maxLength(2000) }),
-  });
+  }, { validators: (control) => {
+    const { achievementsUnlocked, achievementsTotal } = control.value;
+    return achievementsUnlocked != null && achievementsTotal != null && achievementsUnlocked > achievementsTotal
+      ? { achievementsOrder: true } : null;
+  } });
 
   constructor() {
     this.suggestionQueries
@@ -198,6 +208,8 @@ export class EntryEditorDialog {
             status: entry.status,
             ownership: entry.ownership,
             playtime: entry.playtime,
+            achievementsUnlocked: entry.achievementsUnlocked,
+            achievementsTotal: entry.achievementsTotal,
             notes: entry.notes ?? '',
           }
         : {},
@@ -241,6 +253,10 @@ export class EntryEditorDialog {
       return;
     }
     this.form.markAllAsTouched();
+    if (this.form.hasError('achievementsOrder') || this.form.controls.achievementsUnlocked.invalid
+        || this.form.controls.achievementsTotal.invalid) {
+      this.showMoreInfo.set(true);
+    }
     if (this.form.invalid || this.form.controls.gameId.value === null) {
       return;
     }
@@ -256,6 +272,8 @@ export class EntryEditorDialog {
       status: value.status,
       ownership: value.ownership,
       playtime: value.playtime,
+      achievementsUnlocked: value.achievementsUnlocked,
+      achievementsTotal: value.achievementsTotal,
       notes: value.notes.trim() || null,
     };
 

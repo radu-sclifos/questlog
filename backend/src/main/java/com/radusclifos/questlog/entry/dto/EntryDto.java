@@ -30,4 +30,8 @@ public class EntryDto {
 
     private Integer playtime;
 
+    private Integer achievementsUnlocked;
+
+    private Integer achievementsTotal;
+
 }

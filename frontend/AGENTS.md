@@ -115,3 +115,7 @@ Notes sono nella sezione More info, chiusa a ogni apertura; richiuderla conserva
 
 I pannelli dei menu condividono lo stile globale in src/tailwind.css: dropdown-panel
 per menu HTML e select-panel per ::picker(select), senza modificare il campo chiuso.
+
+Achievements: Entry e SaveEntryRequest espongono achievementsUnlocked e achievementsTotal,
+interi opzionali non negativi. In More info i due input sono affiancati; se entrambi
+indicati, unlocked non può superare total. La card mostra unlocked / total.

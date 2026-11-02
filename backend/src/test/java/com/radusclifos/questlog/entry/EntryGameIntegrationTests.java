@@ -112,4 +112,37 @@ class EntryGameIntegrationTests {
                 () -> service.create(() -> "invalid-platform-owner", request));
     }
 
+    @Test void achievementCountsBelongToEachEntryAndCanBeCleared() {
+        users.save(new User("achievement-owner", "Owner", "hash"));
+        users.save(new User("achievement-other", "Other", "hash"));
+        var game = games.save(new Game("Achievement game", null));
+        var request = new SaveEntryRequest(game.getId(), null, null, null, null, null);
+        request.setAchievementsUnlocked(12);
+        request.setAchievementsTotal(30);
+        var entry = service.create(() -> "achievement-owner", request);
+        assertEquals(12, entry.getAchievementsUnlocked());
+        assertEquals(30, service.get(() -> "achievement-owner", entry.getId()).getAchievementsTotal());
+        request.setAchievementsUnlocked(0);
+        var other = service.create(() -> "achievement-other", request);
+        assertEquals(0, other.getAchievementsUnlocked());
+        assertEquals(12, service.get(() -> "achievement-owner", entry.getId()).getAchievementsUnlocked());
+        request.setAchievementsUnlocked(30);
+        assertEquals(30, service.update(() -> "achievement-owner", entry.getId(), request).getAchievementsUnlocked());
+        request.setAchievementsUnlocked(31);
+        var invalid = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.update(() -> "achievement-owner", entry.getId(), request));
+        assertEquals(400, invalid.getStatusCode().value());
+        request.setAchievementsUnlocked(-1);
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.update(() -> "achievement-owner", entry.getId(), request));
+        request.setAchievementsUnlocked(null);
+        request.setAchievementsTotal(-1);
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.update(() -> "achievement-owner", entry.getId(), request));
+        request.setAchievementsTotal(null);
+        var cleared = service.update(() -> "achievement-owner", entry.getId(), request);
+        assertNull(cleared.getAchievementsUnlocked());
+        assertNull(cleared.getAchievementsTotal());
+    }
+
 }

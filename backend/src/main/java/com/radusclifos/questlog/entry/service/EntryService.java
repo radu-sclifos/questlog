@@ -105,6 +105,13 @@ public class EntryService {
     }
 
     private Entry save(Entry entry) {
+        var unlocked = entry.getAchievementsUnlocked();
+        var total = entry.getAchievementsTotal();
+        if ((unlocked != null && unlocked < 0) || (total != null && total < 0)
+                || (unlocked != null && total != null && unlocked > total)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid achievement counts");
+        }
+
         try {
             var saved = entryRepository.save(entry);
             // Check database constraints before leaving the service transaction
