@@ -104,3 +104,8 @@ gameId e campi personali, senza title. Chiusura e selezione annullano la ricerca
 
 Il salvataggio dell'editor gestisce HTTP 409 mostrando "This game is already in
 your library." e lascia il dialog aperto con i dati inseriti.
+
+La piattaforma di riferimento è opzionale: Entry.platform espone id/name e
+SaveEntryRequest.platformId invia la scelta. L’editor carica le piattaforme con
+GET /api/games/{id}/platforms dopo la selezione e in modifica, annullando richieste obsolete.
+Il backend verifica che la piattaforma appartenga al gioco.

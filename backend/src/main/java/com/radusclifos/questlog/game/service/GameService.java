@@ -1,6 +1,7 @@
 package com.radusclifos.questlog.game.service;
 
 import com.radusclifos.questlog.game.dto.GameDto;
+import com.radusclifos.questlog.game.dto.GamePlatform;
 import com.radusclifos.questlog.game.dto.GamePage;
 import com.radusclifos.questlog.game.dto.GameSuggestion;
 import com.radusclifos.questlog.game.mapper.GameMapper;
@@ -42,6 +43,13 @@ public class GameService {
         }
         var sort = Sort.by(Sort.Order.asc("name").ignoreCase(), Sort.Order.asc("id"));
         return games.findByNameContainingIgnoreCase(name.strip(), PageRequest.of(0, limit, sort));
+    }
+
+    public List<GamePlatform> platforms(Long id) {
+        if (!games.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        }
+        return games.findPlatformsByGameId(id);
     }
 
     public GameDto findById(Long id) {

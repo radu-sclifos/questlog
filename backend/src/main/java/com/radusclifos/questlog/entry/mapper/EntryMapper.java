@@ -45,6 +45,7 @@ public abstract class EntryMapper {
         copyDetails(request, entry);
     }
 
+    @Mapping(target = "platform", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "game", ignore = true)

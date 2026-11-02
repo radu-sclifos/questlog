@@ -76,8 +76,10 @@ public class EntryService {
     @Transactional
     public EntryDto create(Principal principal, SaveEntryRequest request) {
         var user = userService.current(principal);
+        // get entry Entity with Game already set
         var entry = entryMapper.toEntity(request, findGame(request.getGameId()));
         entry.setUser(user);
+        setPlatform(entry, request.getPlatformId());
         return entryMapper.toDto(save(entry));
     }
 
@@ -89,7 +91,17 @@ public class EntryService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The game associated with an entry cannot be changed");
         }
         entryMapper.updateEntity(request, entry);
+        setPlatform(entry, request.getPlatformId());
         return entryMapper.toDto(save(entry));
+    }
+
+    private void setPlatform(Entry entry, Long platformId) {
+        if (platformId != null) {
+            entry.setPlatform(entry.getGame().getPlatforms().stream()
+                    .filter(platform -> platform.getId().equals(platformId))
+                    .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "The platform is not available for this game")));
+        }
     }
 
     private Entry save(Entry entry) {

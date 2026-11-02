@@ -77,4 +77,39 @@ class EntryGameIntegrationTests {
         assertEquals("The game associated with an entry cannot be changed", conflict.getReason());
         assertEquals(otherGame.getId(), service.get(() -> "duplicate-owner", other.getId()).getGame().getId());
     }
+    @Test void referencePlatformIsOptionalAndMustBelongToTheGame() {
+        users.save(new User("platform-owner", "Owner", "hash"));
+        var gameId = new TransactionTemplate(transactions).execute(status -> {
+            var pc = new com.radusclifos.questlog.game.Platform("PC");
+            em.persist(pc);
+            var game = new Game("Platform game", null);
+            game.getPlatforms().add(pc);
+            em.persist(game);
+            return game.getId();
+        });
+        var platformId = new TransactionTemplate(transactions).execute(status ->
+                games.findById(gameId).orElseThrow().getPlatforms().iterator().next().getId());
+        var request = new SaveEntryRequest(gameId, null, null, null, null, null);
+        var created = service.create(() -> "platform-owner", request);
+        assertNull(created.getPlatform());
+
+        request.setPlatformId(platformId);
+        var updated = service.update(() -> "platform-owner", created.getId(), request);
+        assertEquals(platformId, updated.getPlatform().getId());
+        assertEquals("PC", service.get(() -> "platform-owner", created.getId()).getPlatform().getName());
+
+        request.setPlatformId(Long.MAX_VALUE);
+        var error = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.update(() -> "platform-owner", created.getId(), request));
+        assertEquals(400, error.getStatusCode().value());
+        assertEquals(platformId, service.get(() -> "platform-owner", created.getId()).getPlatform().getId());
+
+        request.setPlatformId(null);
+        assertNull(service.update(() -> "platform-owner", created.getId(), request).getPlatform());
+        request.setPlatformId(Long.MAX_VALUE);
+        users.save(new User("invalid-platform-owner", "Owner", "hash"));
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.create(() -> "invalid-platform-owner", request));
+    }
+
 }

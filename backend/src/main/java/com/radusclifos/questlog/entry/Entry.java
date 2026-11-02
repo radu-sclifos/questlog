@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.entry;
 
+import com.radusclifos.questlog.game.Platform;
 import com.radusclifos.questlog.user.User;
 import com.radusclifos.questlog.game.Game;
 import jakarta.persistence.*;
@@ -28,6 +29,10 @@ public class Entry {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "platform_id")
+    private Platform platform;
 
     @Column
     private Double score;

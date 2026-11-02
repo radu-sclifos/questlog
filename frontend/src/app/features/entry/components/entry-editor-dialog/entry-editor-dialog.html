@@ -51,6 +51,30 @@
           }
         </div>
 
+        <div class="fieldset sm:col-span-2">
+          <label for="entry-platform" class="fieldset-legend">Reference platform</label>
+          <select id="entry-platform" class="select w-full" formControlName="platformId">
+            <option [ngValue]="null">Not specified</option>
+            @if ((platformsLoading() || platformsError()) && editingEntry()?.platform; as platform) {
+              <option [ngValue]="platform.id">{{ platform.name }}</option>
+            }
+            @for (platform of platforms(); track platform.id) {
+              <option [ngValue]="platform.id">{{ platform.name }}</option>
+            }
+          </select>
+          @if (platformsLoading()) {
+            <span class="text-base-content/50">Loading platforms...</span>
+          } @else if (platformsError()) {
+            <span class="text-error">Unable to load platforms.
+              <button type="button" class="link" (click)="retryPlatforms()">Retry</button>
+            </span>
+          } @else if (form.controls.gameId.value && !platforms().length) {
+            <span class="text-base-content/50">No platforms listed for this game.</span>
+          } @else {
+            <span class="text-base-content/50">Choose where you played the most or earned the most achievements.</span>
+          }
+        </div>
+
         <label class="fieldset">
           <span class="fieldset-legend">Status</span>
           <select class="select w-full" formControlName="status">

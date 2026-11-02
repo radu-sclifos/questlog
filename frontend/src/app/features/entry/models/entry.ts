@@ -1,3 +1,4 @@
+import { Platform } from '../../games/models/platform';
 import { EntryGame } from './entry-game';
 
 export enum EntryStatus {
@@ -20,6 +21,7 @@ export enum EntryOwnership {
 
 export interface SaveEntryRequest {
   gameId: number;
+  platformId: number | null;
   score: number | null;
   notes: string | null;
   status: EntryStatus | null;
@@ -30,6 +32,7 @@ export interface SaveEntryRequest {
 export interface Entry {
   id: number;
   game: EntryGame;
+  platform: Platform | null;
   score: number | null;
   notes: string | null;
   status: EntryStatus;
