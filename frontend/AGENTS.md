@@ -109,3 +109,6 @@ La piattaforma di riferimento è opzionale: Entry.platform espone id/name e
 SaveEntryRequest.platformId invia la scelta. L’editor carica le piattaforme con
 GET /api/games/{id}/platforms dopo la selezione e in modifica, annullando richieste obsolete.
 Il backend verifica che la piattaforma appartenga al gioco.
+
+Nell’editor, Status e Reference platform sono affiancati su desktop. Ownership e
+Notes sono nella sezione More info, chiusa a ogni apertura; richiuderla conserva i valori.

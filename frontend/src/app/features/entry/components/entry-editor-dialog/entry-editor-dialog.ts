@@ -36,6 +36,7 @@ export class EntryEditorDialog {
   readonly savedEntry = output<Entry>();
   //meant to block the saving button and not allow the user to add multiple times the same Entry
   protected readonly saving = signal(false);
+  protected readonly showMoreInfo = signal(false);
   //if there's an Entry inside editingEntry that means that we're editing, so we apply the corresponding behavior
   protected readonly editingEntry = signal<Entry | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
@@ -186,6 +187,7 @@ export class EntryEditorDialog {
     this.suggestionQueries.next(null);
     this.titleFocused.set(false);
     this.editingEntry.set(entry);
+    this.showMoreInfo.set(false);
     this.form.reset(
       entry
         ? {
