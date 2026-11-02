@@ -12,7 +12,7 @@
 
     <label>
       <span class="sr-only">Status</span>
-      <select class="select w-auto" formControlName="status">
+      <select class="select select-panel w-auto" formControlName="status">
         <option value="">All statuses</option>
         @for (status of statuses; track status) {
           <option [value]="status">{{ statusLabels[status] }}</option>
@@ -42,7 +42,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <label class="flex items-center gap-2">
         <span class="text-sm text-base-content/60">Sort by</span>
-        <select class="select w-auto" formControlName="sortBy">
+        <select class="select select-panel w-auto" formControlName="sortBy">
           <option value="status">Status</option>
           <option value="game.name">Title</option>
           <option value="score">Rating</option>

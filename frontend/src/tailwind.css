@@ -12,3 +12,13 @@
     --input-color: var(--color-primary);
   }
 }
+
+/* Shared appearance for dropdown panels and native select pickers. */
+.dropdown-panel,
+.select-panel::picker(select) {
+  background-color: var(--color-base-200);
+  color: var(--color-base-content);
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 30%, transparent);
+  border-radius: var(--radius-box);
+  box-shadow: var(--shadow-xl);
+}

@@ -112,3 +112,6 @@ Il backend verifica che la piattaforma appartenga al gioco.
 
 Nell’editor, Status e Reference platform sono affiancati su desktop. Ownership e
 Notes sono nella sezione More info, chiusa a ogni apertura; richiuderla conserva i valori.
+
+I pannelli dei menu condividono lo stile globale in src/tailwind.css: dropdown-panel
+per menu HTML e select-panel per ::picker(select), senza modificare il campo chiuso.
