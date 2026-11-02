@@ -63,6 +63,12 @@
           </select>
         </label>
 
+        <label class="fieldset">
+          <span class="fieldset-legend">Score</span>
+          <input class="input w-full" type="number" formControlName="score" min="0" max="10" step="0.5"
+                 placeholder="0 - 10" (blur)="normalizeScore()" />
+        </label>
+
         <div class="fieldset">
           <label for="entry-platform" class="fieldset-legend">Reference platform</label>
           <select id="entry-platform" class="select select-panel select-below w-full" formControlName="platformId"
@@ -94,13 +100,6 @@
             </button>
           }
         </div>
-
-
-        <label class="fieldset">
-          <span class="fieldset-legend">Score</span>
-          <input class="input w-full" type="number" formControlName="score" min="0" max="10" step="0.5"
-                 placeholder="0 - 10" (blur)="normalizeScore()" />
-        </label>
 
         <label class="fieldset">
           <span class="fieldset-legend">Playtime (hours)</span>
