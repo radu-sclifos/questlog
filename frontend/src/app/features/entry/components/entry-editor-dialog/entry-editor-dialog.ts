@@ -5,6 +5,7 @@ import { catchError, finalize, of, Subject, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GameService } from '../../../games/services/game.service';
 import { Platform } from '../../../games/models/platform';
+import { sortPlatforms } from '../../../games/models/platform-order';
 import { GameSuggestion } from '../../../games/models/game-suggestion';
 import { Entry, EntryOwnership, EntryStatus, SaveEntryRequest } from '../../models/entry';
 import { ENTRY_OWNERSHIP_LABELS, ENTRY_STATUS_LABELS } from '../../models/entry-labels';
@@ -129,7 +130,7 @@ export class EntryEditorDialog {
         takeUntilDestroyed(),
       )
       .subscribe((platforms) =>
-        this.platforms.set((platforms ?? []).sort((a, b) => a.name.localeCompare(b.name))),
+        this.platforms.set(sortPlatforms(platforms ?? [])),
       );
 
     this.form.controls.title.valueChanges.pipe(takeUntilDestroyed()).subscribe((name) => {
