@@ -22,3 +22,13 @@
   border-radius: var(--radius-box);
   box-shadow: var(--shadow-xl);
 }
+
+/* Highlight the selected option without the native checkmark. */
+.select-highlight option:checked {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.select-highlight option::checkmark {
+  display: none;
+}
