@@ -1,5 +1,5 @@
 <dialog #dialog class="modal" (cancel)="onCancel($event)">
-  <div class="modal-box max-w-xl">
+  <div class="modal-box my-10 max-h-[calc(100dvh-5rem)] max-w-xl overflow-y-auto">
     <h2 id="entry-editor-title" class="text-xl font-bold" tabindex="-1" autofocus>
       {{ editingEntry() ? 'Edit game' : 'Add a game' }}
     </h2>
