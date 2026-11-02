@@ -76,8 +76,10 @@ public class EntryService {
     @Transactional
     public EntryDto create(Principal principal, SaveEntryRequest request) {
         var user = userService.current(principal);
+        // get entry Entity with Game already set
         var entry = entryMapper.toEntity(request, findGame(request.getGameId()));
         entry.setUser(user);
+        setPlatform(entry, request.getPlatformId());
         return entryMapper.toDto(save(entry));
     }
 
@@ -89,10 +91,27 @@ public class EntryService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The game associated with an entry cannot be changed");
         }
         entryMapper.updateEntity(request, entry);
+        setPlatform(entry, request.getPlatformId());
         return entryMapper.toDto(save(entry));
     }
 
+    private void setPlatform(Entry entry, Long platformId) {
+        if (platformId != null) {
+            entry.setPlatform(entry.getGame().getPlatforms().stream()
+                    .filter(platform -> platform.getId().equals(platformId))
+                    .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "The platform is not available for this game")));
+        }
+    }
+
     private Entry save(Entry entry) {
+        var unlocked = entry.getAchievementsUnlocked();
+        var total = entry.getAchievementsTotal();
+        if ((unlocked != null && unlocked < 0) || (total != null && total < 0)
+                || (unlocked != null && total != null && unlocked > total)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid achievement counts");
+        }
+
         try {
             var saved = entryRepository.save(entry);
             // Check database constraints before leaving the service transaction
@@ -101,7 +120,7 @@ public class EntryService {
         } catch (DataIntegrityViolationException exception) {
             for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
                 if (cause instanceof ConstraintViolationException violation) {
-                    // Constrait violetions management
+                    // Constrait violations management
                     if (isDuplicateGameConstraint(violation.getConstraintName())) {
                         throw new ResponseStatusException(HttpStatus.CONFLICT,
                                 "This game is already in your library", exception);

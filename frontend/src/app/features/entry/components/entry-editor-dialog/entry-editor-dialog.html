@@ -1,14 +1,16 @@
 <dialog #dialog class="modal" (cancel)="onCancel($event)">
-  <div class="modal-box max-w-xl">
-    <h2 id="entry-editor-title" class="text-xl font-bold" tabindex="-1" autofocus>
-      {{ editingEntry() ? 'Edit game' : 'Add a game' }}
-    </h2>
-    <p class="mt-2 text-sm text-base-content/60">
-      {{ editingEntry() ? 'Update your progress and thoughts about the game.' : 'Start a new story in your library.' }}
-    </p>
+  <form
+    class="modal-box my-10 flex max-h-[calc(100dvh-5rem)] max-w-xl flex-col overflow-hidden border border-base-content/20 p-0"
+    [formGroup]="form" (ngSubmit)="submit()">
+    <div class="min-h-0 overflow-y-auto p-6">
+      <h2 id="entry-editor-title" class="text-xl font-bold" tabindex="-1" autofocus>
+        {{ editingEntry() ? 'Edit game' : 'Add a game' }}
+      </h2>
+      <p class="mt-2 text-sm text-base-content/60">
+        {{ editingEntry() ? 'Update your progress and thoughts about the game.' : 'Start a new story in your library.' }}
+      </p>
 
-    <form class="mt-6" [formGroup]="form" (ngSubmit)="submit()">
-      <fieldset class="grid gap-4 sm:grid-cols-2" [disabled]="saving()">
+      <fieldset class="mt-6 grid gap-4 sm:grid-cols-2" [disabled]="saving()">
         <div class="fieldset sm:col-span-2" (focusout)="onTitleFocusOut($event)">
           <label for="entry-game-title" class="fieldset-legend">Title *</label>
           <div class="relative">
@@ -18,7 +20,7 @@
                    (keydown)="onTitleKeydown($event)" />
             @if (!editingEntry() && titleFocused() && !form.controls.gameId.value && form.controls.title.value.trim().length >= 3) {
               <div
-                class="absolute top-full left-0 z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-box border border-base-content/15 bg-base-100 shadow-xl">
+                class="dropdown-panel absolute top-full left-0 z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-box">
                 @if (suggestionsLoading()) {
                   <p class="p-3 text-sm text-base-content/60">Searching games...</p>
                 } @else if (suggestionsError()) {
@@ -51,29 +53,53 @@
           }
         </div>
 
+
         <label class="fieldset">
           <span class="fieldset-legend">Status</span>
-          <select class="select w-full" formControlName="status">
+          <select class="select select-panel w-full" formControlName="status">
             @for (status of statuses; track status) {
               <option [ngValue]="status">{{ statusLabels[status] }}</option>
             }
           </select>
         </label>
 
-        <label class="fieldset">
-          <span class="fieldset-legend">Ownership</span>
-          <select class="select w-full" formControlName="ownership">
-            @for (ownership of ownerships; track ownership) {
-              <option [ngValue]="ownership">{{ ownershipLabels[ownership] }}</option>
+        <div class="fieldset">
+          <label for="entry-platform" class="fieldset-legend">Reference platform</label>
+          <select id="entry-platform" class="select select-panel w-full" formControlName="platformId"
+                  [class]="form.controls.platformId.value === null ? 'text-base-content/50' : ''">
+            <option [ngValue]="null" class="text-base-content/50"
+                    [disabled]="platformsLoading() || platformsError() || !form.controls.gameId.value || !platforms().length">
+              @if (platformsLoading()) {
+                Loading platforms...
+              } @else if (platformsError()) {
+                Unable to load platforms
+              } @else if (!form.controls.gameId.value) {
+                Select a game first
+              } @else if (!platforms().length) {
+                No platforms available
+              } @else {
+                Not specified
+              }
+            </option>
+            @if ((platformsLoading() || platformsError()) && editingEntry()?.platform; as platform) {
+              <option [ngValue]="platform.id" class="text-base-content">{{ platform.name }}</option>
+            }
+            @for (platform of platforms(); track platform.id) {
+              <option [ngValue]="platform.id" class="text-base-content">{{ platform.name }}</option>
             }
           </select>
-        </label>
+          @if (platformsError()) {
+            <button type="button" class="link text-base-content/50 justify-self-start"
+                    (click)="retryPlatforms()">Retry
+            </button>
+          }
+        </div>
+
 
         <label class="fieldset">
           <span class="fieldset-legend">Score</span>
           <input class="input w-full" type="number" formControlName="score" min="0" max="10" step="0.5"
                  placeholder="0 - 10" (blur)="normalizeScore()" />
-          <span class="text-base-content/50">Steps of 0.5</span>
         </label>
 
         <label class="fieldset">
@@ -84,28 +110,79 @@
           }
         </label>
 
-        <label class="fieldset sm:col-span-2">
-          <span class="fieldset-legend">Notes</span>
-          <textarea class="textarea w-full" formControlName="notes" rows="3" maxlength="2000"
-                    placeholder="Your thoughts about the game"></textarea>
-          <span class="text-base-content/50">{{ form.controls.notes.value.length }}/2000</span>
-        </label>
+        <div class="sm:col-span-2">
+          <div class="flex items-center gap-4">
+            <span class="h-px flex-1 bg-base-content/15"></span>
+            <button type="button" class="btn btn-ghost btn-sm gap-1.5 px-2 font-normal text-primary"
+                    (click)="showMoreInfo.set(!showMoreInfo())">
+              {{ showMoreInfo() ? 'Less info' : 'More info' }}
+              <svg class="size-4 transition-transform motion-reduce:transition-none"
+                   [class.rotate-180]="showMoreInfo()" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.5">
+                <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <span class="h-px flex-1 bg-base-content/15"></span>
+          </div>
+          @if (showMoreInfo()) {
+            <div class="mt-3 grid gap-4 sm:grid-cols-2">
+              <label class="fieldset">
+                <span class="fieldset-legend">Ownership</span>
+                <select class="select select-panel w-full" formControlName="ownership">
+                  @for (ownership of ownerships; track ownership) {
+                    <option [ngValue]="ownership">{{ ownershipLabels[ownership] }}</option>
+                  }
+                </select>
+              </label>
+
+              <div class="fieldset">
+                <span class="fieldset-legend">Achievements</span>
+                <div class="flex items-end gap-2">
+                  <label class="min-w-0 flex-1">
+                    <input class="input w-full placeholder:text-base-content/50" type="number" formControlName="achievementsUnlocked"
+                           min="0" max="2147483647" step="1" placeholder="Unlocked" />
+                  </label>
+                  <span class="self-center text-base-content/50">/</span>
+                  <label class="min-w-0 flex-1">
+                    <input class="input w-full placeholder:text-base-content/50" type="number" formControlName="achievementsTotal"
+                           min="0" max="2147483647" step="1" placeholder="Total" />
+                  </label>
+                </div>
+                @if (form.controls.achievementsUnlocked.touched || form.controls.achievementsTotal.touched) {
+                  @if (form.controls.achievementsUnlocked.invalid || form.controls.achievementsTotal.invalid) {
+                    <span class="text-error">Enter whole numbers between 0 and 2147483647.</span>
+                  } @else if (form.hasError('achievementsOrder')) {
+                    <span class="text-error">Unlocked achievements cannot exceed the total.</span>
+                  }
+                }
+              </div>
+
+              <label class="fieldset sm:col-span-2">
+                <span class="fieldset-legend">Notes</span>
+                <textarea class="textarea w-full" formControlName="notes" rows="3" maxlength="2000"
+                          placeholder="Your thoughts about the game"></textarea>
+                <span class="text-base-content/50">{{ form.controls.notes.value.length }}/2000</span>
+              </label>
+            </div>
+          }
+        </div>
       </fieldset>
 
       @if (errorMessage(); as message) {
         <div class="alert alert-error mt-4 font-bold">{{ message }}</div>
       }
 
-      <div class="modal-action">
-        <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="close()">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
-          @if (saving()) {
-            <span class="loading loading-spinner loading-sm"></span>
-          }
-          {{ saving() ? 'Saving...' : editingEntry() ? 'Edit game' : 'Add game' }}
-        </button>
-      </div>
-    </form>
-  </div>
+    </div>
+
+    <div class="modal-action m-0 shrink-0 border-t border-base-content/10 bg-base-100 px-6 py-4">
+      <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
+        @if (saving()) {
+          <span class="loading loading-spinner loading-sm"></span>
+        }
+        {{ saving() ? 'Saving...' : editingEntry() ? 'Edit game' : 'Add game' }}
+      </button>
+    </div>
+  </form>
   <div class="modal-backdrop"></div>
 </dialog>

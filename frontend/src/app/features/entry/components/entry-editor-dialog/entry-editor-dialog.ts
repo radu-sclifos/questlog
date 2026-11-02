@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { catchError, finalize, of, Subject, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GameService } from '../../../games/services/game.service';
+import { Platform } from '../../../games/models/platform';
 import { GameSuggestion } from '../../../games/models/game-suggestion';
 import { Entry, EntryOwnership, EntryStatus, SaveEntryRequest } from '../../models/entry';
 import { ENTRY_OWNERSHIP_LABELS, ENTRY_STATUS_LABELS } from '../../models/entry-labels';
@@ -21,6 +22,11 @@ export class EntryEditorDialog {
   private readonly gameService = inject(GameService);
   private readonly suggestionQueries = new Subject<string | null>();
 
+  private readonly platformQueries = new Subject<number | null>();
+  protected readonly platforms = signal<Platform[]>([]);
+  protected readonly platformsLoading = signal(false);
+  protected readonly platformsError = signal(false);
+
   protected readonly suggestions = signal<GameSuggestion[]>([]);
   protected readonly suggestionsLoading = signal(false);
   protected readonly suggestionsError = signal(false);
@@ -30,6 +36,7 @@ export class EntryEditorDialog {
   readonly savedEntry = output<Entry>();
   //meant to block the saving button and not allow the user to add multiple times the same Entry
   protected readonly saving = signal(false);
+  protected readonly showMoreInfo = signal(false);
   //if there's an Entry inside editingEntry that means that we're editing, so we apply the corresponding behavior
   protected readonly editingEntry = signal<Entry | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
@@ -40,6 +47,7 @@ export class EntryEditorDialog {
   protected readonly ownershipLabels = ENTRY_OWNERSHIP_LABELS;
 
   protected readonly form = new FormGroup({
+    platformId: new FormControl<number | null>(null),
     gameId: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
     title: new FormControl('', {
       nonNullable: true,
@@ -56,8 +64,18 @@ export class EntryEditorDialog {
       Validators.min(0),
       Validators.pattern(/^\d+$/),
     ]),
+    achievementsUnlocked: new FormControl<number | null>(null, [
+      Validators.min(0), Validators.max(2147483647), Validators.pattern(/^\d+$/),
+    ]),
+    achievementsTotal: new FormControl<number | null>(null, [
+      Validators.min(0), Validators.max(2147483647), Validators.pattern(/^\d+$/),
+    ]),
     notes: new FormControl('', { nonNullable: true, validators: Validators.maxLength(2000) }),
-  });
+  }, { validators: (control) => {
+    const { achievementsUnlocked, achievementsTotal } = control.value;
+    return achievementsUnlocked != null && achievementsTotal != null && achievementsUnlocked > achievementsTotal
+      ? { achievementsOrder: true } : null;
+  } });
 
   constructor() {
     this.suggestionQueries
@@ -90,6 +108,30 @@ export class EntryEditorDialog {
       )
       .subscribe((games) => this.suggestions.set(games));
 
+    // Changing or closing the game cancels any pending platform request.
+    this.platformQueries
+      .pipe(
+        switchMap((id) => {
+          this.platforms.set([]);
+          this.platformsError.set(false);
+          this.platformsLoading.set(id !== null);
+          if (id === null) {
+            return of(null);
+          }
+          return this.gameService.platforms(id).pipe(
+            catchError(() => {
+              this.platformsError.set(true);
+              return of(null);
+            }),
+            finalize(() => this.platformsLoading.set(false)),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((platforms) =>
+        this.platforms.set((platforms ?? []).sort((a, b) => a.name.localeCompare(b.name))),
+      );
+
     this.form.controls.title.valueChanges.pipe(takeUntilDestroyed()).subscribe((name) => {
       if (this.editingEntry()) { // Can't search for games if editing
         return;
@@ -97,6 +139,8 @@ export class EntryEditorDialog {
 
       // Typed text is not a selection, even when it matches the old name
       this.form.controls.gameId.setValue(null);
+      this.form.controls.platformId.setValue(null);
+      this.platformQueries.next(null);
       this.suggestionQueries.next(name.trim());
     });
   }
@@ -108,6 +152,8 @@ export class EntryEditorDialog {
 
     this.suggestionQueries.next(null);
     this.form.patchValue({ title: game.name, gameId: game.id }, { emitEvent: false });
+    this.form.controls.platformId.setValue(null);
+    this.platformQueries.next(game.id);
     this.titleFocused.set(false);
   }
 
@@ -151,26 +197,32 @@ export class EntryEditorDialog {
     this.suggestionQueries.next(null);
     this.titleFocused.set(false);
     this.editingEntry.set(entry);
+    this.showMoreInfo.set(false);
     this.form.reset(
       entry
         ? {
             title: entry.game.name,
             gameId: entry.game.id,
+            platformId: entry.platform?.id ?? null,
             score: entry.score,
             status: entry.status,
             ownership: entry.ownership,
             playtime: entry.playtime,
+            achievementsUnlocked: entry.achievementsUnlocked,
+            achievementsTotal: entry.achievementsTotal,
             notes: entry.notes ?? '',
           }
         : {},
       { emitEvent: false },
     );
+    this.platformQueries.next(entry?.game.id ?? null);
     this.errorMessage.set(null);
     this.dialog().nativeElement.showModal();
   }
 
   protected close(): void {
     if (!this.saving()) {
+      this.platformQueries.next(null);
       this.suggestionQueries.next(null);
       this.dialog().nativeElement.close();
     }
@@ -180,8 +232,13 @@ export class EntryEditorDialog {
     if (this.saving()) {
       event.preventDefault();
     } else {
+      this.platformQueries.next(null);
       this.suggestionQueries.next(null);
     }
+  }
+
+  protected retryPlatforms(): void {
+    this.platformQueries.next(this.form.controls.gameId.value);
   }
 
   protected normalizeScore(): void {
@@ -196,6 +253,10 @@ export class EntryEditorDialog {
       return;
     }
     this.form.markAllAsTouched();
+    if (this.form.hasError('achievementsOrder') || this.form.controls.achievementsUnlocked.invalid
+        || this.form.controls.achievementsTotal.invalid) {
+      this.showMoreInfo.set(true);
+    }
     if (this.form.invalid || this.form.controls.gameId.value === null) {
       return;
     }
@@ -206,10 +267,13 @@ export class EntryEditorDialog {
 
     const request: SaveEntryRequest = {
       gameId: this.form.controls.gameId.value,
+      platformId: value.platformId,
       score: value.score,
       status: value.status,
       ownership: value.ownership,
       playtime: value.playtime,
+      achievementsUnlocked: value.achievementsUnlocked,
+      achievementsTotal: value.achievementsTotal,
       notes: value.notes.trim() || null,
     };
 

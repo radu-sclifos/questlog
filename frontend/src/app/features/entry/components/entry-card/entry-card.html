@@ -15,7 +15,6 @@
 
       <span class="min-w-0">
         <span class="block wrap-break-word text-lg font-semibold sm:text-xl">{{ entry().game.name }}</span>
-        <span class="mt-1 block text-xs font-normal text-base-content/50">Coming soon</span>
         <span class="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
           <app-entry-status-badge [status]="entry().status" size="sm" />
           <span class="text-xs font-normal">Score: {{ entry().score ?? '—' }}</span>
@@ -39,8 +38,12 @@
     <div class="border-t border-base-content/10 p-5 pb-1 sm:p-6 sm:pb-1">
       <dl class="entry-card__details">
         <div>
-          <dt class="text-xs text-base-content/50">Genre</dt>
-          <dd class="mt-1 text-sm font-medium">—</dd>
+          <dt class="text-xs text-base-content/50">Reference platform</dt>
+          <dd class="mt-1 text-sm font-medium">{{ entry().platform?.name ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-base-content/50">Playtime</dt>
+          <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
         </div>
         <div>
           <dt class="text-xs text-base-content/50">Ownership</dt>
@@ -53,13 +56,9 @@
           </dd>
         </div>
         <div>
-          <dt class="text-xs text-base-content/50">Playtime</dt>
-          <dd class="mt-1 text-sm font-medium">{{ entry().playtime ?? '—' }} hours</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-base-content/50">Achievement</dt>
+          <dt class="text-xs text-base-content/50">Achievements</dt>
           <dd class="mt-1 text-sm font-medium">
-            Coming soon
+            {{ entry().achievementsUnlocked ?? '—' }} / {{ entry().achievementsTotal ?? '—' }}
           </dd>
         </div>
       </dl>

@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.entry;
 
+import com.radusclifos.questlog.game.Platform;
 import com.radusclifos.questlog.user.User;
 import com.radusclifos.questlog.game.Game;
 import jakarta.persistence.*;
@@ -29,6 +30,10 @@ public class Entry {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "platform_id")
+    private Platform platform;
+
     @Column
     private Double score;
 
@@ -45,6 +50,10 @@ public class Entry {
 
     @Column
     private Integer playtime;
+
+    private Integer achievementsUnlocked;
+
+    private Integer achievementsTotal;
 
     public Entry(Game game) {
         setGame(game);

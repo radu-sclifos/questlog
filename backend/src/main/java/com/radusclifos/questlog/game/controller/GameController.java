@@ -2,6 +2,7 @@ package com.radusclifos.questlog.game.controller;
 
 import com.radusclifos.questlog.game.dto.GameDto;
 import com.radusclifos.questlog.game.dto.GamePage;
+import com.radusclifos.questlog.game.dto.GamePlatform;
 import com.radusclifos.questlog.game.dto.GameSuggestion;
 import com.radusclifos.questlog.game.service.GameService;
 import com.radusclifos.questlog.shared.search.SearchCriteria;
@@ -32,6 +33,11 @@ public class GameController {
     @GetMapping("/{id}")
     public GameDto findById(@PathVariable Long id) {
         return games.findById(id);
+    }
+
+    @GetMapping("/{id}/platforms")
+    public List<GamePlatform> platforms(@PathVariable Long id) {
+        return games.platforms(id);
     }
 
 }

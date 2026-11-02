@@ -59,7 +59,7 @@
                 {{ entryPage.page + 1 }}
               </summary>
 
-              <ul class="pagination-menu menu rounded-box border border-base-content/30 bg-base-200 p-2 shadow-xl">
+              <ul class="pagination-menu dropdown-panel menu p-2">
                 @for (pageIndex of pageOptions(); track pageIndex) {
                   <li>
                     <button type="button" class="justify-center" [class.bg-primary]="pageIndex === entryPage.page"

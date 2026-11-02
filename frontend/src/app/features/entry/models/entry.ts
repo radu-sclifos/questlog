@@ -1,3 +1,4 @@
+import { Platform } from '../../games/models/platform';
 import { EntryGame } from './entry-game';
 
 export enum EntryStatus {
@@ -20,19 +21,25 @@ export enum EntryOwnership {
 
 export interface SaveEntryRequest {
   gameId: number;
+  platformId: number | null;
   score: number | null;
   notes: string | null;
   status: EntryStatus | null;
   ownership: EntryOwnership | null;
   playtime: number | null;
+  achievementsUnlocked: number | null;
+  achievementsTotal: number | null;
 }
 
 export interface Entry {
   id: number;
   game: EntryGame;
+  platform: Platform | null;
   score: number | null;
   notes: string | null;
   status: EntryStatus;
   ownership: EntryOwnership | null;
   playtime: number | null;
+  achievementsUnlocked: number | null;
+  achievementsTotal: number | null;
 }

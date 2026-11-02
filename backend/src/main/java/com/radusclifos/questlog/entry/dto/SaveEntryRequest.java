@@ -3,7 +3,6 @@ package com.radusclifos.questlog.entry.dto;
 import com.radusclifos.questlog.entry.EntryOwnership;
 import com.radusclifos.questlog.entry.EntryStatus;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class SaveEntryRequest {
 
     @NotNull
@@ -30,5 +28,24 @@ public class SaveEntryRequest {
     private EntryOwnership ownership;
 
     private Integer playtime;
+
+    @PositiveOrZero
+    private Integer achievementsUnlocked;
+
+    @PositiveOrZero
+    private Integer achievementsTotal;
+
+    @Positive
+    private Long platformId;
+
+    public SaveEntryRequest(Long gameId, Double score, String notes, EntryStatus status,
+                            EntryOwnership ownership, Integer playtime) {
+        this.gameId = gameId;
+        this.score = score;
+        this.notes = notes;
+        this.status = status;
+        this.ownership = ownership;
+        this.playtime = playtime;
+    }
 
 }

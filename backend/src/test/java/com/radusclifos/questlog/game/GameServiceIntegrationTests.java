@@ -87,4 +87,32 @@ class GameServiceIntegrationTests {
                 service.suggestions("bALDur", 10));
     }
 
+    @Test
+    void platformsReturnsOnlyLinkedPlatformsAndDistinguishesMissingGames() {
+        var id = new TransactionTemplate(transactions).execute(status -> {
+            var game = new Game("Platform lookup", null);
+            var pc = new Platform("PC");
+            var console = new Platform("Console");
+            em.persist(pc);
+            em.persist(console);
+            em.persist(new Platform("Unrelated"));
+            game.getPlatforms().add(pc);
+            game.getPlatforms().add(console);
+            em.persist(game);
+            return game.getId();
+        });
+        var platforms = service.platforms(id);
+        assertEquals(List.of("Console", "PC"), platforms.stream().map(p -> p.name()).toList());
+        assertNotNull(platforms.getFirst().id());
+        var emptyId = new TransactionTemplate(transactions).execute(status -> {
+            var game = new Game("No platforms", null);
+            em.persist(game);
+            return game.getId();
+        });
+        assertTrue(service.platforms(emptyId).isEmpty());
+        var error = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> service.platforms(Long.MAX_VALUE));
+        assertEquals(404, error.getStatusCode().value());
+    }
+
 }

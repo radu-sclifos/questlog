@@ -104,3 +104,18 @@ gameId e campi personali, senza title. Chiusura e selezione annullano la ricerca
 
 Il salvataggio dell'editor gestisce HTTP 409 mostrando "This game is already in
 your library." e lascia il dialog aperto con i dati inseriti.
+
+La piattaforma di riferimento è opzionale: Entry.platform espone id/name e
+SaveEntryRequest.platformId invia la scelta. L’editor carica le piattaforme con
+GET /api/games/{id}/platforms dopo la selezione e in modifica, annullando richieste obsolete.
+Il backend verifica che la piattaforma appartenga al gioco.
+
+Nell’editor, Status e Reference platform sono affiancati su desktop. Ownership e
+Notes sono nella sezione More info, chiusa a ogni apertura; richiuderla conserva i valori.
+
+I pannelli dei menu condividono lo stile globale in src/tailwind.css: dropdown-panel
+per menu HTML e select-panel per ::picker(select), senza modificare il campo chiuso.
+
+Achievements: Entry e SaveEntryRequest espongono achievementsUnlocked e achievementsTotal,
+interi opzionali non negativi. In More info i due input sono affiancati; se entrambi
+indicati, unlocked non può superare total. La card mostra unlocked / total.

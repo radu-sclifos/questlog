@@ -128,4 +128,19 @@ class GameControllerTests {
     void missingGameReturnsNotFound() throws Exception {
         mvc.perform(get("/games/1")).andExpect(status().isNotFound());
     }
+    @Test
+    void readsPlatformsWithoutLoadingGameDetails() throws Exception {
+        when(repository.existsById(1L)).thenReturn(true);
+        when(repository.findPlatformsByGameId(1L)).thenReturn(List.of(
+                new com.radusclifos.questlog.game.dto.GamePlatform(2L, "PC")));
+        mvc.perform(get("/games/1/platforms"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[{\"id\":2,\"name\":\"PC\"}]"));
+        verify(repository, never()).findById(any());
+        mvc.perform(get("/games/99/platforms")).andExpect(status().isNotFound());
+        when(repository.existsById(3L)).thenReturn(true);
+        mvc.perform(get("/games/3/platforms"))
+                .andExpect(status().isOk()).andExpect(content().json("[]"));
+    }
+
 }
