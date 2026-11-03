@@ -52,6 +52,12 @@ export class AuthService {
       .pipe(tap(() => this.clearSession()));
   }
 
+  updateProfile(displayName: string, bio: string | null): Observable<UserProfile> {
+    return this.http.patch<UserProfile>('/api/me', { displayName, bio }).pipe(
+      tap(user => this.currentUser.set(user)),
+    );
+  }
+
   clearSession(): void {
     this.currentUser.set(null);
     this.unavailable.set(false);

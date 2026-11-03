@@ -39,6 +39,7 @@ public class UserService {
     public UserResponse update(Principal principal, UpdateProfileRequest request) {
         User user = current(principal);
         user.rename(request.getDisplayName());
+        user.describe(request.getBio());
         return UserResponse.from(user);
     }
 

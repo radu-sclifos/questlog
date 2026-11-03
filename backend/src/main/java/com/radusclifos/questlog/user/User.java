@@ -1,8 +1,11 @@
 package com.radusclifos.questlog.user;
 
-import jakarta.persistence.*;
 import com.radusclifos.questlog.shared.search.SearchIgnore;
-import lombok.*;
+import io.micrometer.common.util.StringUtils;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
@@ -21,6 +24,9 @@ public class User {
 
     @Column(nullable = false, length = 100)
     private String displayName;
+
+    @Column(length = 300)
+    private String bio;
 
     @Column(nullable = false)
     @SearchIgnore
@@ -45,6 +51,14 @@ public class User {
 
     public void disable() {
         this.enabled = false;
+    }
+
+    public void describe(String bio) {
+        if (StringUtils.isBlank(bio)) {
+            this.bio = null;
+        } else {
+            this.bio = bio.strip();
+        }
     }
 
 }

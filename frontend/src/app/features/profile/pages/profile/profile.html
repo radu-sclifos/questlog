@@ -1,0 +1,195 @@
+<app-entry-navbar [canEdit]="canEdit()" [username]="username()" [profilePage]="true" />
+<app-profile-editor #editor (saved)="reload()" (avatarChanged)="updateAvatar($event)" />
+<app-favorites-editor #favoritesEditor (saved)="reload()" />
+
+<div class="mx-auto max-w-5xl">
+  <header class="mb-8 flex flex-wrap items-end gap-x-5 gap-y-2">
+    <app-logo class="block w-48 sm:w-56" />
+    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary sm:mb-2">Your game diary</p>
+  </header>
+
+  @if (error(); as message) {
+    <div class="rounded-box border border-base-content/10 bg-base-100 p-8">
+      <h1 class="text-xl font-semibold">{{ message }}</h1>
+      <a routerLink="/" class="btn btn-primary btn-sm mt-5">Go home</a>
+    </div>
+  } @else if (profile(); as user) {
+    <section class="profile-heading">
+      <div class="profile-avatar">
+        @if (avatar(); as url) {
+          @if (!imageFailed()) {
+            <img [src]="url" [alt]="user.displayName + ' profile picture'" class="h-full w-full object-cover"
+                 (error)="imageFailed.set(true)" />
+          } @else {
+            {{ initials(user.displayName) }}
+          }
+        } @else {
+          {{ initials(user.displayName) }}
+        }
+      </div>
+      <div class="min-w-0">
+        <h1 class="wrap-break-word text-3xl font-bold tracking-tight sm:text-4xl">{{ user.displayName }}</h1>
+        <p class="mt-1 wrap-break-word text-sm text-base-content/60">
+          &#64;{{ user.username }}
+        </p>
+        <p class="mt-1 text-xs text-base-content/50">
+          Member since {{ user.createdAt | date:'MMMM yyyy' }}
+        </p>
+        @if (user.bio) {
+          <p
+            class="mt-4 max-w-xl whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-base-content/80">{{ user.bio }}</p>
+        } @else if (canEdit()) {
+          <button type="button" class="mt-4 cursor-pointer text-left text-sm text-base-content/50 hover:text-primary"
+                  (click)="editor.open(user)">
+            Add a bio to tell your story.
+          </button>
+        }
+      </div>
+      <div class="profile-actions">
+        @if (canEdit()) {
+          <button type="button" class="btn btn-outline btn-sm" (click)="editor.open(user)">Edit profile</button>
+        }
+        <a class="btn btn-primary btn-sm" [routerLink]="['/list', user.username]">View library</a>
+      </div>
+    </section>
+
+    <dl class="profile-stats">
+      <div>
+        <dd>{{ user.statistics.totalGames | number }}</dd>
+        <dt>Games in library</dt>
+      </div>
+      <div>
+        <dd>
+          @if (user.statistics.averageRating !== null) {
+            {{ user.statistics.averageRating | number:'1.1-1' }} <span class="text-lg text-base-content/50">/ 10</span>
+          } @else {
+            —
+          }
+        </dd>
+        <dt>Average rating</dt>
+        <p>{{ user.statistics.ratedGames | number }} rated games</p>
+      </div>
+      <div>
+        <dd>{{ user.statistics.finishedGames | number }}</dd>
+        <dt>Finished games</dt>
+        <p>Beaten + Completed</p>
+      </div>
+      <div>
+        <dd>
+          @if (user.statistics.loggedPlaytime !== null) {
+            {{ user.statistics.loggedPlaytime | number }} <span class="text-lg text-base-content/50">h</span>
+          } @else {
+            —
+          }
+        </dd>
+        <dt>Logged playtime</dt>
+      </div>
+    </dl>
+
+    <div class="profile-overview">
+      <section class="profile-panel">
+        <h2 class="text-lg font-semibold">Library breakdown</h2>
+        <div class="profile-breakdown">
+          <div class="profile-donut" [style.background]="donut()" title="Games grouped by status">
+            <div>
+              <strong class="text-3xl font-bold">{{ user.statistics.totalGames | number }}</strong>
+              <span class="text-sm text-base-content/60">games</span>
+            </div>
+          </div>
+          <ul class="min-w-0 flex-1 space-y-1">
+            @for (item of statuses(); track item.status) {
+              <li>
+                <a class="flex items-center gap-3 rounded-lg px-2 py-1 text-sm transition-colors hover:bg-base-200"
+                   [routerLink]="['/list', user.username]" [queryParams]="{ status: item.status }">
+                  <span class="size-2.5 shrink-0 rounded-sm" [style.background]="item.color"></span>
+                  <span class="flex-1">{{ item.label }}</span><span
+                  class="tabular-nums">{{ item.count | number }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+        <p class="mt-4 text-xs text-base-content/50">
+          @if (user.statistics.totalGames) {
+            Select a status to explore the library.
+          } @else {
+            The story starts with the first game.
+          }
+        </p>
+      </section>
+
+      @if (user.currentlyPlaying.length) {
+        <section class="profile-panel">
+          <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-lg font-semibold">Currently playing</h2>
+            <a class="text-xs text-primary hover:underline" [routerLink]="['/list', user.username]"
+               [queryParams]="{ status: EntryStatus.PLAYING }">
+              View all {{ user.statistics.statuses.PLAYING }} →
+            </a>
+          </div>
+          <div class="space-y-3">
+            @for (entry of user.currentlyPlaying; track entry.game.id) {
+              <a class="playing-row group" [routerLink]="['/game', entry.game.id]">
+                <app-game-cover class="block w-12 shrink-0" [imageId]="entry.game.coverImageId" />
+                <div class="min-w-0">
+                  <h3 class="wrap-break-word text-sm font-semibold group-hover:text-primary">{{ entry.game.name }}</h3>
+                  <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-base-content/50">
+                    @if (entry.platform) {
+                      <span>{{ entry.platform.name }}</span>
+                    }
+                    @if (entry.playtime !== null) {
+                      <span>{{ entry.playtime | number }} h</span>
+                    }
+                  </p>
+                </div>
+              </a>
+            }
+          </div>
+        </section>
+      } @else if (canEdit()) {
+        <section class="profile-panel">
+          <h2 class="text-lg font-semibold">Currently playing</h2>
+          <p class="mt-4 text-sm leading-relaxed text-base-content/60">
+            What’s your next adventure? Set a game to Playing
+            in your library to show it here.
+          </p>
+          <a class="btn btn-outline btn-sm mt-5" [routerLink]="['/list', user.username]">Explore your library</a>
+        </section>
+      }
+    </div>
+
+    @if (user.favorites.length || canEdit()) {
+      <section class="profile-panel mt-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold">Favorite games</h2>
+            <p class="mt-1 text-sm text-base-content/50">The games that stayed with {{ canEdit() ? 'you' : 'me' }}.</p>
+          </div>
+          @if (canEdit()) {
+            <button type="button" class="btn btn-ghost btn-sm text-primary"
+                    (click)="favoritesEditor.open(user.favorites)">{{ user.favorites.length ? 'Edit favorites' : 'Choose favorites' }}
+            </button>
+          }
+        </div>
+        @if (user.favorites.length) {
+          <div class="profile-favorites">
+            @for (game of user.favorites; track game.id) {
+              <a class="group block min-w-0" [routerLink]="['/game', game.id]">
+                <app-game-cover [imageId]="game.coverImageId" />
+                <h3 class="mt-3 wrap-break-word text-sm font-semibold group-hover:text-primary">{{ game.name }}</h3>
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="mt-6 rounded-lg bg-base-200 p-5 text-sm text-base-content/50">
+            Pick up to five favorites to make this profile yours.
+          </p>
+        }
+      </section>
+    }
+  } @else if (loading()) {
+    <div class="flex items-center gap-3 py-16 text-sm text-base-content/60">
+      <span class="loading loading-spinner loading-sm text-primary"></span> Loading profile…
+    </div>
+  }
+</div>

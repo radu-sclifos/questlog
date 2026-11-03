@@ -2,6 +2,9 @@ package com.radusclifos.questlog.user;
 import com.radusclifos.questlog.config.SecurityConfig;
 import com.radusclifos.questlog.auth.controller.AuthController;
 import com.radusclifos.questlog.user.controller.UserController;
+import com.radusclifos.questlog.user.controller.CurrentUserController;
+import com.radusclifos.questlog.user.service.ProfileService;
+import com.radusclifos.questlog.user.service.AvatarService;
 import com.radusclifos.questlog.user.repository.UserRepository;
 import com.radusclifos.questlog.user.service.UserService;
 import com.radusclifos.questlog.entry.service.EntryService;
@@ -22,8 +25,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 class SecurityTests {
     @Configuration @EnableWebMvc @EnableWebSecurity
-    @Import({SecurityConfig.class,AuthController.class,UserController.class,UserService.class,com.radusclifos.questlog.entry.controller.EntryController.class})
+    @Import({SecurityConfig.class,AuthController.class,UserController.class,CurrentUserController.class,UserService.class,com.radusclifos.questlog.entry.controller.EntryController.class})
     static class Config {
+        @Bean ProfileService profiles() { return mock(ProfileService.class); }
+        @Bean AvatarService avatars() { return mock(AvatarService.class); }
         @Bean UserRepository users() { return mock(UserRepository.class); }
         @Bean com.radusclifos.questlog.entry.repository.EntryRepository entryRepository() {
             var repository = mock(com.radusclifos.questlog.entry.repository.EntryRepository.class);

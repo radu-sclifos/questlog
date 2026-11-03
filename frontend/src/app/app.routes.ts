@@ -3,6 +3,11 @@ import { homeRedirectGuard } from './features/auth/guards/home-redirect.guard';
 
 export const routes: Routes = [
   {
+    path: 'user/:username',
+    title: 'Profile - QuestLog',
+    loadComponent: () => import('./features/profile/pages/profile/profile').then(m => m.Profile),
+  },
+  {
     path: 'login',
     title: 'Sign in',
     loadComponent: () =>

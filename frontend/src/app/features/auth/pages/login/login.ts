@@ -48,7 +48,7 @@ export class Login {
       next: (user) => {
         this.form.controls.password.reset();
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        if (returnUrl?.startsWith('/list/')) {
+        if (returnUrl?.startsWith('/list/') || returnUrl?.startsWith('/user/')) {
           void this.router.navigateByUrl(returnUrl);
         } else {
           void this.router.navigate(['/list', user.username]);

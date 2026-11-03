@@ -12,6 +12,8 @@ import { ToastService } from '../../../../shared/toast/toast.service';
 })
 export class EntryNavbar {
   readonly canEdit = input(true);
+  readonly username = input('');
+  readonly profilePage = input(false);
   readonly addEntry = output<void>();
   private readonly auth = inject(AuthService);
   protected readonly user = this.auth.user;

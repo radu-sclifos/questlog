@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValueChangeEvent } from '@angular/forms';
 import { filter, of, switchMap, timer } from 'rxjs';
@@ -16,6 +16,7 @@ import { FilterOperator } from '../../../../shared/search/filter-criteria';
 })
 export class EntryListHeader {
   readonly criteriaChange = output<SearchCriteria>();
+  readonly selectedStatus = input<EntryStatus | ''>('');
 
   private readonly fb = inject(FormBuilder).nonNullable;
   protected readonly form = this.fb.group({
@@ -30,6 +31,9 @@ export class EntryListHeader {
   protected readonly SortDirection = SortDirection;
 
   constructor() {
+    effect(() => {
+      this.form.patchValue({ status: this.selectedStatus() }, { emitEvent: false });
+    });
     this.form.events
       .pipe(
         filter((event) => event instanceof ValueChangeEvent),
