@@ -16,7 +16,8 @@
     </section>
   } @else if (game(); as game) {
     <header class="game-heading mb-8">
-      <app-game-cover class="block min-w-0" [imageId]="game.coverImageId" />
+
+      <app-game-cover class="block min-w-0" [imageId]="game.coverImageId" [zoomable]="true" [name]="game.name" />
 
       <div class="min-w-0 py-1 sm:py-4">
         <h1 class="wrap-break-word text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
@@ -85,26 +86,27 @@
       @if (relationGroups().length) {
         <section class="card border border-base-content/10 bg-base-100/80 p-5 sm:p-6">
           <h2 class="text-[1.375rem] font-semibold">Related games</h2>
+
           @for (group of relationGroups(); track group.type) {
             <section class="relation-group">
               <h3 class="mb-3 text-sm font-semibold text-base-content/60">
                 {{ group.label }} · {{ group.games.length }}
               </h3>
+
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 @for (related of group.games; track related.id) {
-                  <a
-                    class="flex min-w-0 items-center gap-3 rounded-lg p-2 transition-colors hover:bg-base-content/5"
-                    [routerLink]="['/game', related.id]"
-                  >
+                  <a class="flex min-w-0 items-center gap-3 rounded-lg p-2 transition-colors hover:bg-base-content/5"
+                     [routerLink]="['/game', related.id]">
                     <app-game-cover class="block w-14 shrink-0" [imageId]="related.coverImageId" />
-                    <span class="min-w-0 wrap-break-word text-sm font-medium">{{
-                      related.name
-                    }}</span>
+                    <span class="min-w-0 wrap-break-word text-sm font-medium">
+                      {{ related.name }}
+                    </span>
                   </a>
                 }
               </div>
             </section>
           }
+
         </section>
       }
     </div>

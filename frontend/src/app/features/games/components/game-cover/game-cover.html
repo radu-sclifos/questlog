@@ -1,13 +1,38 @@
 <div class="flex aspect-3/4 w-full items-center justify-center overflow-hidden rounded-lg bg-base-200">
 
   @if (url(); as url) {
-    <img
-      [src]="url"
-      alt=""
-      class="h-full w-full object-cover"
-      loading="lazy"
-      (error)="imageFailed.set(true)"
-    />
+    @if (zoomable()) {
+      <button type="button" class="h-full w-full cursor-zoom-in" title="Enlarge cover"
+              (click)="coverDialog.showModal()">
+        <img [src]="url" [alt]="name()" class="h-full w-full object-cover" loading="lazy"
+             (error)="imageFailed.set(true)" />
+      </button>
+
+      <dialog #coverDialog class="modal">
+        <div class="modal-box relative w-auto max-w-[calc(100vw-2rem)] overflow-visible bg-base-100 p-0">
+          <form method="dialog">
+            <button type="submit" class="btn btn-circle btn-sm absolute right-3 top-3 z-10" title="Close cover">
+              ✕
+            </button>
+          </form>
+          @if (previewFailed()) {
+            <p class="px-10 py-12 text-sm text-base-content/60">
+              Unable to load the enlarged cover.
+            </p>
+          } @else {
+            <img [src]="previewUrl()" loading="lazy" [alt]="name()"
+                 class="max-h-[85dvh] max-w-full rounded-lg object-contain"
+                 (error)="previewFailed.set(true)" />
+          }
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button type="submit">Close</button>
+        </form>
+      </dialog>
+    } @else {
+      <img [src]="url" alt="" class="h-full w-full object-cover" loading="lazy"
+           (error)="imageFailed.set(true)" />
+    }
   } @else {
     <span class="text-center text-xs uppercase tracking-wider text-base-content/40">No cover</span>
   }

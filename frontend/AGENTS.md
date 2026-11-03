@@ -149,3 +149,7 @@ La cover e il nome in EntryCard sono link a /game/:id. Fermano la propagazione
 per evitare di espandere la card durante la navigazione. Il resto della riga e
 il pulsante freccia continuano a espandere/richiudere i dettagli; i link non sono
 annidati nel pulsante di espansione.
+
+La cover principale della scheda abilita GameCover.zoomable: apre un dialog nativo
+con classi modal DaisyUI, immagine IGDB t_1080p e backdrop oscurato. Si chiude con
+Esc, pulsante o click esterno. Le cover correlate mantengono solo la navigazione.
