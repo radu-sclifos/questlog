@@ -1,11 +1,12 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Entry } from '../../models/entry';
 import { ENTRY_OWNERSHIP_LABELS } from '../../models/entry-labels';
 
 import { EntryStatusBadge } from '../entry-status-badge/entry-status-badge';
 
 @Component({
-  imports: [EntryStatusBadge],
+  imports: [EntryStatusBadge, RouterLink],
   selector: 'app-entry-card',
   templateUrl: './entry-card.html',
   styleUrl: './entry-card.scss',

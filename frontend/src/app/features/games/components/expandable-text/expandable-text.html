@@ -1,0 +1,23 @@
+<dt class="mb-[0.35rem] flex items-baseline justify-between gap-3 text-xs text-base-content/50">
+  <span>{{ label() }}</span>
+  @if (overflowing()) {
+    <button
+      type="button"
+      class="btn btn-link btn-xs h-auto min-h-0 shrink-0 p-0 font-normal no-underline hover:underline"
+      (click)="toggle()">
+      {{ expanded() ? 'Show less' : 'Show all' }}
+    </button>
+  }
+</dt>
+<dd class="text-sm leading-[1.7] wrap-anywhere">
+  <p #content [class.line-clamp-2]="!expanded()">
+    @for (value of values(); track $index) {
+      @if (!$first) {
+        <span
+          class="mx-2 inline-block size-[3px] rounded-full bg-base-content/60 align-middle"
+        ></span>
+      }
+      {{ value }}
+    }
+  </p>
+</dd>

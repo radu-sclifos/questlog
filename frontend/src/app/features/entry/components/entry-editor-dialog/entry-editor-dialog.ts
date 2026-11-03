@@ -221,6 +221,11 @@ export class EntryEditorDialog {
     this.dialog().nativeElement.showModal();
   }
 
+  openForGame(game: GameSuggestion): void {
+    this.open();
+    this.selectGame(game);
+  }
+
   protected close(): void {
     if (!this.saving()) {
       this.platformQueries.next(null);
