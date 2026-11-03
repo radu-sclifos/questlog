@@ -126,7 +126,8 @@ indicati, unlocked non può superare total. La card mostra unlocked / total.
 `features/games/pages/game-detail/` espone `/game/:id` pubblica e lazy-loaded,
 con ID interno e dettaglio da `GET /api/games/{id}`. Il titolo del documento segue
 il nome del gioco. ID invalidi e 404 mostrano Game not found; gli altri errori
-mostrano un messaggio senza retry manuale. Il cambio rotta annulla richieste precedenti.
+mostrano un messaggio senza retry manuale. Il cambio rotta annulla richieste precedenti e riporta la pagina in cima tramite
+ViewportScroller, anche navigando tra giochi correlati nello stesso componente.
 
 Layout: intestazione libera con cover; Your journey; bolla unica con About aperto,
 Storyline chiuso e Game details; Related games raggruppati per relazione.

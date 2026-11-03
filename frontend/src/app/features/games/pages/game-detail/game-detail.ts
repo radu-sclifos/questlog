@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -35,6 +35,7 @@ export class GameDetail {
   private readonly games = inject(GameService);
   private readonly route = inject(ActivatedRoute);
   private readonly title = inject(Title);
+  private readonly viewportScroller = inject(ViewportScroller);
 
   protected readonly game = signal<Game | null>(null);
   protected readonly loading = signal(true);
@@ -82,8 +83,8 @@ export class GameDetail {
     this.route.paramMap
       .pipe(
         map((params) => params.get('id') ?? ''),
-        switchMap((id) => this.loadGame(id)),
         distinctUntilChanged(),
+        switchMap((id) => this.loadGame(id)),
         takeUntilDestroyed(),
       )
       .subscribe((game) => {
@@ -93,6 +94,7 @@ export class GameDetail {
   }
 
   private loadGame(id: string) {
+    this.viewportScroller.scrollToPosition([0, 0]);
     this.game.set(null);
     this.error.set(null);
     this.notFound.set(false);
