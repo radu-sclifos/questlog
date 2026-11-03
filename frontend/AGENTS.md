@@ -36,7 +36,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 | --- | --- | --- |
 | Bootstrap | `src/app/app.config.ts` | Router, HTTP/interceptor, inizializzazione sessione |
 | Shell | `src/app/app.html` | Contenitore principale, router outlet, toast globali |
-| Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, redirect iniziale |
+| Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, redirect iniziale |
 | Autenticazione | `src/app/features/auth/` | Login, servizio sessione, interceptor, guard |
 | Libreria | `src/app/features/entry/pages/entry-list/` | Ricerca, paginazione, permessi UI, refresh dopo CRUD |
 | Componenti entry | `src/app/features/entry/components/` | Navbar, header filtri, card espandibili, dialog editor/eliminazione, badge stato |
@@ -119,3 +119,27 @@ per menu HTML e select-panel per ::picker(select), senza modificare il campo chi
 Achievements: Entry e SaveEntryRequest espongono achievementsUnlocked e achievementsTotal,
 interi opzionali non negativi. In More info i due input sono affiancati; se entrambi
 indicati, unlocked non può superare total. La card mostra unlocked / total.
+
+
+## Scheda gioco
+
+`features/games/pages/game-detail/` espone `/game/:id` pubblica e lazy-loaded,
+con ID interno e dettaglio da `GET /api/games/{id}`. Il titolo del documento segue
+il nome del gioco. ID invalidi e 404 mostrano Game not found; gli altri errori
+mostrano un messaggio senza retry manuale. Il cambio rotta annulla richieste precedenti.
+
+Layout: intestazione libera con cover; Your journey; bolla unica con About aperto,
+Storyline chiuso e Game details; Related games raggruppati per relazione.
+About e Storyline usano details nativi e sono assenti quando privi di testo.
+I dettagli hanno due colonne uguali su desktop (piattaforme incluse), una su mobile.
+ExpandableText limita i valori a due righe e mostra Show all / Show less solo in caso
+di overflow reale, ricalcolato al ridimensionamento. I campi principali restano visibili
+anche vuoti con un trattino; Porting e Supporting studios compaiono insieme quando almeno uno dei due è valorizzato;
+se entrambi sono vuoti la loro riga è nascosta. Le categorie di relazioni vuote non compaiono.
+
+`game-journey` è visibile solo agli autenticati e cerca esclusivamente l'entry
+con username della sessione e filtro game.id, indipendentemente dalla provenienza
+della navigazione. Caricamento ed errori sono separati dalla scheda pubblica, senza retry manuale.
+Riusa EntryEditorDialog per modifica o aggiunta con gioco preselezionato tramite
+openForGame. Dopo il salvataggio usa direttamente l'entry restituita dal dialog; le note non compaiono nella scheda.
+`game-cover` gestisce il CDN IGDB e il fallback anche per i giochi correlati.

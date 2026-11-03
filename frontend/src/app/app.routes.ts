@@ -22,5 +22,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/entry/pages/entry-list/entry-list').then((m) => m.EntryList),
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'game/:id',
+    title: 'Game - QuestLog',
+    loadComponent: () =>
+      import('./features/games/pages/game-detail/game-detail').then((m) => m.GameDetail),
+  },
+  {
+    path: '**',
+    redirectTo: ''
+  },
 ];

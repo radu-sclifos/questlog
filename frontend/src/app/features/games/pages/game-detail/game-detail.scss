@@ -1,0 +1,52 @@
+.game-heading {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1.25rem;
+
+  @media (min-width: 40rem) {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+
+.game-section + .game-details-section {
+  border-top: 1px solid color-mix(in oklab, var(--color-base-content) 15%, transparent);
+}
+
+.game-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 2rem;
+
+  > div {
+    min-width: 0;
+    padding-block: 1rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  }
+
+  dt {
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+    color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+  }
+
+  dd {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 40rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.relation-group {
+  margin-top: 1.25rem;
+
+  + .relation-group {
+    padding-top: 1.25rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  }
+}

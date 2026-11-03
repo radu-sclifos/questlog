@@ -1,0 +1,15 @@
+<div class="flex aspect-3/4 w-full items-center justify-center overflow-hidden rounded-lg bg-base-200">
+
+  @if (url(); as url) {
+    <img
+      [src]="url"
+      alt=""
+      class="h-full w-full object-cover"
+      loading="lazy"
+      (error)="imageFailed.set(true)"
+    />
+  } @else {
+    <span class="text-center text-xs uppercase tracking-wider text-base-content/40">No cover</span>
+  }
+
+</div>

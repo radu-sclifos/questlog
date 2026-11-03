@@ -1,0 +1,67 @@
+@if (auth.user()) {
+
+  <section class="card border border-base-content/10 bg-base-100/80 px-5 pb-5 pt-3.5 sm:px-6 sm:pb-6">
+    <div class="flex min-h-8 flex-wrap items-center justify-between gap-3 border-b border-base-content/10 pb-4">
+      <h2 class="text-[1.375rem] font-semibold">Your journey</h2>
+      @if (!loading() && !error() && entry()) {
+        <button class="btn btn-sm btn-outline btn-primary" type="button" (click)="edit()">
+          Edit entry
+        </button>
+      }
+    </div>
+    @if (loading()) {
+      <p class="mt-4 text-sm text-base-content/60">
+        <span class="loading loading-spinner loading-xs mr-2"></span>Loading your journey…
+      </p>
+    } @else if (error()) {
+      <p class="mt-4 text-sm text-base-content/60">Unable to load your journey.</p>
+    } @else if (entry(); as entry) {
+      <div class="mt-5">
+
+        <dl class="journey-stats">
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <app-entry-status-badge [status]="entry.status" />
+            </dd>
+          </div>
+
+          <div>
+            <dt>Your score</dt>
+            <dd class="journey-stats__score text-primary">{{ entry.score ?? '—' }}</dd>
+          </div>
+
+          <div>
+            <dt>Reference platform</dt>
+            <dd>{{ entry.platform?.name ?? '—' }}</dd>
+          </div>
+
+          <div>
+            <dt>Playtime</dt>
+            <dd>
+              {{ entry.playtime === null ? '—' : entry.playtime + ' h' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Achievements</dt>
+            <dd>
+              {{ entry.achievementsUnlocked ?? '—' }} / {{ entry.achievementsTotal ?? '—' }}
+            </dd>
+          </div>
+        </dl>
+
+      </div>
+    } @else {
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <p class="text-sm text-base-content/60">Your journey with this game hasn't started yet.</p>
+        <button class="btn btn-sm btn-primary" type="button" (click)="edit()">
+          Add to library
+        </button>
+      </div>
+    }
+  </section>
+
+  <app-entry-editor-dialog (savedEntry)="onSaved($event)" />
+
+}

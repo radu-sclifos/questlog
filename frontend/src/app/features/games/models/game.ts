@@ -1,16 +1,48 @@
-export type GameStatus = 'Playing' | 'On-hold' | 'Dropped' | 'Completed' | 'Planned';
-
-export interface Game {
+export interface GameReference {
   id: number;
-  title: string;
-  platform: string;
+  igdbId: number;
+  name: string;
+}
+
+export interface GameSummary extends GameReference {
   coverImageId: string | null;
-  rating: number | null;
-  status: GameStatus;
-  genre: string;
-  ownership: string;
-  hoursPlayed: number;
-  achievementsUnlocked: number;
-  achievementsTotal: number;
-  notes: string;
+}
+
+export interface GameCompany {
+  company: GameReference;
+  developer: boolean;
+  publisher: boolean;
+  porting: boolean;
+  supporting: boolean;
+}
+
+export type GameRelationType =
+  | 'PARENT_GAME'
+  | 'VERSION_OF'
+  | 'DLC'
+  | 'EXPANSION'
+  | 'STANDALONE_EXPANSION'
+  | 'REMAKE'
+  | 'REMASTER'
+  | 'PORT'
+  | 'EXPANDED_GAME'
+  | 'FORK';
+
+export interface GameRelation {
+  relationType: GameRelationType;
+  game: GameSummary;
+}
+
+export interface Game extends GameSummary {
+  firstReleaseDate: string | null;
+  summary: string | null;
+  storyline: string | null;
+  gameType: GameReference | null;
+  platforms: GameReference[];
+  genres: GameReference[];
+  engines: GameReference[];
+  franchises: GameReference[];
+  series: GameReference[];
+  involvedCompanies: GameCompany[];
+  relations: GameRelation[];
 }
