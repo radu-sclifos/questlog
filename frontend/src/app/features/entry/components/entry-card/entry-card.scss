@@ -29,6 +29,19 @@
   aspect-ratio: 3 / 4;
   width: 100%;
   overflow: hidden;
+  transition: box-shadow 180ms ease;
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--color-primary) 70%, transparent),
+        0 0 14px color-mix(in oklab, var(--color-primary) 35%, transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .entry-card__details {

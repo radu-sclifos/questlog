@@ -143,3 +143,8 @@ della navigazione. Caricamento ed errori sono separati dalla scheda pubblica, se
 Riusa EntryEditorDialog per modifica o aggiunta con gioco preselezionato tramite
 openForGame. Dopo il salvataggio usa direttamente l'entry restituita dal dialog; le note non compaiono nella scheda.
 `game-cover` gestisce il CDN IGDB e il fallback anche per i giochi correlati.
+
+La cover e il nome in EntryCard sono link a /game/:id. Fermano la propagazione
+per evitare di espandere la card durante la navigazione. Il resto della riga e
+il pulsante freccia continuano a espandere/richiudere i dettagli; i link non sono
+annidati nel pulsante di espansione.
