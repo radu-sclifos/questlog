@@ -107,13 +107,13 @@
   }
 }
 
-.playing-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: .75rem;
-  border: 1px solid color-mix(in oklab, var(--color-base-content) 8%, transparent);
-  border-radius: .75rem;
+.profile-playing {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.25rem;
+  max-width: 19.25rem;
+  margin-inline: auto;
 }
 
 .profile-favorites {
