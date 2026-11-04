@@ -4,14 +4,6 @@
 <div class="mx-auto max-w-5xl">
 
   <header class="mb-8">
-    <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-5">
-      <button type="button" class="max-w-full cursor-pointer text-left" (click)="listHeader.reset()">
-        <app-logo class="block w-48 sm:w-56" [link]="null" />
-      </button>
-      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary sm:mb-2">
-        Your game diary
-      </p>
-    </div>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <h1
@@ -42,7 +34,7 @@
   }
 
   <div #listStart class="library-start">
-    <app-entry-list-header #listHeader [selectedStatus]="routeStatus()" (criteriaChange)="onCriteriaChange($event)">
+    <app-entry-list-header [selectedStatus]="routeStatus()" (criteriaChange)="onCriteriaChange($event)">
       <span pagination class="text-sm text-base-content/60">
         Showing {{ firstResult() }} to {{ lastResult() }} of {{ page()?.totalElements ?? 0 }} games
       </span>
