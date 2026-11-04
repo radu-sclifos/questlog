@@ -1,8 +1,5 @@
 :host {
-  --entry-sidebar-width: 3.25rem;
-
   display: block;
-  padding-inline-start: var(--entry-sidebar-width);
 }
 
 .library-start {
@@ -74,7 +71,7 @@
 
   .pagination-controls {
     position: fixed;
-    inset-inline-start: calc(var(--entry-sidebar-width) + 0.5rem);
+    inset-inline-start: 0.5rem;
     inset-inline-end: 0.5rem;
     top: auto;
     transform: none;

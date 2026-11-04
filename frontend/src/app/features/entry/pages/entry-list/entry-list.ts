@@ -2,10 +2,18 @@ import { EntryListHeader } from '../../components/entry-list-header/entry-list-h
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, combineLatest, distinctUntilChanged, EMPTY, finalize, map, Subject, switchMap } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  finalize,
+  map,
+  Subject,
+  switchMap,
+} from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EntryCard } from '../../components/entry-card/entry-card';
-import { EntryNavbar } from '../../components/entry-navbar/entry-navbar';
 import { EntryEditorDialog } from '../../components/entry-editor-dialog/entry-editor-dialog';
 import { EntryDeleteDialog } from '../../components/entry-delete-dialog/entry-delete-dialog';
 import { EntryService } from '../../services/entry.service';
@@ -19,7 +27,7 @@ import { Logo } from '../../../../shared/logo/logo';
 
 @Component({
   selector: 'app-entry-list',
-  imports: [EntryListHeader, EntryCard, EntryNavbar, EntryEditorDialog, EntryDeleteDialog, Logo],
+  imports: [EntryListHeader, EntryCard, EntryEditorDialog, EntryDeleteDialog, Logo],
   templateUrl: './entry-list.html',
   styleUrl: './entry-list.scss',
 })
@@ -92,17 +100,27 @@ export class EntryList {
 
     combineLatest([this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        map(([params, query]) => ({ username: params.get('username') ?? '', status: query.get('status') })),
+        map(([params, query]) => ({
+          username: params.get('username') ?? '',
+          status: query.get('status'),
+        })),
         distinctUntilChanged((a, b) => a.username === b.username && a.status === b.status),
         takeUntilDestroyed(),
       )
       .subscribe(({ username, status }) => {
         this.username.set(username);
-        const validStatus = Object.values(EntryStatus).includes(status as EntryStatus) ? status as EntryStatus : '';
+        const validStatus = Object.values(EntryStatus).includes(status as EntryStatus)
+          ? (status as EntryStatus)
+          : '';
         this.routeStatus.set(validStatus);
         this.page.set(null);
         const criteria = new SearchCriteria();
-        if (validStatus) criteria.addFilter({ field: 'status', operator: FilterOperator.EQUAL, value: validStatus });
+        if (validStatus)
+          criteria.addFilter({
+            field: 'status',
+            operator: FilterOperator.EQUAL,
+            value: validStatus,
+          });
         this.onCriteriaChange(criteria);
       });
   }

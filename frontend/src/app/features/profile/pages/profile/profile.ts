@@ -15,7 +15,6 @@ import {
   tap,
 } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
-import { EntryNavbar } from '../../../entry/components/entry-navbar/entry-navbar';
 import { EntryStatus } from '../../../entry/models/entry';
 import { ENTRY_STATUS_LABELS } from '../../../entry/models/entry-labels';
 import { GameCover } from '../../../games/components/game-cover/game-cover';
@@ -42,7 +41,6 @@ const STATUS_COLORS: Record<EntryStatus, string> = {
     RouterLink,
     DatePipe,
     DecimalPipe,
-    EntryNavbar,
     GameCover,
     Logo,
     ProfileEditor,

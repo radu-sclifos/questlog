@@ -36,11 +36,11 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 | --- | --- | --- |
 | Bootstrap | `src/app/app.config.ts` | Router, HTTP/interceptor, inizializzazione sessione |
 | Shell | `src/app/app.html` | Contenitore principale, router outlet, toast globali |
-| Navbar globale | `src/app/shared/navbar/` | Barra superiore sticky su tutte le pagine eccetto login; menu sessione con profilo, libreria e logout; sidebar mantenuta |
+| Navbar globale | `src/app/shared/navbar/` | Barra superiore sticky su tutte le pagine eccetto login; menu sessione con profilo, libreria e logout |
 | Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, `/user/:username`, redirect iniziale |
 | Autenticazione | `src/app/features/auth/` | Login, servizio sessione, interceptor, guard |
 | Libreria | `src/app/features/entry/pages/entry-list/` | Ricerca, paginazione, permessi UI, refresh dopo CRUD |
-| Componenti entry | `src/app/features/entry/components/` | Navbar, header filtri, card espandibili, dialog editor/eliminazione, badge stato |
+| Componenti entry | `src/app/features/entry/components/` | Header filtri, card espandibili, dialog editor/eliminazione, badge stato |
 | API entry | `src/app/features/entry/services/entry.service.ts` | Ricerca e CRUD |
 | Modelli entry | `src/app/features/entry/models/` | DTO, enum, etichette e pagina risultati |
 | Profilo | `src/app/features/profile/pages/profile/` | Pagina pubblica, statistiche, giochi in corso e preferiti |
@@ -69,7 +69,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
   filtri e ordinamenti sono eseguiti dal backend; il nome usa il percorso game.name. `switchMap` sostituisce richieste
   precedenti. Pagina iniziale 0, dimensione UI 25; cambio filtri azzera la pagina.
   Dopo eliminazione dell'ultimo elemento si recupera l'ultima pagina valida.
-- Layout libreria: navbar laterale sinistra; paginazione sticky verticale su desktop,
+- Layout libreria: pulsante Add a game accanto a Your library solo per il proprietario; nessuna sidebar; paginazione sticky verticale su desktop,
   fissa in basso su mobile. `ResizeObserver` aggiorna l'altezza per il centraggio.
 - Editor e conferma eliminazione usano `<dialog>` nativi (`showModal()` / `close()`).
   Durante il salvataggio/eliminazione sono bloccati invii ripetuti e chiusura.
