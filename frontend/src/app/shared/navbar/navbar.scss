@@ -12,3 +12,9 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
+
+.profile-initials {
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}

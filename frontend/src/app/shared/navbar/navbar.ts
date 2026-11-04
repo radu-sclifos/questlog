@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   HostListener,
@@ -7,11 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter, finalize } from 'rxjs';
+import { distinctUntilChanged, filter, finalize, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../features/auth/services/auth.service';
 import { initials } from '../../features/profile/utils/profile-image';
+import { ProfileService } from '../../features/profile/services/profile.service';
 import { Logo } from '../logo/logo';
 import { ToastService } from '../toast/toast.service';
 
@@ -23,12 +25,31 @@ import { ToastService } from '../toast/toast.service';
 })
 export class Navbar {
   private readonly auth = inject(AuthService);
+  private readonly profiles = inject(ProfileService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  protected readonly initials = initials;
   private readonly profileMenu = viewChild<ElementRef<HTMLDetailsElement>>('profileMenu');
+
   protected readonly user = this.auth.user;
   protected readonly signingOut = signal(false);
-  protected readonly initials = initials;
+  private readonly failedAvatar = signal<string | null>(null);
+  private readonly avatar = toSignal(
+    toObservable(this.user).pipe(
+      map((user) => user?.username ?? null),
+      distinctUntilChanged(),
+      switchMap((username) => (username ? this.profiles.watchAvatar(username) : of(null))),
+    ),
+    { initialValue: null },
+  );
+  protected readonly visibleAvatar = computed(() => {
+    if (this.avatar() !== this.failedAvatar()) {
+      return this.avatar();
+    } else {
+      return null;
+    }
+  });
 
   constructor() {
     this.router.events
@@ -39,24 +60,35 @@ export class Navbar {
       .subscribe(() => this.closeMenu());
   }
 
+  protected onAvatarError(url: string): void {
+    this.failedAvatar.set(url);
+  }
+
   @HostListener('document:click', ['$event'])
   protected onDocumentClick(event: MouseEvent): void {
     const menu = this.profileMenu()?.nativeElement;
-    if (menu && event.target instanceof Node && !menu.contains(event.target)) this.closeMenu();
+    if (menu && event.target instanceof Node && !menu.contains(event.target)) {
+      this.closeMenu();
+    }
   }
 
   @HostListener('document:keydown.escape')
   protected closeMenu(): void {
     const menu = this.profileMenu()?.nativeElement;
     if (menu?.open) {
-      if (menu.contains(document.activeElement)) menu.querySelector('summary')?.focus();
+      if (menu.contains(document.activeElement)) {
+        menu.querySelector('summary')?.focus();
+      }
       menu.open = false;
     }
   }
 
   protected logout(): void {
-    if (this.signingOut()) return;
+    if (this.signingOut()) {
+      return;
+    }
     this.signingOut.set(true);
+
     this.auth
       .logout()
       .pipe(

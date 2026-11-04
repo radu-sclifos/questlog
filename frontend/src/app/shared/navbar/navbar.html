@@ -12,12 +12,17 @@
     <div class="shrink-0">
       @if (user(); as currentUser) {
         <details #profileMenu class="dropdown dropdown-end">
+
           <summary class="btn btn-ghost gap-2 px-2">
-            <span class="avatar avatar-placeholder">
-              <span class="size-8 shrink-0 rounded-full bg-primary/15 text-sm font-semibold text-primary">
+            @if (visibleAvatar(); as avatar) {
+              <img [src]="avatar" alt="" class="size-8 shrink-0 rounded-full object-cover"
+                   (error)="onAvatarError(avatar)">
+            } @else {
+              <span
+                class="profile-initials size-8 shrink-0 rounded-full bg-primary/15 text-sm font-semibold text-primary">
                 {{ initials(currentUser.displayName || currentUser.username) }}
               </span>
-            </span>
+            }
             <span class="hidden max-w-40 truncate sm:block">
               {{ currentUser.displayName || currentUser.username }}
             </span>
@@ -26,6 +31,7 @@
               <path d="m6 9 6 6 6-6" />
             </svg>
           </summary>
+
           <ul class="dropdown-content dropdown-panel menu mt-3 w-60 p-2">
             <li class="menu-title min-w-0 px-3 py-2">
               <span class="block truncate">{{ currentUser.username }}</span>
