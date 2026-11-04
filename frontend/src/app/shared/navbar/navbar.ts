@@ -9,7 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { distinctUntilChanged, filter, finalize, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../features/auth/services/auth.service';
 import { initials } from '../../features/profile/utils/profile-image';
@@ -19,7 +19,7 @@ import { ToastService } from '../toast/toast.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [Logo, RouterLink, RouterLinkActive],
+  imports: [Logo, RouterLink],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })

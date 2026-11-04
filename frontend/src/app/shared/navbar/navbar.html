@@ -32,17 +32,14 @@
             </svg>
           </summary>
 
-          <ul class="dropdown-content dropdown-panel menu mt-3 w-60 p-2">
-            <li class="menu-title min-w-0 px-3 py-2">
-              <span class="block truncate">{{ currentUser.username }}</span>
-            </li>
+          <ul class="dropdown-content dropdown-panel menu mt-3 w-44 p-2">
             <li>
-              <a [routerLink]="['/user', currentUser.username]" routerLinkActive="menu-active" (click)="closeMenu()">
+              <a [routerLink]="['/user', currentUser.username]" (click)="closeMenu()">
                 My profile
               </a>
             </li>
             <li>
-              <a [routerLink]="['/list', currentUser.username]" routerLinkActive="menu-active" (click)="closeMenu()">
+              <a [routerLink]="['/list', currentUser.username]" (click)="closeMenu()">
                 My library
               </a>
             </li>
