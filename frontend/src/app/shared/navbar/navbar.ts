@@ -1,4 +1,3 @@
-import { ViewportScroller } from '@angular/common';
 import {
   Component,
   computed,
@@ -29,7 +28,6 @@ export class Navbar {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfileService);
   private readonly router = inject(Router);
-  private readonly viewport = inject(ViewportScroller);
   private readonly toast = inject(ToastService);
 
   protected readonly initials = initials;
@@ -65,16 +63,6 @@ export class Navbar {
 
   protected onAvatarError(url: string): void {
     this.failedAvatar.set(url);
-  }
-
-  protected async navigateHome(event: MouseEvent): Promise<void> {
-    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
-      return;
-    }
-
-    event.preventDefault();
-    await this.router.navigateByUrl('/');
-    this.viewport.scrollToPosition([0, 0], { behavior: 'instant' });
   }
 
   @HostListener('document:click', ['$event'])

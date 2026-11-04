@@ -1,5 +1,5 @@
 @if (link(); as destination) {
-  <a [routerLink]="destination" class="block">
+  <a [href]="destination" class="block" (click)="navigate($event, destination)">
     <ng-container *ngTemplateOutlet="image" />
   </a>
 } @else {
