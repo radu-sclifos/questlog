@@ -22,7 +22,7 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <label class="btn btn-sm btn-outline" [class.btn-disabled]="busy()">
+          <label class="btn btn-sm btn-outline btn-primary" [class.btn-disabled]="busy()">
             Choose image
             <input type="file" accept="image/png,image/jpeg" class="hidden" [disabled]="busy()"
                    (change)="choosePhoto($event)" />

@@ -47,7 +47,7 @@
       </div>
       <div class="profile-actions">
         @if (canEdit()) {
-          <button type="button" class="btn btn-outline btn-sm" (click)="editor.open(user)">Edit profile</button>
+          <button type="button" class="btn btn-outline btn-secondary btn-sm" (click)="editor.open(user)">Edit profile</button>
         }
         <a class="btn btn-primary btn-sm" [routerLink]="['/list', user.username]">View library</a>
       </div>
