@@ -36,12 +36,16 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 | --- | --- | --- |
 | Bootstrap | `src/app/app.config.ts` | Router, HTTP/interceptor, inizializzazione sessione |
 | Shell | `src/app/app.html` | Contenitore principale, router outlet, toast globali |
-| Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, redirect iniziale |
+| Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, `/user/:username`, redirect iniziale |
 | Autenticazione | `src/app/features/auth/` | Login, servizio sessione, interceptor, guard |
 | Libreria | `src/app/features/entry/pages/entry-list/` | Ricerca, paginazione, permessi UI, refresh dopo CRUD |
 | Componenti entry | `src/app/features/entry/components/` | Navbar, header filtri, card espandibili, dialog editor/eliminazione, badge stato |
 | API entry | `src/app/features/entry/services/entry.service.ts` | Ricerca e CRUD |
 | Modelli entry | `src/app/features/entry/models/` | DTO, enum, etichette e pagina risultati |
+| Profilo | `src/app/features/profile/pages/profile/` | Pagina pubblica, statistiche, giochi in corso e preferiti |
+| Componenti profilo | `src/app/features/profile/components/` | Dialog di modifica profilo e preferiti |
+| API profilo | `src/app/features/profile/services/profile.service.ts` | Lettura profilo, gestione avatar e preferiti |
+| Modelli e utilità profilo | `src/app/features/profile/models/`, `src/app/features/profile/utils/` | Contratto del profilo, URL avatar e iniziali |
 | Ricerca condivisa | `src/app/shared/search/` | Filtri, ordinamento, criteri paginati |
 | UI condivisa | `src/app/shared/badge/`, `src/app/shared/toast/` | Badge base, notifiche e relativo servizio |
 

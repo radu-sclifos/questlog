@@ -1,4 +1,4 @@
-<app-entry-navbar [canEdit]="canEdit()" (addEntry)="editorDialog.open()" />
+<app-entry-navbar [canEdit]="canEdit()" [username]="username()" (addEntry)="editorDialog.open()" />
 
 <app-entry-editor-dialog #editorDialog (savedEntry)="onEntrySaved($event)" />
 <app-entry-delete-dialog #deleteDialog (deletedEntry)="onEntryDeleted()" />
@@ -25,7 +25,7 @@
   }
 
   <div #listStart class="library-start">
-    <app-entry-list-header #listHeader (criteriaChange)="onCriteriaChange($event)">
+    <app-entry-list-header #listHeader [selectedStatus]="routeStatus()" (criteriaChange)="onCriteriaChange($event)">
       <span pagination class="text-sm text-base-content/60">
         Showing {{ firstResult() }} to {{ lastResult() }} of {{ page()?.totalElements ?? 0 }} games
       </span>

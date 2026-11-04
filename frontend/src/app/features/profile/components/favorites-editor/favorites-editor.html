@@ -1,0 +1,86 @@
+<dialog #dialog class="modal" (cancel)="saving() ? $event.preventDefault() : close()">
+
+  <div class="modal-box max-w-lg border border-base-content/10 bg-base-100">
+    <h2 class="text-xl font-bold">Favorite games</h2>
+    <p class="mt-2 text-sm text-base-content/60">Choose up to five games and put them in your preferred order.</p>
+
+    <ol class="mt-5 space-y-2">
+      @for (game of selected(); track game.id; let i = $index) {
+        <li class="flex items-center gap-2 rounded-lg border border-base-content/10 bg-base-200 p-2">
+          <span class="w-5 shrink-0 text-center text-sm text-primary">{{ i + 1 }}</span>
+          <span class="min-w-0 flex-1 wrap-break-word text-sm font-medium">{{ game.name }}</span>
+          <button type="button" class="btn btn-ghost btn-square btn-xs" title="Move up" [disabled]="saving() || i === 0"
+                  (click)="move(i, -1)">
+            ↑
+          </button>
+          <button type="button" class="btn btn-ghost btn-square btn-xs" title="Move down"
+                  [disabled]="saving() || i === selected().length - 1" (click)="move(i, 1)">
+            ↓
+          </button>
+          <button type="button" class="btn btn-ghost btn-square btn-xs text-error" [title]="'Remove ' + game.name"
+                  [disabled]="saving()" (click)="remove(game.id)">
+            ✕
+          </button>
+        </li>
+      } @empty {
+        <li class="rounded-lg bg-base-200 p-4 text-sm text-base-content/50">No favorites selected yet.</li>
+      }
+    </ol>
+
+    @if (selected().length < 5) {
+      <label class="fieldset mt-5">
+        <span class="fieldset-legend">Find a game</span>
+        <input type="search" class="input w-full" placeholder="Search the catalog…" [value]="query()"
+               [disabled]="saving()" (input)="setQuery($any($event.target).value)" />
+      </label>
+      @if (query().trim().length > 0 && query().trim().length < 3) {
+        <p class="mt-2 text-xs text-base-content/50">Type at least 3 characters.</p>
+      }
+      @if (searching()) {
+        <p class="mt-2 text-sm text-base-content/60">Searching…</p>
+      }
+      @if (searchError()) {
+        <p class="mt-2 text-sm text-error">Unable to search games. Please try again.</p>
+      }
+      @if (suggestions().length) {
+        <ul class="menu mt-2 max-h-56 w-full flex-nowrap overflow-y-auto rounded-box bg-base-200 p-2">
+          @for (game of suggestions(); track game.id) {
+            <li>
+              <button type="button" [disabled]="isSelected(game.id) || saving()"
+                      (click)="add(game)">{{ game.name }}
+                @if (isSelected(game.id)) {
+                  <span class="text-xs opacity-50">Selected</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (query().trim().length >= 3 && !searching() && !searchError()) {
+        <p class="mt-2 text-sm text-base-content/50">No games found.</p>
+      }
+    } @else {
+      <p class="mt-4 text-xs text-base-content/50">
+        All five spots are filled. Remove a game to choose another.
+      </p>
+    }
+
+    @if (error()) {
+      <p class="mt-3 text-sm text-error">{{ error() }}</p>
+    }
+
+    <div class="modal-action">
+      <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+        @if (saving()) {
+          <span class="loading loading-spinner loading-xs"></span>
+        }
+        Save favorites
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop">
+    <button type="button" [disabled]="saving()" (click)="close()">Close</button>
+  </div>
+
+</dialog>

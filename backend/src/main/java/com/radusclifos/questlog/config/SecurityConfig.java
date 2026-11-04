@@ -34,10 +34,11 @@ public class SecurityConfig {
         var publicEntrySearch = PathPatternRequestMatcher.withDefaults()
                 .matcher(HttpMethod.POST, "/entries/search");
 
-        http.securityMatcher("/auth/**", "/me", "/users/**", "/entries", "/entries/**")
+        http.securityMatcher("/auth/**", "/me", "/me/**", "/users/**", "/entries", "/entries/**")
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/auth/csrf", "/auth/login").permitAll()
                         .requestMatchers(publicEntrySearch).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/*/profile", "/users/*/avatar").permitAll()
                         .anyRequest().authenticated())
                 // This read-only POST can be called without a CSRF token
                 .csrf(csrf -> csrf.ignoringRequestMatchers(publicEntrySearch))

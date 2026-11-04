@@ -1,0 +1,94 @@
+<dialog #dialog class="modal" (cancel)="busy() ? $event.preventDefault() : close()">
+
+  <div class="modal-box max-w-lg border border-base-content/10 bg-base-100">
+
+    <h2 class="text-xl font-bold">Edit profile</h2>
+
+    <section class="mt-6 border-b border-base-content/10 pb-6">
+      <h3 class="mb-3 text-sm font-semibold">Profile picture</h3>
+      <div class="flex items-center gap-5">
+        <div class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-full
+          bg-base-300 text-2xl font-bold text-primary">
+          @if (imageUrl(); as url) {
+            @if (!imageFailed()) {
+              <img [src]="url" alt="Profile preview" class="h-full w-full object-cover"
+                   (error)="imageFailed.set(true)" />
+            } @else {
+              {{ initials(profile()?.displayName ?? '') }}
+            }
+          } @else {
+            {{ initials(profile()?.displayName ?? '') }}
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <label class="btn btn-sm btn-outline btn-secondary" [class.btn-disabled]="busy()">
+            Choose image
+            <input type="file" accept="image/png,image/jpeg" class="hidden" [disabled]="busy()"
+                   (change)="choosePhoto($event)" />
+          </label>
+          @if (revision()) {
+            <button type="button" class="btn btn-sm btn-ghost text-error" [disabled]="busy()" (click)="removePhoto()">
+              Remove
+            </button>
+          }
+          @if (selectedFile()) {
+            <button type="button" class="btn btn-sm btn-primary" [disabled]="busy()" (click)="upload()">
+              Upload picture
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" [disabled]="busy()" (click)="clearPreview()">
+              Discard
+            </button>
+          }
+        </div>
+      </div>
+      <p class="mt-3 text-xs leading-relaxed text-base-content/50">
+        PNG or JPEG, up to 2.5 MB and 16 megapixels. A square is cropped from the center.
+        Picture uploads and removals are saved immediately.
+      </p>
+      @if (uploading()) {
+        <p class="mt-2 text-sm text-primary">Updating picture…</p>
+      }
+      @if (photoError()) {
+        <p class="mt-2 text-sm text-error">{{ photoError() }}</p>
+      }
+    </section>
+
+    <form class="mt-5" [formGroup]="form" (ngSubmit)="save()">
+      <fieldset class="fieldset" [disabled]="busy()">
+        <label class="fieldset-legend" for="profile-name">Display name</label>
+        <input id="profile-name" class="input w-full" formControlName="displayName" maxlength="100" />
+        @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+          <p class="text-error">Enter a name between 1 and 100 characters.</p>
+        }
+        <label class="fieldset-legend" for="profile-bio">
+          Bio <span class="font-normal text-base-content/50">Optional</span>
+        </label>
+        <textarea id="profile-bio" class="textarea min-h-28 w-full" formControlName="bio" maxlength="300"
+                  placeholder="What kind of player are you?"></textarea>
+        <p class="text-right text-base-content/50">{{ form.controls.bio.value.length }} / 300</p>
+      </fieldset>
+
+      @if (error()) {
+        <p class="mt-3 text-sm text-error">{{ error() }}</p>
+      }
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" [disabled]="busy()" (click)="close()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy() || form.invalid || !!selectedFile()">
+          @if (saving()) {
+            <span class="loading loading-spinner loading-xs"></span>
+          } Save profile
+        </button>
+      </div>
+      @if (selectedFile()) {
+        <p class="mt-2 text-right text-xs text-base-content/50">Upload or discard the selected picture first.</p>
+      }
+    </form>
+  </div>
+
+  <div class="modal-backdrop">
+    <button type="button" [disabled]="busy()" (click)="close()">Close</button>
+  </div>
+
+</dialog>
