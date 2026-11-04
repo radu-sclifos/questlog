@@ -1,5 +1,4 @@
 <div class="relative" (keydown)="onKeydown($event)" (focusout)="onFocusOut($event)">
-
   <div class="input flex w-full min-w-0 items-center gap-2 bg-base-300 pr-1">
     <svg class="size-4 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2" focusable="false">
@@ -47,47 +46,37 @@
           Unable to search. Please try again later.
         </p>
       } @else if (!results().items.length) {
-        <p class="px-3 py-4 text-sm text-base-content/60">No {{ mode() }} found.</p>
+        <p class="px-3 py-4 text-sm text-base-content/60">
+          No {{ mode() }} found.
+        </p>
       } @else {
         @for (item of results().items; track item.path.join('/')) {
           <a data-search-result [routerLink]="item.path" (click)="open.set(false)"
              class="flex min-h-14 items-center gap-3 rounded-lg px-3 py-1.5 hover:bg-base-content/5 focus-visible:bg-base-content/10">
-
-            @if (item.image && !failedImages().has(item.image)) {
-              <img [src]="item.image" alt="" class="w-8 shrink-0 object-cover"
-                   [class.h-11]="mode() === 'games'"
-                   [class.rounded]="mode() === 'games'"
-                   [class.h-8]="mode() === 'users'"
-                   [class.rounded-full]="mode() === 'users'"
-                   (error)="imageFailed(item.image)" />
+            @if (item.game; as game) {
+              <app-game-search-result [game]="game" />
             } @else {
-              <span class="grid w-8 shrink-0 place-items-center bg-primary/10 text-xs text-primary"
-                    [class.h-11]="mode() === 'games'"
-                    [class.rounded]="mode() === 'games'"
-                    [class.h-8]="mode() === 'users'"
-                    [class.rounded-full]="mode() === 'users'">
-                @if (mode() === 'users') {
+              @if (item.image && !failedImages().has(item.image)) {
+                <img [src]="item.image" alt="" class="size-8 shrink-0 rounded-full object-cover"
+                     (error)="imageFailed(item.image)" />
+              } @else {
+                <span class="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs text-primary">
                   {{ initials(item.title) }}
-                } @else {
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                       focusable="false">
-                    <rect x="4" y="3" width="16" height="18" rx="2" />
-                    <path d="M8 8h8M8 12h5" />
-                  </svg>
+                </span>
+              }
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-medium">{{ item.title }}</span>
+                @if (item.subtitle) {
+                  <span class="block truncate text-xs text-base-content/60">
+                    {{ item.subtitle }}
+                  </span>
                 }
               </span>
             }
-            <span class="min-w-0">
-              <span class="block truncate text-sm font-medium">{{ item.title }}</span>
-              @if (item.subtitle) {
-                <span class="block truncate text-xs text-base-content/60">{{ item.subtitle }}</span>
-              }
-            </span>
           </a>
         }
       }
 
     </div>
   }
-
 </div>

@@ -20,7 +20,7 @@
                    (keydown)="onTitleKeydown($event)" />
             @if (!editingEntry() && titleFocused() && !form.controls.gameId.value && form.controls.title.value.trim().length >= 3) {
               <div
-                class="dropdown-panel absolute top-full left-0 z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-box">
+                class="dropdown-panel absolute top-full left-0 z-20 mt-1 max-h-[min(19rem,45dvh)] w-full overflow-y-auto rounded-box">
                 @if (suggestionsLoading()) {
                   <p class="p-3 text-sm text-base-content/60">Searching games...</p>
                 } @else if (suggestionsError()) {
@@ -29,9 +29,10 @@
                   <ul class="menu w-full p-1">
                     @for (game of suggestions(); track game.id; let index = $index) {
                       <li>
-                        <button type="button" class="whitespace-normal text-left"
+                        <button type="button" class="flex min-h-14 items-center px-3 py-1.5 text-left"
                                 [class.bg-base-300]="highlightedIndex() === index"
-                                (click)="selectGame(game)">{{ game.name }}
+                                (click)="selectGame(game)">
+                          <app-game-search-result [game]="game" />
                         </button>
                       </li>
                     }

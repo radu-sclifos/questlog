@@ -1,0 +1,17 @@
+@if (imageUrl() && !imageFailed()) {
+  <img [src]="imageUrl()" alt="" class="h-11 w-8 shrink-0 rounded object-cover" (error)="imageFailed.set(true)" />
+} @else {
+  <span class="grid h-11 w-8 shrink-0 place-items-center rounded bg-primary/10 text-primary">
+    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" focusable="false">
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8M8 12h5" />
+    </svg>
+  </span>
+}
+
+<span class="min-w-0">
+  <span class="block truncate text-sm font-medium">{{ game().name }}</span>
+  @if (year(); as releaseYear) {
+    <span class="block truncate text-xs text-base-content/60">{{ releaseYear }}</span>
+  }
+</span>

@@ -4,6 +4,8 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { catchError, filter, map, of, startWith, switchMap, timer } from 'rxjs';
 import { GameService } from '../../../../features/games/services/game.service';
+import { GameSuggestion } from '../../../../features/games/models/game-suggestion';
+import { GameSearchResult } from '../../../../features/games/components/game-search-result/game-search-result';
 import { avatarUrl, initials } from '../../../../features/profile/utils/profile-image';
 
 interface UserSuggestion {
@@ -13,6 +15,7 @@ interface UserSuggestion {
 }
 
 interface SearchResult {
+  game?: GameSuggestion;
   path: string[];
   title: string;
   subtitle: string;
@@ -23,7 +26,7 @@ const emptyResults = { items: [] as SearchResult[], loading: false, error: false
 
 @Component({
   selector: 'app-navbar-search',
-  imports: [RouterLink],
+  imports: [RouterLink, GameSearchResult],
   templateUrl: './navbar-search.html',
   host: { class: 'block min-w-0' },
 })
@@ -48,38 +51,39 @@ export class NavbarSearch {
         if (name.length < 3) {
           return of(emptyResults);
         }
-        const request =
-          mode === 'games'
-            ? this.games.suggestions(name, 6).pipe(
-                map((games) =>
-                  games.map((game) => ({
-                    path: ['/game', String(game.id)],
-                    title: game.name,
-                    subtitle: game.firstReleaseDate?.slice(0, 4) ?? '',
-                    image: game.coverImageId
-                      ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${encodeURIComponent(game.coverImageId)}.jpg`
-                      : null,
-                  })),
-                ),
-              )
-            : this.http
-                .get<UserSuggestion[]>('/api/users/suggestions', { params: { name, limit: 6 } })
-                .pipe(
-                  map((users) =>
-                    users.map((user) => ({
-                      path: ['/user', user.username],
-                      title: user.displayName || user.username,
-                      subtitle: `@${user.username}`,
-                      image: avatarUrl(user.username, user.avatarRevision),
-                    })),
-                  ),
-                );
-        return timer(300).pipe(
-          switchMap(() => request),
-          map((items) => ({ items, loading: false, error: false })),
-          catchError(() => of({ ...emptyResults, error: true })),
-          startWith({ ...emptyResults, loading: true }),
-        );
+        if (mode === 'games') {
+          return this.games.searchSuggestions(name, 6).pipe(
+            map((state) => ({
+              ...state,
+              items: state.items.map((game): SearchResult => ({
+                game,
+                path: ['/game', String(game.id)],
+                title: game.name,
+                subtitle: '',
+                image: null,
+              })),
+            })),
+          );
+        } else {
+          const request = this.http
+            .get<UserSuggestion[]>('/api/users/suggestions', { params: { name, limit: 6 } })
+            .pipe(
+              map((users) =>
+                users.map((user): SearchResult => ({
+                  path: ['/user', user.username],
+                  title: user.displayName || user.username,
+                  subtitle: `@${user.username}`,
+                  image: avatarUrl(user.username, user.avatarRevision),
+                })),
+              ),
+            );
+          return timer(300).pipe(
+            switchMap(() => request),
+            map((items) => ({ items, loading: false, error: false })),
+            catchError(() => of({ ...emptyResults, error: true })),
+            startWith({ ...emptyResults, loading: true }),
+          );
+        }
       }),
     ),
     { initialValue: emptyResults },

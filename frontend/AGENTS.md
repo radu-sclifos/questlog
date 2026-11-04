@@ -43,6 +43,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 | Libreria | `src/app/features/entry/pages/entry-list/` | Ricerca, paginazione, permessi UI, refresh dopo CRUD |
 | Componenti entry | `src/app/features/entry/components/` | Header filtri, card espandibili, dialog editor/eliminazione, badge stato |
 | API entry | `src/app/features/entry/services/entry.service.ts` | Ricerca e CRUD |
+| Suggerimenti giochi condivisi | `features/games/services/game.service.ts`, `features/games/components/game-search-result/` (sotto `src/app/`) | `searchSuggestions` gestisce soglia, debounce e stati; riga con cover, titolo e anno condivisa da navbar (6 risultati) ed editor (5) |
 | Modelli entry | `src/app/features/entry/models/` | DTO, enum, etichette e pagina risultati |
 | Profilo | `src/app/features/profile/pages/profile/` | Pagina pubblica, statistiche, giochi in corso e preferiti |
 | Componenti profilo | `src/app/features/profile/components/` | Dialog di modifica profilo e preferiti |
