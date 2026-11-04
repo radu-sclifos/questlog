@@ -118,15 +118,17 @@
         </p>
       </section>
 
-      @if (user.currentlyPlaying.length) {
-        <section class="profile-panel">
+      <section class="profile-panel flex flex-col">
           <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-lg font-semibold">Currently playing</h2>
+            @if (user.currentlyPlaying.length) {
             <a class="text-xs text-primary hover:underline" [routerLink]="['/list', user.username]"
                [queryParams]="{ status: EntryStatus.PLAYING }">
               View all {{ user.statistics.statuses.PLAYING }} →
             </a>
+            }
           </div>
+        @if (user.currentlyPlaying.length) {
           <div class="profile-playing">
             @for (entry of user.currentlyPlaying; track entry.game.id) {
               <a class="group block min-w-0 text-center" [routerLink]="['/game', entry.game.id]">
@@ -135,17 +137,22 @@
               </a>
             }
           </div>
-        </section>
-      } @else if (canEdit()) {
-        <section class="profile-panel">
-          <h2 class="text-lg font-semibold">Currently playing</h2>
-          <p class="mt-4 text-sm leading-relaxed text-base-content/60">
-            What’s your next adventure? Set a game to Playing
-            in your library to show it here.
-          </p>
-          <a class="btn btn-outline btn-sm mt-5" [routerLink]="['/list', user.username]">Explore your library</a>
-        </section>
-      }
+        } @else {
+          <div class="flex min-h-48 flex-1 flex-col items-center justify-center text-center">
+            <p class="text-sm font-medium text-base-content/70">No games in progress.</p>
+            @if (canEdit()) {
+              <p class="mt-2 max-w-xs text-sm leading-relaxed text-base-content/50">
+                Set a game to Playing in your library to show it here.
+              </p>
+              <a class="btn btn-outline btn-sm mt-5" [routerLink]="['/list', user.username]">Explore your library</a>
+            } @else {
+              <p class="mt-2 max-w-xs text-sm leading-relaxed text-base-content/50">
+                This player has no games marked as Playing yet.
+              </p>
+            }
+          </div>
+        }
+      </section>
     </div>
 
     @if (user.favorites.length || canEdit()) {
