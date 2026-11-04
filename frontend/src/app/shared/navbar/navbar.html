@@ -3,7 +3,9 @@
   <nav class="navbar h-16 min-h-16 gap-4 px-4 py-0 sm:px-8">
 
     <div class="shrink-0">
-      <app-logo width="9rem" />
+      <a href="/" class="block" (click)="navigateHome($event)">
+        <app-logo width="9rem" [link]="null" />
+      </a>
     </div>
 
     <!-- Reserved for the future Games / Users search. -->
