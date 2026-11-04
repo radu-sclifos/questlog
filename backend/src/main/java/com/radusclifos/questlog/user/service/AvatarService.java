@@ -27,7 +27,7 @@ public class AvatarService {
     private final UserAvatarRepository avatars;
     private final EntityManager em;
 
-    private static final long MAX_BYTES = 2 * 1024 * 1024;
+    private static final long MAX_BYTES = 2560 * 1024;
     private static final long MAX_PIXELS = 16_000_000;
 
     @Autowired
@@ -47,7 +47,7 @@ public class AvatarService {
     public String save(Principal principal, MultipartFile file) {
         var user = users.current(principal);
         if (file.isEmpty() || file.getSize() > MAX_BYTES) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an image up to 2 MB");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an image up to 2.5 MB");
         }
 
         var data = normalize(file);

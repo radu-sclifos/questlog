@@ -96,10 +96,10 @@ export class ProfileEditor {
     this.photoError.set(null);
     if (
       !['image/png', 'image/jpeg'].includes(file.type) ||
-      file.size > 2 * 1024 * 1024 ||
+      file.size > 2560 * 1024 ||
       !file.size
     ) {
-      this.photoError.set('Choose a PNG or JPEG image up to 2 MB.');
+      this.photoError.set('Choose a PNG or JPEG image up to 2.5 MB.');
       return;
     }
     this.clearPreview();
@@ -144,7 +144,7 @@ export class ProfileEditor {
         error: (error: unknown) =>
           this.photoError.set(
             error instanceof HttpErrorResponse && [400, 413].includes(error.status)
-              ? 'Choose a valid PNG or JPEG up to 2 MB and 16 megapixels.'
+              ? 'Choose a valid PNG or JPEG up to 2.5 MB and 16 megapixels.'
               : 'Unable to upload your picture. Please try again.',
           ),
       });

@@ -158,7 +158,7 @@ class ProfileIntegrationTests {
     @Test void oversizedImagesAreRejectedWithoutReplacingExistingAvatar() throws Exception {
         avatars.saveAndFlush(new UserAvatar(owner.getId(), new byte[]{1, 2}));
         mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/me/avatar")
-                .file(new MockMultipartFile("file", "large.png", "image/png", new byte[2 * 1024 * 1024 + 1]))
+                .file(new MockMultipartFile("file", "large.png", "image/png", new byte[2560 * 1024 + 1]))
                 .with(user("profile-owner")).with(csrf())).andExpect(status().isBadRequest());
         assertArrayEquals(new byte[]{1, 2}, avatars.findById(owner.getId()).orElseThrow().getData());
     }
