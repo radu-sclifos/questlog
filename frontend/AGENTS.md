@@ -37,6 +37,7 @@ architettura o convenzioni, senza trasformarle in un diario delle attività.
 | Bootstrap | `src/app/app.config.ts` | Router, HTTP/interceptor, inizializzazione sessione |
 | Shell | `src/app/app.html` | Contenitore principale, router outlet, toast globali |
 | Navbar globale | `src/app/shared/navbar/` | Barra superiore sticky su tutte le pagine eccetto login; menu sessione con profilo, libreria e logout |
+| Ricerca navbar | `src/app/shared/navbar/components/navbar-search/` | Games/Users, minimo 3 caratteri e debounce 300 ms, massimo 6 risultati con immagini; `/api/games/suggestions` e `/api/users/suggestions?name=...&limit=6`; seconda riga sotto 768 px |
 | Rotte | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, `/user/:username`, redirect iniziale |
 | Autenticazione | `src/app/features/auth/` | Login, servizio sessione, interceptor, guard |
 | Libreria | `src/app/features/entry/pages/entry-list/` | Ricerca, paginazione, permessi UI, refresh dopo CRUD |

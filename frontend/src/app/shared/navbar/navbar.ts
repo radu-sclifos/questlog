@@ -16,11 +16,12 @@ import { AuthService } from '../../features/auth/services/auth.service';
 import { initials } from '../../features/profile/utils/profile-image';
 import { ProfileService } from '../../features/profile/services/profile.service';
 import { Logo } from '../logo/logo';
+import { NavbarSearch } from './components/navbar-search/navbar-search';
 import { ToastService } from '../toast/toast.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [Logo, RouterLink],
+  imports: [Logo, RouterLink, NavbarSearch],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })

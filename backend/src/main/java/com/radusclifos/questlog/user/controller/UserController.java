@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -33,6 +34,12 @@ public class UserController {
     public UserResponse profile(Principal principal, @PathVariable String username) {
         users.current(principal);
         return UserResponse.from(users.find(username));
+    }
+
+    @GetMapping("/suggestions")
+    public List<UserSuggestion> suggestions(@RequestParam String name,
+                                            @RequestParam(defaultValue = "6") int limit) {
+        return users.suggestions(name, limit);
     }
 
     @GetMapping("/{username}/profile")

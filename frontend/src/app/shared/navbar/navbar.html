@@ -1,20 +1,19 @@
 <header class="border-b border-base-content/10 bg-base-200 text-base-content">
 
-  <nav class="navbar h-16 min-h-16 gap-4 px-4 py-0 sm:px-8">
+  <nav class="navbar navbar-layout gap-4 px-4 py-3 sm:px-8 md:py-0">
 
     <div class="flex shrink-0 items-end gap-3">
       <a href="/" class="block" (click)="navigateHome($event)">
         <app-logo width="9rem" [link]="null" />
       </a>
-      <p class="mb-3 hidden whitespace-nowrap text-xs font-semibold uppercase tracking-[0.25em] text-primary md:block">
+      <p class="mb-3 hidden whitespace-nowrap text-xs font-semibold uppercase tracking-[0.25em] text-primary 2xl:block">
         Your game diary
       </p>
     </div>
 
-    <!-- Reserved for the future Games / Users search. -->
-    <div class="min-w-0 flex-1"></div>
+    <app-navbar-search class="navbar-search" />
 
-    <div class="shrink-0">
+    <div class="justify-self-end shrink-0">
       @if (user(); as currentUser) {
         <details #profileMenu class="dropdown dropdown-end">
 
@@ -28,7 +27,7 @@
                 {{ initials(currentUser.displayName || currentUser.username) }}
               </span>
             }
-            <span class="hidden max-w-40 truncate sm:block">
+            <span class="hidden max-w-20 truncate sm:block xl:max-w-40">
               {{ currentUser.displayName || currentUser.username }}
             </span>
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

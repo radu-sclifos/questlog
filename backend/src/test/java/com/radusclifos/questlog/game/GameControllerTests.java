@@ -78,7 +78,7 @@ class GameControllerTests {
     void suggestsGamesByNameWithABoundedResultList() throws Exception {
         var game = new Game("Hollow Knight", "co_example");
         ReflectionTestUtils.setField(game, "id", 1L);
-        when(repository.findByNameContainingIgnoreCase(eq("Holl"), any())).thenReturn(List.of(new GameSuggestion(1L, "Hollow Knight")));
+        when(repository.findByNameContainingIgnoreCase(eq("Holl"), any())).thenReturn(List.of(new GameSuggestion(1L, "Hollow Knight", null, null)));
         mvc.perform(get("/games/suggestions").param("name", " Holl "))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))

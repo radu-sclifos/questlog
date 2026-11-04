@@ -1,0 +1,93 @@
+<div class="relative" (keydown)="onKeydown($event)" (focusout)="onFocusOut($event)">
+
+  <div class="input flex w-full min-w-0 items-center gap-2 bg-base-300 pr-1">
+    <svg class="size-4 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" focusable="false">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m16 16 4 4" />
+    </svg>
+
+    <input type="search" class="min-w-0 grow" maxlength="200"
+           [value]="query()"
+           [placeholder]="mode() === 'games' ? 'Search games…' : 'Search users…'"
+           (input)="query.set($any($event.target).value); open.set(true)"
+           (focus)="open.set(true)" />
+
+    <div class="join shrink-0 gap-0.5">
+      <button type="button" class="btn btn-xs join-item border-0 shadow-none"
+              [class.btn-soft]="mode() === 'games'"
+              [class.btn-primary]="mode() === 'games'"
+              [class.btn-ghost]="mode() !== 'games'"
+              (click)="setMode('games')">
+        Games
+      </button>
+      <button type="button" class="btn btn-xs join-item border-0 shadow-none"
+              [class.btn-soft]="mode() === 'users'"
+              [class.btn-primary]="mode() === 'users'"
+              [class.btn-ghost]="mode() !== 'users'"
+              (click)="setMode('users')">
+        Users
+      </button>
+    </div>
+  </div>
+
+  @if (open()) {
+    <div class="dropdown-panel absolute inset-x-0 top-full z-50 mt-2 max-h-[min(24rem,60dvh)] overflow-y-auto p-1.5">
+
+      @if (query().trim().length < 3) {
+        <p class="px-3 py-4 text-sm text-base-content/60">
+          Type at least 3 characters to search {{ mode() }}.
+        </p>
+      } @else if (results().loading) {
+        <p class="flex items-center gap-2 px-3 py-4 text-sm text-base-content/60">
+          <span class="loading loading-spinner loading-xs"></span>Searching…
+        </p>
+      } @else if (results().error) {
+        <p class="px-3 py-4 text-sm text-base-content/60">
+          Unable to search. Please try again later.
+        </p>
+      } @else if (!results().items.length) {
+        <p class="px-3 py-4 text-sm text-base-content/60">No {{ mode() }} found.</p>
+      } @else {
+        @for (item of results().items; track item.path.join('/')) {
+          <a data-search-result [routerLink]="item.path" (click)="open.set(false)"
+             class="flex min-h-14 items-center gap-3 rounded-lg px-3 py-1.5 hover:bg-base-content/5 focus-visible:bg-base-content/10">
+
+            @if (item.image && !failedImages().has(item.image)) {
+              <img [src]="item.image" alt="" class="w-8 shrink-0 object-cover"
+                   [class.h-11]="mode() === 'games'"
+                   [class.rounded]="mode() === 'games'"
+                   [class.h-8]="mode() === 'users'"
+                   [class.rounded-full]="mode() === 'users'"
+                   (error)="imageFailed(item.image)" />
+            } @else {
+              <span class="grid w-8 shrink-0 place-items-center bg-primary/10 text-xs text-primary"
+                    [class.h-11]="mode() === 'games'"
+                    [class.rounded]="mode() === 'games'"
+                    [class.h-8]="mode() === 'users'"
+                    [class.rounded-full]="mode() === 'users'">
+                @if (mode() === 'users') {
+                  {{ initials(item.title) }}
+                } @else {
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                       focusable="false">
+                    <rect x="4" y="3" width="16" height="18" rx="2" />
+                    <path d="M8 8h8M8 12h5" />
+                  </svg>
+                }
+              </span>
+            }
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium">{{ item.title }}</span>
+              @if (item.subtitle) {
+                <span class="block truncate text-xs text-base-content/60">{{ item.subtitle }}</span>
+              }
+            </span>
+          </a>
+        }
+      }
+
+    </div>
+  }
+
+</div>

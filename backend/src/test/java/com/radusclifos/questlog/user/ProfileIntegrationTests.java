@@ -87,6 +87,34 @@ class ProfileIntegrationTests {
         mvc.perform(get("/users/profile-owner/profile")).andExpect(status().isNotFound());
     }
 
+    @Test void suggestionsSearchPublicNamesAndReturnOnlyPublicFields() throws Exception {
+        users.save(new User("search-person", "Distinct Display", "hash"));
+        var disabled = users.save(new User("disabled-owner", "Hidden owner", "hash"));
+        disabled.disable();
+        avatars.save(new UserAvatar(owner.getId(), new byte[]{1, 2}));
+        mvc.perform(get("/users/suggestions").param("name", "OWNER").param("limit", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].username").value("profile-owner"))
+                .andExpect(jsonPath("$[0].avatarRevision").isString())
+                .andExpect(jsonPath("$[0].passwordHash").doesNotExist())
+                .andExpect(jsonPath("$[0].id").doesNotExist());
+        mvc.perform(get("/users/suggestions").param("name", "profile-"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+        mvc.perform(get("/users/suggestions").param("name", "missing"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/users/suggestions").param("name", "dIsTiNcT"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].username").value("search-person"));
+        mvc.perform(get("/users/suggestions").param("name", "disabled"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/users/suggestions").param("name", "pro%"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/users/suggestions").param("name", "ow"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/users/suggestions").param("name", "owner").param("limit", "100"))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test void favoritesAreLimitedUniqueOrderedAndReplaceableWithoutChangingAnotherUser() throws Exception {
         var games = java.util.stream.IntStream.range(0, 6).mapToObj(i -> {
             var game = new Game("Favorite " + i, "cover" + i); em.persist(game); return game;
