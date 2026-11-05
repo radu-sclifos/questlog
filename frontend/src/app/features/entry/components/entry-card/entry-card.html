@@ -28,9 +28,12 @@
           >{{ entry().game.name }}</a
         >
       </h2>
-      <span class="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
-        <app-entry-status-badge [status]="entry().status" size="sm" />
-        <span class="text-xs font-normal">Score: {{ entry().score ?? '—' }}</span>
+      <span class="mt-2 grid grid-cols-2 items-center justify-items-center gap-2 sm:hidden">
+        <app-entry-status-badge class="inline-flex items-center justify-self-start" [status]="entry().status" size="sm" />
+        <span class="inline-flex items-center gap-1 text-xs font-normal">
+          <span class="text-base-content/50">Score:</span>
+          <span class="text-base font-semibold lining-nums tabular-nums text-primary">{{ entry().score ?? '—' }}</span>
+        </span>
       </span>
     </div>
 
