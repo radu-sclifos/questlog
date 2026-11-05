@@ -12,7 +12,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("""
-            select new UserSuggestion(u.username, u.displayName, a.revision)
+            select new com.radusclifos.questlog.user.dto.UserSuggestion(
+                u.username, u.displayName, a.revision
+            )
             from User u left join UserAvatar a on a.userId = u.id
             where u.enabled = true and
               (locate(lower(:name), lower(u.username)) > 0 or locate(lower(:name), lower(u.displayName)) > 0)
