@@ -18,7 +18,9 @@ public interface GameRepository extends SearchRepository<Game, Long> {
 
     // Select only the fields needed by the platform picker.
     @Query("""
-            select new GamePlatform(p.id, p.name)
+            select new com.radusclifos.questlog.game.dto.GamePlatform(
+                p.id, p.name
+            )
             from Game g join g.platforms p where g.id = :gameId
             order by lower(p.name), p.id
             """)
