@@ -3,17 +3,21 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 1.25rem;
+  text-align: center;
 
   > app-game-cover {
     width: 6rem;
+    justify-self: center;
   }
 
   @media (min-width: 40rem) {
     grid-template-columns: 11rem minmax(0, 1fr);
     gap: 2rem;
+    text-align: left;
 
     > app-game-cover {
       width: auto;
+      justify-self: stretch;
     }
   }
 }
