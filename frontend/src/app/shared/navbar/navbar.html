@@ -9,7 +9,17 @@
       </p>
     </div>
 
-    <app-navbar-search class="navbar-search" />
+    <button type="button" class="btn btn-sm btn-square btn-primary btn-soft navbar-search-toggle"
+            [class.search-active]="mobileSearchOpen()"
+            [title]="mobileSearchOpen() ? 'Close search' : 'Search'" (click)="toggleMobileSearch()">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m16 16 4 4" />
+      </svg>
+    </button>
+
+    <app-navbar-search class="navbar-search" [class.is-open]="mobileSearchOpen()"
+                       (resultSelected)="mobileSearchOpen.set(false)" />
 
     <div class="justify-self-end shrink-0">
       @if (user(); as currentUser) {
@@ -34,7 +44,7 @@
             </svg>
           </summary>
 
-          <ul class="dropdown-content dropdown-panel menu mt-3 w-44 p-2">
+          <ul class="dropdown-content dropdown-panel menu mt-3 w-max min-w-[140px] whitespace-nowrap p-2">
             <li>
               <a [routerLink]="['/user', currentUser.username]" (click)="closeMenu()">
                 My profile

@@ -1,13 +1,21 @@
 :host {
   display: block;
-  padding-inline-start: 3.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline-start: 3.25rem;
+  }
 }
 
 .profile-heading {
   display: grid;
-  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
+  text-align: center;
+
+  > .profile-avatar {
+    justify-self: center;
+  }
 }
 
 .profile-avatar {
@@ -28,6 +36,7 @@
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: .75rem;
 }
 
@@ -84,6 +93,15 @@
   align-items: center;
   gap: 1.25rem;
   margin-top: 1.5rem;
+
+  @media (width < 380px) {
+    flex-direction: column;
+
+    > ul {
+      width: 100%;
+      flex: none;
+    }
+  }
 }
 
 .profile-donut {
@@ -130,6 +148,7 @@
   .profile-heading {
     grid-template-columns: 7rem minmax(0, 1fr);
     gap: 1.75rem;
+    text-align: left;
   }
   .profile-avatar {
     width: 7rem;
@@ -138,6 +157,7 @@
   }
   .profile-actions {
     grid-column: 2;
+    justify-content: flex-start;
   }
   .profile-stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
