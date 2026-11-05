@@ -32,8 +32,7 @@ public class GameRelation {
         this.sourceGame = java.util.Objects.requireNonNull(sourceGame);
         this.targetGame = java.util.Objects.requireNonNull(targetGame);
         this.relationType = java.util.Objects.requireNonNull(relationType);
-        if (sourceGame == targetGame || (sourceGame.getId() != null
-                && sourceGame.getId().equals(targetGame.getId()))) {
+        if (sourceGame == targetGame || (sourceGame.getId() != null && sourceGame.getId().equals(targetGame.getId()))) {
             throw new IllegalArgumentException("A game cannot reference itself");
         }
     }

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/auth/csrf", "/auth/login").permitAll()
                         .requestMatchers(publicEntrySearch).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/*/profile", "/users/*/avatar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/suggestions", "/users/*/profile", "/users/*/avatar").permitAll()
                         .anyRequest().authenticated())
                 // This read-only POST can be called without a CSRF token
                 .csrf(csrf -> csrf.ignoringRequestMatchers(publicEntrySearch))

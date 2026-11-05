@@ -1,13 +1,7 @@
-<app-entry-navbar [canEdit]="canEdit()" [username]="username()" [profilePage]="true" />
 <app-profile-editor #editor (saved)="reload()" (avatarChanged)="updateAvatar($event)" />
 <app-favorites-editor #favoritesEditor (saved)="reload()" />
 
 <div class="mx-auto max-w-5xl">
-  <header class="mb-8 flex flex-wrap items-end gap-x-5 gap-y-2">
-    <app-logo class="block w-48 sm:w-56" />
-    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary sm:mb-2">Your game diary</p>
-  </header>
-
   @if (error(); as message) {
     <div class="rounded-box border border-base-content/10 bg-base-100 p-8">
       <h1 class="text-xl font-semibold">{{ message }}</h1>

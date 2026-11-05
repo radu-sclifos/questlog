@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { catchError, finalize, of, Subject, switchMap, timer } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, finalize, of, Subject, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { GameService } from '../../../games/services/game.service';
+import { GameSearchResult } from '../../../games/components/game-search-result/game-search-result';
 import { Platform } from '../../../games/models/platform';
 import { sortPlatforms } from '../../../games/models/platform-order';
 import { GameSuggestion } from '../../../games/models/game-suggestion';
@@ -13,7 +14,7 @@ import { EntryService } from '../../services/entry.service';
 
 @Component({
   selector: 'app-entry-editor-dialog',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, GameSearchResult],
   templateUrl: './entry-editor-dialog.html',
 })
 export class EntryEditorDialog {
@@ -28,11 +29,15 @@ export class EntryEditorDialog {
   protected readonly platformsLoading = signal(false);
   protected readonly platformsError = signal(false);
 
-  protected readonly suggestions = signal<GameSuggestion[]>([]);
-  protected readonly suggestionsLoading = signal(false);
-  protected readonly suggestionsError = signal(false);
   protected readonly titleFocused = signal(false);
   protected readonly highlightedIndex = signal(-1);
+  private readonly suggestionState = toSignal(this.suggestionQueries.pipe(
+    tap(() => this.highlightedIndex.set(-1)),
+    switchMap(name => this.gameService.searchSuggestions(name, 5)),
+  ), { initialValue: { items: [] as GameSuggestion[], loading: false, error: false } });
+  protected readonly suggestions = computed(() => this.suggestionState().items);
+  protected readonly suggestionsLoading = computed(() => this.suggestionState().loading);
+  protected readonly suggestionsError = computed(() => this.suggestionState().error);
 
   readonly savedEntry = output<Entry>();
   //meant to block the saving button and not allow the user to add multiple times the same Entry
@@ -79,36 +84,6 @@ export class EntryEditorDialog {
   } });
 
   constructor() {
-    this.suggestionQueries
-      .pipe(
-        switchMap((name) => {
-          this.suggestionsLoading.set(false);
-          this.suggestions.set([]);
-          this.suggestionsError.set(false);
-          this.highlightedIndex.set(-1);
-          if (!name || name.length < 3) {
-            return of([] as GameSuggestion[]);
-          }
-
-          // Cancel the previous request immediately, then wait for typing to pause
-          this.suggestionsLoading.set(true);
-
-          return timer(300).pipe(
-            switchMap(() => {
-              return this.gameService.suggestions(name).pipe(
-                catchError(() => {
-                  this.suggestionsError.set(true);
-                  return of([] as GameSuggestion[]);
-                }),
-              );
-            }),
-            finalize(() => this.suggestionsLoading.set(false)),
-          );
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe((games) => this.suggestions.set(games));
-
     // Changing or closing the game cancels any pending platform request.
     this.platformQueries
       .pipe(

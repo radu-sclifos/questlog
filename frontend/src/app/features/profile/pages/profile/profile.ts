@@ -15,11 +15,9 @@ import {
   tap,
 } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
-import { EntryNavbar } from '../../../entry/components/entry-navbar/entry-navbar';
 import { EntryStatus } from '../../../entry/models/entry';
 import { ENTRY_STATUS_LABELS } from '../../../entry/models/entry-labels';
 import { GameCover } from '../../../games/components/game-cover/game-cover';
-import { Logo } from '../../../../shared/logo/logo';
 import { PublicProfile } from '../../models/public-profile';
 import { avatarUrl, initials } from '../../utils/profile-image';
 import { ProfileService } from '../../services/profile.service';
@@ -42,9 +40,7 @@ const STATUS_COLORS: Record<EntryStatus, string> = {
     RouterLink,
     DatePipe,
     DecimalPipe,
-    EntryNavbar,
     GameCover,
-    Logo,
     ProfileEditor,
     FavoritesEditor,
   ],

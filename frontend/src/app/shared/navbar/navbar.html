@@ -1,0 +1,64 @@
+<header class="border-b border-base-content/10 bg-base-200 text-base-content">
+
+  <nav class="navbar navbar-layout gap-4 px-4 py-3 sm:px-8 md:py-0">
+
+    <div class="flex shrink-0 items-end gap-3">
+      <app-logo width="9rem" />
+      <p class="mb-3 hidden whitespace-nowrap text-xs font-semibold uppercase tracking-[0.25em] text-primary 2xl:block">
+        Your game diary
+      </p>
+    </div>
+
+    <app-navbar-search class="navbar-search" />
+
+    <div class="justify-self-end shrink-0">
+      @if (user(); as currentUser) {
+        <details #profileMenu class="dropdown dropdown-end">
+
+          <summary class="btn btn-ghost gap-2 px-2">
+            @if (visibleAvatar(); as avatar) {
+              <img [src]="avatar" alt="" class="size-8 shrink-0 rounded-full object-cover"
+                   (error)="onAvatarError(avatar)">
+            } @else {
+              <span
+                class="profile-initials size-8 shrink-0 rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                {{ initials(currentUser.displayName || currentUser.username) }}
+              </span>
+            }
+            <span class="hidden max-w-20 truncate sm:block xl:max-w-40">
+              {{ currentUser.displayName || currentUser.username }}
+            </span>
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 focusable="false">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </summary>
+
+          <ul class="dropdown-content dropdown-panel menu mt-3 w-44 p-2">
+            <li>
+              <a [routerLink]="['/user', currentUser.username]" (click)="closeMenu()">
+                My profile
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="['/list', currentUser.username]" (click)="closeMenu()">
+                My library
+              </a>
+            </li>
+            <li class="mt-2 border-t border-base-content/10 pt-2">
+              <button type="button" class="text-error" [disabled]="signingOut()" (click)="logout()">
+                @if (signingOut()) {
+                  <span class="loading loading-spinner loading-xs"></span>
+                }
+                {{ signingOut() ? 'Signing out…' : 'Sign out' }}
+              </button>
+            </li>
+          </ul>
+        </details>
+      } @else {
+        <a routerLink="/login" class="btn btn-primary btn-sm">Sign in</a>
+      }
+    </div>
+  </nav>
+
+</header>

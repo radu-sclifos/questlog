@@ -83,7 +83,8 @@ class GameServiceIntegrationTests {
         assertEquals("Related game", response.getRelations().getFirst().getGame().getName());
         var criteria = new SearchCriteria(List.of(new FilterCriteria("id", FilterOperator.EQUAL, id)), List.of());
         assertEquals(response, service.search(criteria).getItems().getFirst());
-        assertEquals(List.of(new com.radusclifos.questlog.game.dto.GameSuggestion(id, response.getName())),
+        assertEquals(List.of(new com.radusclifos.questlog.game.dto.GameSuggestion(id, response.getName(),
+                        response.getCoverImageId(), response.getFirstReleaseDate())),
                 service.suggestions("bALDur", 10));
     }
 
