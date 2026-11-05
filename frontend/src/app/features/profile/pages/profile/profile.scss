@@ -1,6 +1,9 @@
 :host {
   display: block;
-  padding-inline-start: 3.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline-start: 3.25rem;
+  }
 }
 
 .profile-heading {
