@@ -35,6 +35,15 @@ export class Navbar {
 
   protected readonly user = this.auth.user;
   protected readonly signingOut = signal(false);
+  protected readonly mobileSearchOpen = signal(false);
+  private readonly search = viewChild(NavbarSearch);
+
+  protected toggleMobileSearch(): void {
+    this.mobileSearchOpen.update(open => !open);
+    if (this.mobileSearchOpen()) {
+      requestAnimationFrame(() => this.search()?.focusInput());
+    }
+  }
   private readonly failedAvatar = signal<string | null>(null);
   private readonly avatar = toSignal(
     toObservable(this.user).pipe(
@@ -58,7 +67,10 @@ export class Navbar {
         filter((event) => event instanceof NavigationEnd),
         takeUntilDestroyed(),
       )
-      .subscribe(() => this.closeMenu());
+      .subscribe(() => {
+        this.closeMenu();
+        this.mobileSearchOpen.set(false);
+      });
   }
 
   protected onAvatarError(url: string): void {

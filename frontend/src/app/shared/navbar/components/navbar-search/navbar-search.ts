@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, computed, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { catchError, filter, map, of, startWith, switchMap, timer } from 'rxjs';
@@ -31,6 +31,7 @@ const emptyResults = { items: [] as SearchResult[], loading: false, error: false
   host: { class: 'block min-w-0' },
 })
 export class NavbarSearch {
+  readonly resultSelected = output<void>();
   private readonly games = inject(GameService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -158,7 +159,7 @@ export class NavbarSearch {
     }
   }
 
-  private focusInput(): void {
+  focusInput(): void {
     this.element.nativeElement.querySelector('input')?.focus();
   }
 }

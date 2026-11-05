@@ -9,7 +9,16 @@
       </p>
     </div>
 
-    <app-navbar-search class="navbar-search" />
+    <button type="button" class="btn btn-ghost btn-square navbar-search-toggle"
+            [title]="mobileSearchOpen() ? 'Close search' : 'Search'" (click)="toggleMobileSearch()">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m16 16 4 4" />
+      </svg>
+    </button>
+
+    <app-navbar-search class="navbar-search" [class.is-open]="mobileSearchOpen()"
+                       (resultSelected)="mobileSearchOpen.set(false)" />
 
     <div class="justify-self-end shrink-0">
       @if (user(); as currentUser) {
