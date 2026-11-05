@@ -1,12 +1,20 @@
 .game-heading {
   display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 1.25rem;
+
+  > app-game-cover {
+    width: 6rem;
+  }
 
   @media (min-width: 40rem) {
     grid-template-columns: 11rem minmax(0, 1fr);
     gap: 2rem;
+
+    > app-game-cover {
+      width: auto;
+    }
   }
 }
 
