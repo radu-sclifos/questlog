@@ -25,6 +25,18 @@ summary::-webkit-details-marker {
   column-gap: 0.5rem;
 }
 
+.navbar-search-toggle {
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  border-radius: 0.75rem;
+  box-shadow: none;
+
+  &.search-active {
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    border-color: var(--color-primary);
+  }
+}
+
 .navbar-search {
   display: none;
   grid-row: 2;

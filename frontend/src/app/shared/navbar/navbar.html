@@ -9,7 +9,8 @@
       </p>
     </div>
 
-    <button type="button" class="btn btn-ghost btn-square navbar-search-toggle"
+    <button type="button" class="btn btn-sm btn-square btn-primary btn-soft navbar-search-toggle"
+            [class.search-active]="mobileSearchOpen()"
             [title]="mobileSearchOpen() ? 'Close search' : 'Search'" (click)="toggleMobileSearch()">
       <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="7" />
