@@ -31,6 +31,7 @@
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: .75rem;
 }
 
@@ -141,6 +142,7 @@
   }
   .profile-actions {
     grid-column: 2;
+    justify-content: flex-start;
   }
   .profile-stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
