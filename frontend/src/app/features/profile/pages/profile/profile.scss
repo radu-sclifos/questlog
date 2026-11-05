@@ -93,6 +93,15 @@
   align-items: center;
   gap: 1.25rem;
   margin-top: 1.5rem;
+
+  @media (width < 380px) {
+    flex-direction: column;
+
+    > ul {
+      width: 100%;
+      flex: none;
+    }
+  }
 }
 
 .profile-donut {
