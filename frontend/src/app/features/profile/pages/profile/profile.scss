@@ -8,9 +8,14 @@
 
 .profile-heading {
   display: grid;
-  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
+  text-align: center;
+
+  > .profile-avatar {
+    justify-self: center;
+  }
 }
 
 .profile-avatar {
@@ -134,6 +139,7 @@
   .profile-heading {
     grid-template-columns: 7rem minmax(0, 1fr);
     gap: 1.75rem;
+    text-align: left;
   }
   .profile-avatar {
     width: 7rem;
