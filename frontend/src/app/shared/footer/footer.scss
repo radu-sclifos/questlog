@@ -3,8 +3,7 @@
 }
 
 .site-footer {
-  // Leave room for the library sidebar and the fixed mobile pagination.
-  padding: 2.5rem 1rem 7rem 4.25rem;
+  padding: 2.5rem 1rem var(--footer-mobile-padding-bottom, 2.5rem);
 
   @media (min-width: 40rem) {
     padding: 3rem 5.25rem;
