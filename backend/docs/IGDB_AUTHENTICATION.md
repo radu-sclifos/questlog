@@ -1,20 +1,22 @@
 # Spring Batch infrastructure and IGDB authentication
 
-This step installs Spring Batch 6.0.6 (managed by Spring Boot 4.1.2) with a JDBC
+QuestLog uses Spring Batch (managed by Spring Boot) with a JDBC
 JobRepository in the application's PostgreSQL database. Flyway V1 creates the
 official Batch metadata tables and sequences. Boot schema initialization is
 disabled so Flyway is the sole schema owner.
 
-The catalog synchronization job is documented in CATALOG_IMPORT.md. No scheduler or
-maintenance window is enabled. spring.batch.job.enabled=false prevents Boot from
-launching jobs implicitly; the catalog's explicit opt-in runner is separate.
+The catalog synchronization job is documented in [CATALOG_IMPORT.md](CATALOG_IMPORT.md).
+Its opt-in scheduler runs at 03:00 Europe/Rome when CATALOG_IMPORT_SCHEDULED=true
+and IGDB_ENABLED=true. Scheduling is disabled by default and independent of the
+explicit startup runner. spring.batch.job.enabled=false prevents Boot from
+launching jobs implicitly; it does not disable either explicit launch mechanism.
 No @EnableBatchProcessing is needed: Boot configures the
 infrastructure through spring-boot-starter-batch-jdbc.
 
 ## Register the application once
 
 1. Sign in to Twitch and enable two-factor authentication on your account.
-2. Open https://dev.twitch.tv/console/apps and register an application.
+2. Open the [Twitch developer console](https://dev.twitch.tv/console/apps) and register an application.
 3. Set the OAuth redirect URL to http://localhost. The client credentials flow
    does not use this URL: QuestLog receives no login callback.
 4. Select Confidential as client type.
@@ -23,8 +25,8 @@ infrastructure through spring-boot-starter-batch-jdbc.
 These credentials identify QuestLog itself. Users of QuestLog do not need Twitch
 accounts and do not authorize access to their personal data.
 
-Official setup: https://api-docs.igdb.com/#account-creation
-OAuth flow: https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#client-credentials-grant-flow
+Official setup: [IGDB account creation](https://api-docs.igdb.com/#account-creation)
+OAuth flow: [Twitch client credentials](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#client-credentials-grant-flow)
 
 ## Configure your backend process
 

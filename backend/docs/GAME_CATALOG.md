@@ -1,7 +1,8 @@
-# Game catalog — first persistence step
+# Game catalog
 
-The catalog is independent from personal library entries. The incremental
-Spring Batch importer is described in CATALOG_IMPORT.md; entries reference imported games through a required game_id.
+Catalog metadata is stored separately from personal library data; entries reference
+imported games through a required game_id. The incremental Spring Batch importer
+is described in [CATALOG_IMPORT.md](CATALOG_IMPORT.md).
 
 ## Game
 
@@ -32,7 +33,7 @@ game_franchises and game_series.
 - Directed links to other imported games.
 
 Engine is the Java entity stored in engines; Game.engines uses the game_engines
-join table with game_id and engine_id. The provider field game_engines will be
+join table with game_id and engine_id. The provider field game_engines is
 mapped to this collection by the importer.
 
 Series are imported from IGDB collections and remain distinct from franchises.
@@ -60,7 +61,7 @@ GameRelation stores source, target and an application-owned enum:
 - PARENT_GAME: target is the source game's parent in IGDB.
 
 Self references and duplicate triples are rejected by PostgreSQL.
-The first importer retains raw parent references alongside explicit typed links,
+The importer retains raw parent references alongside explicit typed links,
 preserving the provider's direction. Similar-game recommendations are excluded.
 Both endpoints must exist locally. pending_game_relations persists source references
 whose targets are absent. Existing targets are linked immediately. The second
@@ -115,7 +116,7 @@ igdbId, name and coverImageId; they do not recursively include related games.
 Missing collections are returned as empty arrays and optional metadata as null.
 GameService maps lazy associations within a transaction; collection batching
 avoids loading each game's collections individually on search pages.
-Suggestions use GameSuggestion (id and name only), selected directly from the
+Suggestions use GameSuggestion (id, name, coverImageId and firstReleaseDate), selected directly from the
 database without loading game entities or their associations.
 
 ## Entries linked to games
@@ -142,3 +143,15 @@ preflight existence query is needed; the database also protects concurrent write
 
 Entry updates must retain their existing gameId; a different gameId returns 400.
 The editor displays the existing game name as read-only when editing.
+
+
+## Reference platform and achievements
+
+GET /games/{id}/platforms returns the game's available platforms as GamePlatform
+(id and name). SaveEntryRequest accepts an optional positive platformId; when
+provided, it must belong to the selected game or the backend returns 400.
+EntryDto includes the selected platform as id/name when present.
+
+SaveEntryRequest and EntryDto also expose achievementsUnlocked and achievementsTotal.
+Both are optional nonnegative integers. When both are present, unlocked must not
+exceed total; the service validates this relationship before saving.

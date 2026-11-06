@@ -17,8 +17,9 @@ the provider catalog changes. IGDB does not provide a transaction-wide snapshot;
 changes after the frozen boundary are picked up by a later run. The overlap is a
 practical tolerance, not a guarantee against arbitrary provider indexing delays
 or clock skew. A first full import may be large; there is no popularity filter yet.
-Deletion reconciliation and independent dictionary sync have not been added.
-Related metadata is still refreshed when an imported game is written.
+Deletion reconciliation has not been added. Genres and game types are refreshed
+before game pages in every execution; other reference metadata is refreshed when
+an imported game is written. There is no separate dictionary synchronization job.
 
 Set `CATALOG_IMPORT_SCHEDULED=true` and `IGDB_ENABLED=true` to synchronize daily
 at 03:00 in `Europe/Rome` (including daylight saving time). The application must
@@ -76,7 +77,7 @@ Flyway creates the complete schema from V1 on an empty database. The explicit ru
 starts catalogImportJob synchronously during startup, imports the matching
 records and logs the execution ID, page progress and final status:
 
-    Catalog import execution <id> finished with status COMPLETED.
+    Catalog import execution <id> completed.
 
 If the job or launch fails, the runner logs the error and lets the backend keep
 running. Batch execution history and already committed pages are retained. No background work remains after completion.
@@ -91,18 +92,6 @@ pageMs covers both plus in-tasklet bookkeeping, excluding the log itself and
 Spring Batch's subsequent checkpoint persistence. Dictionary initialization logs
 its own igdbMs and dbMs separately. The final empty game page logs its fetch time.
 
-Set CATALOG_IMPORT_DIAGNOSTICS=true before starting the backend to append
-sqlStatements and flushes to each nonempty game-page log. These are deltas of
-Hibernate's prepared-statement and flush counters around writePage, including
-commit, excluding dictionary initialization and Batch checkpoint persistence.
-sqlStatements counts prepared SQL statements, including reads and writes, rather
-than only SELECT queries or individual rows. The counters are SessionFactory-wide:
-avoid concurrent application traffic for a meaningful import measurement. They
-are never reset by the importer. Disabled diagnostics show disabled rather than
-misleading zero values; turn the option off after profiling to avoid the overhead
-of collecting global Hibernate statistics. Flushes count Hibernate's completed
-full flushes, not every automatic partial-flush check or every SQL statement.
-
 ## Steps and persistence
 
 CatalogImportConfiguration assembles the job and steps. Their execution logic
@@ -115,7 +104,7 @@ CatalogReferenceResolver provides explicit lookups for shared dictionaries.
 EntityManager is used only for flush/clear; the page transaction is unchanged.
 
 Each game page preloads existing games (including referenced relation targets),
-platforms, engines, franchises and companies using at most one lookup query per
+platforms, engines, franchises, series and companies using at most one lookup query per
 entity type, restricted to the IDs in eligible page records. Empty ID sets do not
 issue queries. The maps are local to the page transaction and newly created
 records are added immediately so later records in that page reuse them. Names
@@ -142,11 +131,14 @@ Existing dictionary rows absent from the provider response are retained in the
 database but excluded from the new maps. A dictionary fetch or persistence failure
 fails the import before any game page is processed.
 
-1. catalogImportGames requests one catalog page, then updates the catalog
+1. catalogRefreshReferences fetches genres and game types outside a database
+   transaction, then refreshes their tables and resolver maps atomically. A failure
+   stops the job before any game page is processed.
+2. catalogImportGames requests one catalog page, then updates the catalog
    in its own short transaction. No database transaction is held during HTTP.
    The last game ID and processed page count are persisted after a successful page.
    Relations to existing local targets are created immediately.
-2. catalogImportRelations scans pending links in bounded pages, creates missing
+3. catalogImportRelations scans pending links in bounded pages, creates missing
    local relations when the targets become available, and deletes the resolved
    pending rows in the same transaction. Unresolved rows remain for future runs.
 
@@ -225,7 +217,7 @@ Credentials, access tokens and raw provider error bodies are not logged.
 
 ## Verification
 
-    .\mvnw.cmd -Dtest=CatalogImportJobTests,CatalogImportParametersTests,IgdbAuthenticationTests,IgdbConfigurationTests,BatchInfrastructureTests test
+    .\mvnw.cmd -Dtest=CatalogImportJobTests,CatalogImportParametersTests,CatalogImportStartupTests,CatalogImportSchedulerTests,IgdbAuthenticationTests,IgdbConfigurationTests,BatchInfrastructureTests test
 
 CatalogImportJobTests boots the real application against H2 in PostgreSQL mode,
 applies the schema with Flyway and validates the Hibernate mappings. IGDB is simulated.
@@ -235,9 +227,3 @@ retries from the beginning without duplicating committed records, exact page lim
 filtered-page counting and isolation of limited runs from the full sync history.
 HTTP tests check expanded payloads, incomplete responses and transient retries.
 A live PostgreSQL/IGDB execution must still be verified with real configuration.
-
-The job starts with `catalogRefreshReferences`, a dedicated tasklet that fetches
-genres and game types outside a database transaction and refreshes their tables
-and caches atomically before `catalogImportGames`. A refresh failure stops the job
-before game import. Other reference types remain refreshed per game page.
-
