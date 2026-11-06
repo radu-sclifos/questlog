@@ -23,13 +23,11 @@ public class SearchCriteria {
     @Min(1)
     private int pageSize = 100;
 
-    @Valid
     @Size(max = 20)
-    private List<FilterCriteria> filters = new ArrayList<>();
+    private List<@Valid FilterCriteria> filters = new ArrayList<>();
 
-    @Valid
     @Size(max = 5)
-    private List<SortCriteria> sorts = new ArrayList<>();
+    private List<@Valid SortCriteria> sorts = new ArrayList<>();
 
     public SearchCriteria(List<FilterCriteria> filters, List<SortCriteria> sorts, int pageNumber, int pageSize) {
         setFilters(filters);
