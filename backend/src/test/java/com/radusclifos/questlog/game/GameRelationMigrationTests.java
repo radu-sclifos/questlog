@@ -1,23 +1,26 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.support.PostgresTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@PostgresTest
+@SpringBootTest
 class GameRelationMigrationTests {
+
+    @Autowired
+    JdbcTemplate jdbc;
+
     @Test
     void baselineAcceptsCurrentRelationTypesAndRejectsLegacyValues() {
-        var dataSource = new SingleConnectionDataSource(
-                "jdbc:h2:mem:relation-upgrade;MODE=PostgreSQL", "sa", "", true);
-        new ResourceDatabasePopulator(new ClassPathResource("db/migration/V1__baseline.sql")).execute(dataSource);
-        var jdbc = new JdbcTemplate(dataSource);
         jdbc.update("insert into games(id,name) values(101,'Original'),(102,'Related')");
         var types = List.of("DLC", "EXPANSION", "STANDALONE_EXPANSION", "REMAKE",
                 "REMASTER", "PORT", "EXPANDED_GAME", "FORK");
@@ -39,6 +42,6 @@ class GameRelationMigrationTests {
                 "insert into game_relations(source_game_id,target_game_id,relation_type) values(101,102,'HAS_DLC')"));
         assertThrows(DataIntegrityViolationException.class, () -> jdbc.update(
                 "insert into pending_game_relations(source_game_id,target_igdb_id,relation_type) values(101,999,'HAS_DLC')"));
-        dataSource.destroy();
     }
+
 }

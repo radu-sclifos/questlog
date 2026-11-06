@@ -5,12 +5,15 @@ import com.radusclifos.questlog.entry.mapper.EntryMapper;
 import com.radusclifos.questlog.game.Game;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class EntryMapperTests {
+
     private final EntryMapper mapper = Mappers.getMapper(EntryMapper.class);
 
-    @Test void mapsCatalogDataWithoutCopyingItIntoEntry() {
+    @Test
+    void mapsCatalogDataWithoutCopyingItIntoEntry() {
         var game = new Game("Celeste", "co_example");
         var request = new SaveEntryRequest(1L, 9.0, "Notes", EntryStatus.COMPLETED, EntryOwnership.OWN, 12);
         var entry = mapper.toEntity(request, game);
@@ -23,7 +26,8 @@ class EntryMapperTests {
         assertEquals("Updated title", mapper.toDto(entry).getGame().getName());
     }
 
-    @Test void replacesPersonalDetailsWithoutModifyingTheCatalog() {
+    @Test
+    void replacesPersonalDetailsWithoutModifyingTheCatalog() {
         var game = new Game("Celeste", null);
         var entry = new Entry(game);
         entry.setScore(9.0);
@@ -36,4 +40,5 @@ class EntryMapperTests {
         assertNull(mapper.toDto(null));
         assertNull(mapper.toEntity(null, game));
     }
+
 }

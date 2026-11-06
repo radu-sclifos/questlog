@@ -1,34 +1,36 @@
 package com.radusclifos.questlog.game;
 
 import com.radusclifos.questlog.game.controller.GameController;
-import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.game.dto.GameSuggestion;
 import com.radusclifos.questlog.game.mapper.GameMapper;
+import com.radusclifos.questlog.game.repository.GameRepository;
 import com.radusclifos.questlog.game.service.GameService;
-import org.mapstruct.factory.Mappers;
+import com.radusclifos.questlog.shared.search.SearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import com.radusclifos.questlog.shared.search.SearchCriteria;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class GameControllerTests {
+
     private GameRepository repository;
+
     private MockMvc mvc;
 
     @BeforeEach
@@ -44,9 +46,9 @@ class GameControllerTests {
         when(repository.searchWithCriteria(any())).thenReturn(
                 new PageImpl<>(List.of(game), PageRequest.of(1, 5), 6));
         mvc.perform(post("/games/search").contentType(MediaType.APPLICATION_JSON).content("""
-                {"filters":[{"field":"genres.id","operator":"EQUAL","value":3}],
-                 "sorts":[{"field":"name","direction":"ASC"}],"pageNumber":1,"pageSize":5}
-                """))
+                        {"filters":[{"field":"genres.id","operator":"EQUAL","value":3}],
+                         "sorts":[{"field":"name","direction":"ASC"}],"pageNumber":1,"pageSize":5}
+                        """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].name").value("Hollow Knight"))
                 .andExpect(jsonPath("$.items[0].coverImageId").value("co_example"))
@@ -128,6 +130,7 @@ class GameControllerTests {
     void missingGameReturnsNotFound() throws Exception {
         mvc.perform(get("/games/1")).andExpect(status().isNotFound());
     }
+
     @Test
     void readsPlatformsWithoutLoadingGameDetails() throws Exception {
         when(repository.existsById(1L)).thenReturn(true);

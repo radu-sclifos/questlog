@@ -6,6 +6,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GameRelationTests {
+
     @Test
     void rejectsSelfReferencesIncludingDifferentInstancesOfTheSameRow() {
         var source = new Game("Original", null);
@@ -17,4 +18,5 @@ class GameRelationTests {
         assertThrows(IllegalArgumentException.class,
                 () -> new GameRelation(source, anotherInstance, GameRelationType.REMAKE));
     }
+
 }

@@ -3,15 +3,29 @@ package com.radusclifos.questlog.shared.search;
 import com.radusclifos.questlog.entry.Entry;
 import com.radusclifos.questlog.game.Game;
 import com.radusclifos.questlog.user.User;
-import jakarta.persistence.*;
-import jakarta.persistence.metamodel.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.Metamodel;
+import jakarta.persistence.metamodel.SingularAttribute;
+
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import static org.mockito.Mockito.*;
 
-/** JPA metadata fixture for isolated controller tests; database tests use Hibernate's real metamodel. */
+/**
+ * JPA metadata fixture for isolated controller tests; database tests use Hibernate's real metamodel.
+ */
 public final class SearchTestSupport {
-    private SearchTestSupport() {}
+
+    private SearchTestSupport() {
+    }
 
     public static void configure(com.radusclifos.questlog.entry.repository.EntryRepository repository) {
         var builder = builder();
@@ -23,7 +37,7 @@ public final class SearchTestSupport {
             SearchCriteria criteria = invocation.getArgument(0);
             builder.build(criteria);
             return new org.springframework.data.domain.PageImpl<com.radusclifos.questlog.entry.Entry>(
-                java.util.List.of(), org.springframework.data.domain.PageRequest.of(criteria.getPageNumber(), criteria.getPageSize()), 0);
+                    java.util.List.of(), org.springframework.data.domain.PageRequest.of(criteria.getPageNumber(), criteria.getPageSize()), 0);
         });
     }
 
@@ -48,8 +62,9 @@ public final class SearchTestSupport {
                 doReturn(field.getType()).when(attribute).getJavaType();
                 when(attribute.isId()).thenReturn(field.isAnnotationPresent(Id.class));
                 when(attribute.getPersistentAttributeType()).thenReturn(field.isAnnotationPresent(ManyToOne.class)
-                    ? Attribute.PersistentAttributeType.MANY_TO_ONE : Attribute.PersistentAttributeType.BASIC);
-                if (entities.containsKey(field.getType())) doReturn(entities.get(field.getType())).when(attribute).getType();
+                        ? Attribute.PersistentAttributeType.MANY_TO_ONE : Attribute.PersistentAttributeType.BASIC);
+                if (entities.containsKey(field.getType()))
+                    doReturn(entities.get(field.getType())).when(attribute).getType();
                 attributes.put(field.getName(), attribute);
             }
             doReturn(new HashSet<>(attributes.values())).when(item.getValue()).getSingularAttributes();
@@ -62,4 +77,5 @@ public final class SearchTestSupport {
         when(model.entity(any(Class.class))).thenAnswer(invocation -> entities.get(invocation.getArgument(0)));
         return new CriteriaSpecificationBuilder<>(model.entity(Entry.class));
     }
+
 }

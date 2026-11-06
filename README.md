@@ -43,6 +43,16 @@ Full dependency versions are defined in `frontend/package.json`, `frontend/packa
 
 - **Responsive search flows.** Angular and RxJS debounce searches and cancel outdated requests as input changes. Library filtering, sorting, and pagination run on the backend.
 
+## Backend Tests
+
+The backend suite combines isolated tests with PostgreSQL integration tests using
+Testcontainers and the production Flyway migrations. With Java 25 and Docker
+running, execute `./mvnw test` from `backend/` (`.\mvnw.cmd test` on Windows).
+No external test database or IGDB credentials are needed.
+
+The backend CI workflow runs tests and packages the application on GitHub Actions.
+See [backend testing](backend/docs/TESTING.md) for setup, isolation and commands.
+
 ## Project Status
 
 The core features are implemented: catalog integration, authentication, personal libraries, public profiles, game detail pages, and game and user search.

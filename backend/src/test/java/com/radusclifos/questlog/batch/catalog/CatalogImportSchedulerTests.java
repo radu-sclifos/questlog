@@ -10,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 class CatalogImportSchedulerTests {
+
     private final CatalogImportLauncher launcher = mock(CatalogImportLauncher.class);
+
     private final CatalogImportProperties properties = new CatalogImportProperties(false, 2, 25);
 
     private ApplicationContextRunner context() {
@@ -47,4 +49,5 @@ class CatalogImportSchedulerTests {
 
         assertDoesNotThrow(scheduler::synchronizeCatalog);
     }
+
 }

@@ -103,7 +103,8 @@ From backend/:
 
 HTTP tests simulate Twitch/IGDB, including expiry, concurrent callers, validation,
 401 recovery, rate limits, malformed responses and secret-safe errors.
-The Batch test uses H2 in PostgreSQL compatibility mode and executes the exact V1
-baseline SQL, then writes and reads a job instance through the JDBC repository.
-It does not replace checking all Flyway migrations against a real PostgreSQL
-test database. A real credential check is opt-in and is not run by these tests.
+The Batch test starts PostgreSQL with Testcontainers and applies the production
+migrations through Flyway, then writes and reads a job instance through the JDBC
+repository. Docker must be running; no external test database is required.
+A real credential check is opt-in and is not run by these tests.
+See [Testing](TESTING.md) for the complete suite and CI setup.

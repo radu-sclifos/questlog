@@ -4,9 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class IgdbConfigurationTests {
+
     private final ApplicationContextRunner context = new ApplicationContextRunner()
             .withUserConfiguration(IgdbConfiguration.class);
 
@@ -28,7 +29,7 @@ class IgdbConfigurationTests {
     @Test
     void enablingCreatesClientWithoutNetworkCallsOrAutomaticVerification() {
         context.withPropertyValues("questlog.igdb.enabled=true",
-                "questlog.igdb.client-id=test-id", "questlog.igdb.client-secret=test-secret")
+                        "questlog.igdb.client-id=test-id", "questlog.igdb.client-secret=test-secret")
                 .run(ctx -> assertThat(ctx).hasNotFailed().hasSingleBean(IgdbClient.class)
                         .hasSingleBean(TwitchAppTokenProvider.class)
                         .doesNotHaveBean("igdbAuthenticationCheck"));
@@ -46,4 +47,5 @@ class IgdbConfigurationTests {
         assertFalse(properties.toString().contains("private-id"));
         assertFalse(properties.toString().contains("private-secret"));
     }
+
 }

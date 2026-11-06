@@ -78,8 +78,8 @@ already loaded graph must also maintain its in-memory consistency.
 V1__baseline.sql creates the complete application, catalog, pending relations and Spring Batch schema from scratch. It contains the final table definitions and constraints, without historical ALTER or data migration statements. This consolidated history requires an empty database, including flyway_schema_history. Hibernate remains configured with ddl-auto=validate.
 
 GameCatalogIntegrationTests checks the mapping, full release date, join tables,
-company roles and relation direction against a configured PostgreSQL database.
-Use a dedicated test database with DB_URL, DB_USERNAME and DB_PASSWORD set:
+company roles and relation direction against PostgreSQL started by Testcontainers.
+Start Docker and run (no database environment variables are needed):
 
     ./mvnw -Dtest=GameCatalogIntegrationTests,CriteriaSearchIntegrationTests test
 

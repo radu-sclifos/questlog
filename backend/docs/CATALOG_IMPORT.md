@@ -219,11 +219,13 @@ Credentials, access tokens and raw provider error bodies are not logged.
 
     .\mvnw.cmd -Dtest=CatalogImportJobTests,CatalogImportParametersTests,CatalogImportStartupTests,CatalogImportSchedulerTests,IgdbAuthenticationTests,IgdbConfigurationTests,BatchInfrastructureTests test
 
-CatalogImportJobTests boots the real application against H2 in PostgreSQL mode,
+CatalogImportJobTests boots the real application against PostgreSQL via Testcontainers,
 applies the schema with Flyway and validates the Hibernate mappings. IGDB is simulated.
 It checks initial import, UTC date conversion, shared dictionaries, updates,
 relationship removal/deferred resolution, incremental history, failed-run isolation,
 retries from the beginning without duplicating committed records, exact page limits,
 filtered-page counting and isolation of limited runs from the full sync history.
 HTTP tests check expanded payloads, incomplete responses and transient retries.
-A live PostgreSQL/IGDB execution must still be verified with real configuration.
+The suite requires Docker, but no external database or provider credentials.
+Live IGDB behavior must still be verified with real configuration.
+See [Testing](TESTING.md) for the full suite and CI setup.
