@@ -45,6 +45,13 @@ jobs:
           path: backend/target/surefire-reports/
           if-no-files-found: ignore
           retention-days: 14
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        with:
+          name: backend-coverage
+          path: backend/target/site/jacoco/
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload application
         uses: actions/upload-artifact@v6
         with:

@@ -27,6 +27,34 @@ To select tests in PowerShell:
 The second selection contains only isolated tests and does not require Docker.
 If Docker is unavailable, database tests fail rather than being silently skipped.
 
+## Code coverage
+
+JaCoCo is attached to the test JVM by Maven's `prepare-agent` goal. Its `report`
+goal runs in the `test` phase after Surefire, producing HTML and XML without
+requiring `verify`. Both `test` and `package` generate the reports on success.
+
+For a fresh full-suite measurement, with Docker running:
+
+```powershell
+.\mvnw.cmd clean test
+```
+
+Open `target/site/jacoco/index.html` in a browser. Keep the entire report folder
+together: the HTML pages reference assets and package-level reports within it.
+`target/site/jacoco/jacoco.xml` is available for future tooling such as SonarQube;
+no SonarQube connection is configured. Raw execution data is in `target/jacoco.exec`.
+
+Coverage is informational: no minimum percentage or coverage-based build failure
+is configured. Line and branch coverage show execution, not assertion quality.
+No project-specific report exclusions are configured.
+
+Use `clean` when switching between full and selected test runs: execution data
+can otherwise accumulate across invocations. A selected run measures only that
+selection, not the full suite. If Surefire fails, Maven stops before the report
+goal; after inspecting the failures, `./mvnw jacoco:report` can render any execution
+data collected by that run. An IDE test launch uses its own coverage configuration;
+the Maven plugin applies to Maven executions.
+
 ## Test layers and database lifecycle
 
 - Isolated tests use JUnit, Mockito, MockMvc or simulated HTTP responses. They
@@ -76,5 +104,8 @@ runner's Docker daemon is used directly by Testcontainers; no separate PostgreSQ
 service or database/provider secrets are required.
 
 Surefire reports are uploaded even when tests fail; a successful build uploads
-the executable JAR. This workflow validates and packages the backend. Deployment
+the executable JAR and the complete HTML/XML coverage folder as the
+`backend-coverage` artifact, retained for 14 days. Download and extract that
+artifact, then open `index.html` to browse coverage locally.
+This workflow validates and packages the backend. Deployment
 requires a separately configured target environment and is not part of this job.

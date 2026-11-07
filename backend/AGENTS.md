@@ -1,6 +1,6 @@
 # QuestLog backend — agent guide
 
-Reviewed on November 6, 2026. Paths are relative to `backend/`.
+Reviewed on November 7, 2026. Paths are relative to `backend/`.
 Source code takes precedence over this guide: inspect relevant files before editing.
 
 ## Architecture and conventions
@@ -86,6 +86,8 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
   Java 25 and a running Docker-compatible Linux container runtime are required for
   the full suite; no DB_URL, DB_USERNAME, DB_PASSWORD or IGDB credentials are needed.
   All tests run in the Maven test phase; package includes the same suite.
+- JaCoCo generates HTML/XML coverage in `target/site/jacoco/` after successful tests.
+  Use `clean test` for a fresh full-suite measurement; no coverage threshold is enforced.
 - Add @PostgresTest alongside @SpringBootTest to database integration tests. It imports
   a container-backed service connection, activates the test profile and closes the
   context after each class. Flyway runs production migrations; Hibernate validates them.
