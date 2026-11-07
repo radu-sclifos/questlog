@@ -1,6 +1,10 @@
 name: Backend CI
 
 on:
+  # Required PR checks must also run for frontend-only and documentation changes.
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main

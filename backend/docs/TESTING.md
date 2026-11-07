@@ -99,11 +99,21 @@ commit behavior and DTO access after transaction closure are actually exercised.
 
 ## Continuous integration
 
-`.github/workflows/backend-ci.yml` builds the backend on pushes to `main` that
-change `backend/**` or the workflow itself, and supports manual dispatch.
-Feature-branch pushes and pull request events do not trigger it. A failed run
-reports the problem after integration; it does not revert commits or configure
-any required pull request checks.
+`.github/workflows/backend-ci.yml` builds the backend on every pull request
+targeting `main`, on pushes to `main` that change `backend/**` or the workflow
+itself, and on manual dispatch. Pull requests have no path filter, so the check
+also runs for frontend-only and documentation changes. Feature-branch pushes
+without an open pull request do not trigger it.
+
+Merge protection is configured separately in GitHub, not by the workflow file.
+In repository Settings, configure a branch protection rule for `main` requiring
+a pull request and the `build` status check from GitHub Actions before merging.
+For a solo project, required approving reviews can remain disabled. Select the
+check after it has appeared in a workflow run, and verify the rule is active.
+Do not add a pull-request path filter: a skipped required workflow can leave
+the check pending and block unrelated pull requests. Avoid CI-skip directives
+in pull-request commit messages for the same reason. See GitHub's
+[required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
 
 It installs Java 25, caches Maven
 dependencies and runs the wrapper's `package` command on a Linux runner. The
