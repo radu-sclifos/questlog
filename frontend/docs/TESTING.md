@@ -35,7 +35,26 @@ Production compilation is a separate check:
 npm run build
 ```
 
-No coverage threshold, end-to-end suite, or frontend CI workflow is configured.
+No coverage threshold or end-to-end suite is configured.
+
+## Continuous integration
+
+`.github/workflows/frontend-ci.yml` runs on every pull request targeting `main`,
+every push to `main`, and manual dispatch. There are no path filters, so changes
+limited to the backend or documentation also produce the check.
+
+The `Frontend tests and build` job runs on Ubuntu with Node.js 24. It caches npm
+downloads using `frontend/package-lock.json`, installs dependencies with `npm ci`,
+runs `npm test -- --watch=false`, then runs the production build with
+`npm run build`. A failed step fails the job; production builds also enforce the
+error budgets in `angular.json`. No deployment credentials or application secrets
+are required. New runs on the same ref cancel older runs of this workflow.
+
+Making this check required for merging is a separate GitHub repository setting.
+After the first run, select `Frontend tests and build` as a required status check
+for `main`, alongside the backend check. The workflow itself does not configure
+branch protection. Avoid CI-skip commit directives on pull requests, which can
+leave a required check pending.
 
 ## Organization and conventions
 

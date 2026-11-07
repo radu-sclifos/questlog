@@ -51,7 +51,8 @@ npm test -- --watch=false
 ```
 
 See [Testing](docs/TESTING.md) for prerequisites, focused runs, and suite organization.
-No end-to-end suite or frontend CI workflow is configured.
+GitHub Actions runs the frontend tests and production build on pull requests to
+`main`, pushes to `main`, and manual dispatch. No end-to-end suite is configured.
 
 ## Additional Resources
 
