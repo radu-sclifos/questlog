@@ -1,10 +1,11 @@
 package com.radusclifos.questlog.entry;
 
 import com.radusclifos.questlog.entry.dto.SaveEntryRequest;
-import com.radusclifos.questlog.entry.service.EntryService;
 import com.radusclifos.questlog.entry.repository.EntryRepository;
+import com.radusclifos.questlog.entry.service.EntryService;
 import com.radusclifos.questlog.game.Game;
 import com.radusclifos.questlog.game.repository.GameRepository;
+import com.radusclifos.questlog.support.PostgresTest;
 import com.radusclifos.questlog.user.User;
 import com.radusclifos.questlog.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -14,24 +15,40 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
+@PostgresTest
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:entry-game-link;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-        "spring.datasource.username=sa", "spring.datasource.password=",
         "questlog.catalog-import.on-startup=false", "spring.jpa.open-in-view=false"
 })
 class EntryGameIntegrationTests {
-    @Autowired EntryService service;
-    @Autowired GameRepository games;
-    @Autowired UserRepository users;
-    @Autowired EntryRepository entries;
-    @Autowired EntityManager em;
-    @Autowired JdbcTemplate jdbc;
-    @Autowired PlatformTransactionManager transactions;
 
-    @Test void entriesReferenceSharedCatalogDataAndDtosRemainUsableOutsideTransactions() {
+    @Autowired
+    EntryService service;
+
+    @Autowired
+    GameRepository games;
+
+    @Autowired
+    UserRepository users;
+
+    @Autowired
+    EntryRepository entries;
+
+    @Autowired
+    EntityManager em;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Autowired
+    PlatformTransactionManager transactions;
+
+    @Test
+    void entriesReferenceSharedCatalogDataAndDtosRemainUsableOutsideTransactions() {
         users.save(new User("entry-game-owner", "Owner", "hash"));
         var game = games.save(new Game("Original", "co_original"));
         var request = new SaveEntryRequest(game.getId(), 9.0, "Notes", null, null, null);
@@ -58,7 +75,9 @@ class EntryGameIntegrationTests {
         service.delete(() -> "entry-game-owner", first.getId());
         assertTrue(games.existsById(game.getId()));
     }
-    @Test void rejectsDuplicateCreatesAndGameChangesButAllowsSavingTheSameEntry() {
+
+    @Test
+    void rejectsDuplicateCreatesAndGameChangesButAllowsSavingTheSameEntry() {
         users.save(new User("duplicate-owner", "Owner", "hash"));
         var firstGame = games.save(new Game("First", null));
         var otherGame = games.save(new Game("Other", null));
@@ -77,7 +96,9 @@ class EntryGameIntegrationTests {
         assertEquals("The game associated with an entry cannot be changed", conflict.getReason());
         assertEquals(otherGame.getId(), service.get(() -> "duplicate-owner", other.getId()).getGame().getId());
     }
-    @Test void referencePlatformIsOptionalAndMustBelongToTheGame() {
+
+    @Test
+    void referencePlatformIsOptionalAndMustBelongToTheGame() {
         users.save(new User("platform-owner", "Owner", "hash"));
         var gameId = new TransactionTemplate(transactions).execute(status -> {
             var pc = new com.radusclifos.questlog.game.Platform("PC");
@@ -106,13 +127,15 @@ class EntryGameIntegrationTests {
 
         request.setPlatformId(null);
         assertNull(service.update(() -> "platform-owner", created.getId(), request).getPlatform());
+        assertNull(service.get(() -> "platform-owner", created.getId()).getPlatform());
         request.setPlatformId(Long.MAX_VALUE);
         users.save(new User("invalid-platform-owner", "Owner", "hash"));
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
                 () -> service.create(() -> "invalid-platform-owner", request));
     }
 
-    @Test void achievementCountsBelongToEachEntryAndCanBeCleared() {
+    @Test
+    void achievementCountsBelongToEachEntryAndCanBeCleared() {
         users.save(new User("achievement-owner", "Owner", "hash"));
         users.save(new User("achievement-other", "Other", "hash"));
         var game = games.save(new Game("Achievement game", null));

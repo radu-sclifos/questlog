@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.support.PostgresTest;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,12 +9,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@PostgresTest
 @SpringBootTest
 @Transactional
 class GameCatalogIntegrationTests {
-    @Autowired EntityManager em;
+
+    @Autowired
+    EntityManager em;
 
     @Test
     void persistsReleaseDateMetadataAndDirectedCatalogLinks() {
@@ -74,4 +79,5 @@ class GameCatalogIntegrationTests {
         assertEquals(GameRelationType.REMAKE, relation.getRelationType());
         assertEquals(remake.getId(), relation.getTargetGame().getId());
     }
+
 }

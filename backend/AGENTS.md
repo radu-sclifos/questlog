@@ -1,6 +1,6 @@
 # QuestLog backend — agent guide
 
-Reviewed on November 6, 2026. Paths are relative to `backend/`.
+Reviewed on November 7, 2026. Paths are relative to `backend/`.
 Source code takes precedence over this guide: inspect relevant files before editing.
 
 ## Architecture and conventions
@@ -82,13 +82,21 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
   migrations rather than rewriting applied migrations.
 - From the backend directory: `.\mvnw.cmd test` and `.\mvnw.cmd package` (includes tests).
   On Unix systems, use `./mvnw`.
-- The suite combines isolated tests, H2 tests in PostgreSQL mode, and tests requiring
-  a configured PostgreSQL database. Read the selected test's annotations and properties;
-  use a dedicated test database, never personal or production data.
+- The suite combines isolated tests and PostgreSQL integration tests using Testcontainers.
+  Java 25 and a running Docker-compatible Linux container runtime are required for
+  the full suite; no DB_URL, DB_USERNAME, DB_PASSWORD or IGDB credentials are needed.
+  All tests run in the Maven test phase; package includes the same suite.
+- JaCoCo generates HTML/XML coverage in `target/site/jacoco/` after successful tests.
+  Use `clean test` for a fresh full-suite measurement. Maven's JaCoCo check warns in
+  the logs below 80% overall line coverage without failing the build, locally and in CI.
+  No branch-coverage rule or custom CI coverage summary is configured.
+- Add @PostgresTest alongside @SpringBootTest to database integration tests. It imports
+  a container-backed service connection, activates the test profile and closes the
+  context after each class. Flyway runs production migrations; Hibernate validates them.
+  See [Testing](docs/TESTING.md) for isolation, commands and the backend CI workflow.
 - Select tests in PowerShell with `.\mvnw.cmd '-Dtest=SomeTest,AnotherTest' test`.
   Choose tests relevant to the change; documented commands do not certify previous results.
-- H2 does not replace PostgreSQL schema/query verification. Simulated provider calls
-  do not verify real credentials or the behavior of the live service.
+- Simulated provider calls do not verify real credentials or the behavior of the live service.
 
 ## Further reading
 

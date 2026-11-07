@@ -1,14 +1,20 @@
 package com.radusclifos.questlog.batch.catalog;
 
 import com.radusclifos.questlog.QuestlogApplication;
-import com.radusclifos.questlog.integration.igdb.*;
-import org.junit.jupiter.api.*;
+import com.radusclifos.questlog.game.repository.*;
+import com.radusclifos.questlog.integration.igdb.IgdbClient;
+import com.radusclifos.questlog.integration.igdb.IgdbGame;
+import com.radusclifos.questlog.integration.igdb.IgdbIntegrationException;
+import com.radusclifos.questlog.integration.igdb.IgdbReference;
+import com.radusclifos.questlog.support.PostgresTest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import com.radusclifos.questlog.game.repository.*;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -18,30 +24,54 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import org.springframework.batch.core.BatchStatus;
 
+@PostgresTest
 @SpringBootTest(classes = QuestlogApplication.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:catalog-job;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-                "spring.datasource.username=sa", "spring.datasource.password=",
                 "questlog.igdb.enabled=true", "questlog.igdb.client-id=test-client",
                 "questlog.igdb.client-secret=test-secret", "questlog.igdb.verify-on-startup=false",
                 "questlog.catalog-import.on-startup=false"
         })
 class CatalogImportJobTests {
-    @Autowired CatalogImportLauncher launcher;
-    @Autowired CatalogImportWriter writer;
-    @Autowired CatalogReferenceResolver references;
-    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
-    @Autowired CatalogSyncHistory history;
-    @Autowired JdbcTemplate jdbc;
-    @MockitoBean IgdbClient client;
-    @MockitoSpyBean GameRepository games;
-    @MockitoSpyBean PlatformRepository platforms;
-    @MockitoSpyBean EngineRepository engines;
-    @MockitoSpyBean FranchiseRepository franchises;
-    @MockitoSpyBean SeriesRepository series;
-    @MockitoSpyBean CompanyRepository companies;
+
+    @Autowired
+    CatalogImportLauncher launcher;
+
+    @Autowired
+    CatalogImportWriter writer;
+
+    @Autowired
+    CatalogReferenceResolver references;
+
+    @Autowired
+    jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    CatalogSyncHistory history;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @MockitoBean
+    IgdbClient client;
+
+    @MockitoSpyBean
+    GameRepository games;
+
+    @MockitoSpyBean
+    PlatformRepository platforms;
+
+    @MockitoSpyBean
+    EngineRepository engines;
+
+    @MockitoSpyBean
+    FranchiseRepository franchises;
+
+    @MockitoSpyBean
+    SeriesRepository series;
+
+    @MockitoSpyBean
+    CompanyRepository companies;
 
     @BeforeEach
     void clearCatalog() {
@@ -276,6 +306,7 @@ class CatalogImportJobTests {
         assertEquals("RPG", jdbc.queryForObject("select name from genres where igdb_id=12", String.class));
         assertEquals(1, count("genres"));
     }
+
     @Test
     void importsMetadataAndUpdatesWithoutDuplicatingSharedReferences() throws Exception {
         var original = game(101, "Original", """
@@ -645,5 +676,6 @@ class CatalogImportJobTests {
                 "{\"id\":" + id + ",\"name\":\"" + name + "\""
                         + (extra.contains("first_release_date") ? "" : ",\"first_release_date\":1709164800") + extra + "}", IgdbGame.class);
     }
+
 }
 

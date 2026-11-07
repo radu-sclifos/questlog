@@ -11,21 +11,27 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class IgdbAuthenticationTests {
+
     private MockRestServiceServer twitch;
+
     private MockRestServiceServer igdb;
+
     private Clock clock;
+
     private TwitchAppTokenProvider tokens;
+
     private IgdbClient client;
 
     @BeforeEach
@@ -122,7 +128,7 @@ class IgdbAuthenticationTests {
         var games = client.fetchCatalogGames(0, 2000, 0, 25);
         assertEquals(2, games.size());
         assertEquals(3000L, games.getFirst().firstReleaseDate());
-        assertEquals(null, games.getLast().firstReleaseDate());
+        assertNull(games.getLast().firstReleaseDate());
         igdb.verify();
     }
 
@@ -354,4 +360,5 @@ class IgdbAuthenticationTests {
         expectation.andRespond(status == HttpStatus.OK
                 ? withSuccess("{\"count\":0}", MediaType.APPLICATION_JSON) : withStatus(status));
     }
+
 }

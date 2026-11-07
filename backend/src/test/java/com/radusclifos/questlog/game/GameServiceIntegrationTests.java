@@ -1,7 +1,10 @@
 package com.radusclifos.questlog.game;
 
 import com.radusclifos.questlog.game.service.GameService;
-import com.radusclifos.questlog.shared.search.*;
+import com.radusclifos.questlog.shared.search.FilterCriteria;
+import com.radusclifos.questlog.shared.search.FilterOperator;
+import com.radusclifos.questlog.shared.search.SearchCriteria;
+import com.radusclifos.questlog.support.PostgresTest;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +17,23 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@PostgresTest
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:game-responses;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "spring.datasource.username=sa", "spring.datasource.password=",
         "spring.jpa.open-in-view=false", "questlog.catalog-import.on-startup=false"
 })
 class GameServiceIntegrationTests {
-    @Autowired GameService service;
-    @Autowired EntityManager em;
-    @Autowired PlatformTransactionManager transactions;
 
-    @Test void returnsCompleteResponsesAfterTheTransactionClosesWithoutRecursiveGames() {
+    @Autowired
+    GameService service;
+
+    @Autowired
+    EntityManager em;
+
+    @Autowired
+    PlatformTransactionManager transactions;
+
+    @Test
+    void returnsCompleteResponsesAfterTheTransactionClosesWithoutRecursiveGames() {
         var id = new TransactionTemplate(transactions).execute(status -> {
             var game = new Game("Baldur's Gate 3", "co_example");
             game.setIgdbId(119171L);
@@ -39,7 +48,8 @@ class GameServiceIntegrationTests {
             var series = new Series("Baldur's Gate");
             var company = new Company("Larian");
             var type = new GameType("Main Game");
-            for (var reference : List.of(genre, platform, engine, franchise, series, company, type)) em.persist(reference);
+            for (var reference : List.of(genre, platform, engine, franchise, series, company, type))
+                em.persist(reference);
             game.setGameType(type);
             game.getGenres().add(genre);
             game.getPlatforms().add(platform);

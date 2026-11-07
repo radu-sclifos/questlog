@@ -1,0 +1,8 @@
+# Tests use container-provided connection details, never the development database.
+questlog:
+  catalog-import:
+    on-startup: false
+    scheduled: false
+  igdb:
+    enabled: false
+    verify-on-startup: false

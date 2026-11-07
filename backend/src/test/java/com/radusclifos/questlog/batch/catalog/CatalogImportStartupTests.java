@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 class CatalogImportStartupTests {
+
     private final CatalogImportLauncher launcher = mock(CatalogImportLauncher.class);
+
     private final CatalogImportProperties properties = new CatalogImportProperties(true, 0, 25);
 
     @Test
@@ -27,4 +29,5 @@ class CatalogImportStartupTests {
         var runner = new CatalogImportConfiguration().catalogImportOnStartup(launcher, properties);
         assertDoesNotThrow(() -> runner.run(null));
     }
+
 }

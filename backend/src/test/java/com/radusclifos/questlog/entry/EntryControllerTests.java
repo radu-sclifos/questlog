@@ -16,18 +16,26 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import java.util.Optional;
+
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class EntryControllerTests {
+
     EntryRepository entries;
+
     GameRepository games;
+
     MockMvc mvc;
+
     Game game;
 
-    @BeforeEach void setup() {
+    @BeforeEach
+    void setup() {
         entries = mock(EntryRepository.class);
         games = mock(GameRepository.class);
         var users = mock(UserService.class);
@@ -46,7 +54,8 @@ class EntryControllerTests {
                 new EntryService(entries, Mappers.getMapper(EntryMapper.class), users, games))).build();
     }
 
-    @Test void createsEntryUsingAnExistingGame() throws Exception {
+    @Test
+    void createsEntryUsingAnExistingGame() throws Exception {
         mvc.perform(post("/entries").contentType("application/json").content("{\"gameId\":2,\"score\":9}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
@@ -58,7 +67,8 @@ class EntryControllerTests {
         verify(games, never()).save(any());
     }
 
-    @Test void updatesAnOwnedEntryAndReadsItsGame() throws Exception {
+    @Test
+    void updatesAnOwnedEntryAndReadsItsGame() throws Exception {
         var entry = new Entry(game);
         when(entries.findByIdAndUserId(1L, 10L)).thenReturn(Optional.of(entry));
         mvc.perform(put("/entries/1").contentType("application/json").content("{\"gameId\":2,\"status\":\"COMPLETED\"}"))
@@ -75,7 +85,8 @@ class EntryControllerTests {
         verify(entries, never()).save(any());
     }
 
-    @Test void rejectsMissingGameAndForeignEntries() throws Exception {
+    @Test
+    void rejectsMissingGameAndForeignEntries() throws Exception {
         mvc.perform(post("/entries").contentType("application/json").content("{\"gameId\":999}"))
                 .andExpect(status().isNotFound());
         mvc.perform(put("/entries/99").contentType("application/json").content("{\"gameId\":2}"))

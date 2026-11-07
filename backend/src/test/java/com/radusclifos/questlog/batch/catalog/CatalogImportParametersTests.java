@@ -3,9 +3,11 @@ package com.radusclifos.questlog.batch.catalog;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CatalogImportParametersTests {
+
     @Test
     void defaultsToUnlimitedPages() {
         var properties = new CatalogImportProperties(false, null, null);
@@ -24,4 +26,5 @@ class CatalogImportParametersTests {
                 .addLong("syncStartedAt", 1000L).addLong("syncSince", 0L).toJobParameters();
         assertThrows(IllegalArgumentException.class, () -> CatalogImportParameters.from(parameters));
     }
+
 }

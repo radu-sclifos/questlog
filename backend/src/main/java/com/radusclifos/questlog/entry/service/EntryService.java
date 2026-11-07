@@ -96,7 +96,9 @@ public class EntryService {
     }
 
     private void setPlatform(Entry entry, Long platformId) {
-        if (platformId != null) {
+        if (platformId == null) {
+            entry.setPlatform(null);
+        } else {
             entry.setPlatform(entry.getGame().getPlatforms().stream()
                     .filter(platform -> platform.getId().equals(platformId))
                     .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
