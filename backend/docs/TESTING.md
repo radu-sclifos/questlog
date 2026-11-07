@@ -44,8 +44,15 @@ together: the HTML pages reference assets and package-level reports within it.
 `target/site/jacoco/jacoco.xml` is available for future tooling such as SonarQube;
 no SonarQube connection is configured. Raw execution data is in `target/jacoco.exec`.
 
-Coverage is informational: no minimum percentage or coverage-based build failure
-is configured. Line and branch coverage show execution, not assertion quality.
+Coverage is informational: no coverage-based build failure is configured.
+After report generation, Maven runs `jacoco:check` in the `test` phase with an
+overall (`BUNDLE`) `LINE` / `COVEREDRATIO` minimum of `0.80`. Below 80%, JaCoCo
+logs warnings; `haltOnFailure=false` allows the build to continue. This applies
+locally and in CI; exactly 80% satisfies the rule. No branch-coverage threshold
+is configured. The full JaCoCo report still includes its standard metrics.
+There is no custom GitHub Summary or warning annotation step; inspect Maven's
+logs for the check outcome and download the artifact for the complete report.
+Coverage shows execution, not assertion quality.
 No project-specific report exclusions are configured.
 
 Use `clean` when switching between full and selected test runs: execution data

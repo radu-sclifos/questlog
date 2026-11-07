@@ -87,7 +87,9 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
   the full suite; no DB_URL, DB_USERNAME, DB_PASSWORD or IGDB credentials are needed.
   All tests run in the Maven test phase; package includes the same suite.
 - JaCoCo generates HTML/XML coverage in `target/site/jacoco/` after successful tests.
-  Use `clean test` for a fresh full-suite measurement; no coverage threshold is enforced.
+  Use `clean test` for a fresh full-suite measurement. Maven's JaCoCo check warns in
+  the logs below 80% overall line coverage without failing the build, locally and in CI.
+  No branch-coverage rule or custom CI coverage summary is configured.
 - Add @PostgresTest alongside @SpringBootTest to database integration tests. It imports
   a container-backed service connection, activates the test profile and closes the
   context after each class. Flyway runs production migrations; Hibernate validates them.
