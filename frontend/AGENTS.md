@@ -1,6 +1,6 @@
 # QuestLog frontend — agent guide
 
-Updated on November 6, 2026. Applies to `frontend/`.
+Updated on November 8, 2026. Applies to `frontend/`.
 Use this map to locate relevant files and read only what the task requires.
 Source code remains the source of truth: update these notes when architecture or
 conventions change, without turning them into an activity log.
@@ -92,8 +92,9 @@ Run from `frontend/`:
 - `npm run build`: production build; initial bundle budgets are 500 kB warning /
   1 MB error, and component SCSS budgets are 4 kB warning / 8 kB error.
 - `npm run watch`: continuous development build.
-- `npm test` is declared, but `angular.json` has no `test` target and the current
-  source tree has no spec files. Do not assume a test suite is configured.
+- `npm test`: Angular's Vitest runner with jsdom; watch mode in an interactive terminal.
+  Use `npm test -- --watch=false` for a single run. Specs live beside their source
+  files. See [Testing](docs/TESTING.md) for commands, scope, and test conventions.
 - Documentation-only changes do not require a build. For code changes, run relevant
   checks and report actual verification limits.
 
