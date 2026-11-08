@@ -41,18 +41,18 @@ This will compile your project and store the build artifacts in the `dist/` dire
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
-ng test
+npm test
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+For a single run:
 
 ```bash
-ng e2e
+npm test -- --watch=false
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+See [Testing](docs/TESTING.md) for prerequisites, focused runs, and suite organization.
+GitHub Actions runs the frontend tests and production build on pull requests to
+`main`, pushes to `main`, and manual dispatch. No end-to-end suite is configured.
 
 ## Additional Resources
 
