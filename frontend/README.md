@@ -52,7 +52,7 @@ npm test -- --watch=false
 
 See [Testing](docs/TESTING.md) for prerequisites, focused runs, and suite organization.
 GitHub Actions runs the frontend tests and production build on pull requests to
-`main`, pushes to `main`, and manual dispatch. No end-to-end suite is configured.
+`main` (including new commits) and manual dispatch. No end-to-end suite is configured.
 
 ## Additional Resources
 

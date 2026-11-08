@@ -39,9 +39,11 @@ No coverage threshold or end-to-end suite is configured.
 
 ## Continuous integration
 
-`.github/workflows/frontend-ci.yml` runs on every pull request targeting `main`,
-every push to `main`, and manual dispatch. There are no path filters, so changes
-limited to the backend or documentation also produce the check.
+`.github/workflows/frontend-ci.yml` runs on every pull request targeting `main`
+and manual dispatch. New commits pushed to an open pull request rerun the check.
+Pushes to `main` and feature-branch pushes without an open pull request do not
+trigger it. There are no path filters, so pull requests limited to the backend
+or documentation also produce the check.
 
 The `Frontend tests and build` job runs on Ubuntu with Node.js 24. It caches npm
 downloads using `frontend/package-lock.json`, installs dependencies with `npm ci`,

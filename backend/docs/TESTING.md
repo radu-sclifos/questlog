@@ -100,10 +100,10 @@ commit behavior and DTO access after transaction closure are actually exercised.
 ## Continuous integration
 
 `.github/workflows/backend-ci.yml` builds the backend on every pull request
-targeting `main`, on every push to `main`, and on manual dispatch. There are no
-path filters, so both pull requests and pushes also run the check for
-frontend-only and documentation changes. Feature-branch pushes
-without an open pull request do not trigger it.
+targeting `main` and on manual dispatch. There are no path filters, so pull
+requests also run the check for frontend-only and documentation changes.
+New commits pushed to an open pull request rerun the check. Pushes to `main`
+and feature-branch pushes without an open pull request do not trigger it.
 
 Merge protection is configured separately in GitHub, not by the workflow file.
 In repository Settings, configure a branch protection rule for `main` requiring
