@@ -13,6 +13,7 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -26,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @PostgresTest
+// The importer holds reference caches and a job operator in memory. Keep those
+// isolated while still sharing the JVM-owned PostgreSQL container.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = QuestlogApplication.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
                 "questlog.igdb.enabled=true", "questlog.igdb.client-id=test-client",

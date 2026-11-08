@@ -1,6 +1,6 @@
 # QuestLog backend — agent guide
 
-Reviewed on November 7, 2026. Paths are relative to `backend/`.
+Reviewed on November 8, 2026. Paths are relative to `backend/`.
 Source code takes precedence over this guide: inspect relevant files before editing.
 
 ## Architecture and conventions
@@ -91,8 +91,11 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
   the logs below 80% overall line coverage without failing the build, locally and in CI.
   No branch-coverage rule or custom CI coverage summary is configured.
 - Add @PostgresTest alongside @SpringBootTest to database integration tests. It imports
-  a container-backed service connection, activates the test profile and closes the
-  context after each class. Flyway runs production migrations; Hibernate validates them.
+  shared test-JVM PostgreSQL connection details, activates the test profile and clears
+  data before each class while preserving the Flyway schema/history. Compatible
+  contexts are cached; stateful tests must reset beans or use @DirtiesContext explicitly.
+  Its resource lock and same-thread execution prevent concurrent cleanup/tests.
+  Flyway runs production migrations; Hibernate validates them.
   See [Testing](docs/TESTING.md) for isolation, commands and the backend CI workflow.
 - Select tests in PowerShell with `.\mvnw.cmd '-Dtest=SomeTest,AnotherTest' test`.
   Choose tests relevant to the change; documented commands do not certify previous results.

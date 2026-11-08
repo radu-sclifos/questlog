@@ -67,28 +67,48 @@ the Maven plugin applies to Maven executions.
 - Isolated tests use JUnit, Mockito, MockMvc or simulated HTTP responses. They
   verify application rules, HTTP contracts, security and provider error handling.
 - Spring application integration tests use `@SpringBootTest` plus `@PostgresTest`.
-  The latter imports `PostgresTestConfiguration`, activates the `test` profile and
-  marks the context dirty after each class. Spring Boot manages a PostgreSQL
-  container bean and injects its connection details via `@ServiceConnection`.
-- Each application test class starts with its own empty database. Spring closes
-  the context and container after the class, so committed records cannot leak to
-  another class. Within a class, transactional tests roll back; tests exercising
-  real commits must use distinct fixtures or explicitly clean up between methods.
+  The latter imports `PostgresTestConfiguration`, activates the `test` profile,
+  and installs a before-class database reset listener. Compatible Spring contexts
+  remain cached rather than being closed after every class.
+- `SharedPostgres` lazily starts one PostgreSQL container per test JVM, shared even
+  by contexts with different properties or mocks. `PostgresTestConfiguration`
+  exposes `JdbcConnectionDetails`, not a Spring-managed container bean, so closing
+  one context does not stop PostgreSQL used by another. Testcontainers/Ryuk removes
+  the container when the JVM exits; it is not reused across Maven invocations.
+- Before each class, the listener loads the application context (allowing Flyway
+  and Hibernate validation to finish), then truncates all `public` tables except
+  `flyway_schema_history` in one transaction. Tables, constraints, indexes and
+  migration history remain. Identity sequences and standalone Batch sequences
+  restart at their declared starting values. The current migrations contain no
+  seed rows; if seed data is introduced, update the reset policy to restore it.
+- Cleanup connects directly to the shared test container, never an environment-
+  configured or development datasource. A JUnit resource lock serializes classes
+  using `@PostgresTest`; their methods run on the same thread. Keep these annotations
+  when adding database tests. Separate test JVMs get separate containers.
+- Each class starts with empty application and Batch tables, even if the previous
+  class committed data or failed. Within a class, transactional tests still roll
+  back; tests exercising real commits must use distinct fixtures or explicitly
+  clean up between methods. Cleanup runs before `@BeforeAll` and outside test
+  transactions, not before every method.
+- SQL cleanup does not reset Java state. `CatalogImportJobTests` explicitly retains
+  `@DirtiesContext(AFTER_CLASS)` for its import caches and job operator; its existing
+  per-method cleanup remains. Other stateful tests must reset their beans or opt
+  out of context caching in the same way. They still share the test-JVM container.
 - The focused Batch infrastructure test owns a separate container in a
   try-with-resources block and applies Flyway programmatically.
 
 The image is pinned to `postgres:17.7-alpine` in `PostgresTestConfiguration`;
 update that one factory when changing the tested PostgreSQL version. Match the
-production major when choosing the deployment database. No container reuse or
-fixed host port is configured. Testcontainers cleans up its temporary resources.
+production major when choosing the deployment database. No experimental
+`withReuse(true)` or fixed host port is configured.
 
 Database tests apply the production `db/migration` scripts through Flyway.
 Application contexts retain Hibernate `ddl-auto: validate`; Hibernate does not
 create a substitute schema. Baseline contract tests check schema constraints on
 PostgreSQL; they do not currently model an upgrade from a previous release.
 
-No development database or `DB_*` environment variables are needed: the service
-connection supplies the container endpoint and temporary credentials. The test
+No development database or `DB_*` environment variables are needed: the test
+connection-details bean supplies the container endpoint and temporary credentials. The test
 profile disables provider integration and automatic/scheduled imports. The import
 job test explicitly enables IGDB configuration with dummy values and replaces
 `IgdbClient` with a mock. HTTP tests simulate Twitch/IGDB; they make no live calls.
