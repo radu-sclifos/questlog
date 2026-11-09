@@ -1,0 +1,36 @@
+package com.radusclifos.questlog.company;
+
+import com.radusclifos.questlog.company.controller.CompanyController;
+import com.radusclifos.questlog.company.repository.CompanyRepository;
+import com.radusclifos.questlog.company.service.CompanyService;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Optional;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class CompanyControllerTests {
+
+    @Test
+    void returnsCompanyDetailsWithEnglishCountryName() throws Exception {
+        var companies = mock(CompanyRepository.class);
+        var company = new Company("Example Studio");
+        company.setCountryCode(380);
+        company.setLogoImageId("studio_logo");
+        when(companies.findById(1L)).thenReturn(Optional.of(company));
+        var mvc = MockMvcBuilders.standaloneSetup(new CompanyController(new CompanyService(companies))).build();
+
+        mvc.perform(get("/companies/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Example Studio"))
+                .andExpect(jsonPath("$.country").value("Italy"))
+                .andExpect(jsonPath("$.logoImageId").value("studio_logo"))
+                .andExpect(jsonPath("$.countryCode").doesNotHaveJsonPath());
+        mvc.perform(get("/companies/2")).andExpect(status().isNotFound());
+    }
+}

@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.company.Company;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

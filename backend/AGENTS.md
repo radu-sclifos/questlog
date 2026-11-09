@@ -30,6 +30,7 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
 | `user/service/` | `UserService`, `ProfileService`, `AvatarService` |
 | `entry/` | Personal entries, CRUD, search, ownership, and mapping |
 | `game/` | Shared catalog, details, suggestions, platforms, and relations |
+| `company/` | Company catalog records and public company details |
 | `shared/search/` | JPA criteria, validation, filters, sorting, and pagination |
 | `integration/igdb/` | IGDB client, Twitch app credentials, and token lifecycle |
 | `batch/catalog/` | Import launching, scheduling, history, recovery, and persistence |
@@ -45,7 +46,7 @@ Java root: `src/main/java/com/radusclifos/questlog/`.
   `/auth/logout`, tokens from `/auth/csrf`, and the current user from `/me`. Do not replace with JWT.
 - The security chain covers auth, me, users, and entries. Public exceptions include
   entry search POST requests and GET requests for user suggestions, public profiles,
-  and avatars. `/games/**` is outside the current chain: catalog endpoints perform
+  and avatars. `/games/**` and `/companies/**` are outside the current chain: catalog endpoints perform
   reads, including POST search. Review security before adding mutations.
 - Entry ownership is assigned by the server. Individual entry access uses both
   the entry ID and authenticated user; another user's entry returns 404.

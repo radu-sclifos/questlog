@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.company.Company;
 import com.radusclifos.questlog.game.service.GameService;
 import com.radusclifos.questlog.shared.search.FilterCriteria;
 import com.radusclifos.questlog.shared.search.FilterOperator;

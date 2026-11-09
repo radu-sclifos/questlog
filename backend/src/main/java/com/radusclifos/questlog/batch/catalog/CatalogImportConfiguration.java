@@ -4,6 +4,7 @@ import com.radusclifos.questlog.batch.catalog.repository.PendingGameRelationRepo
 import com.radusclifos.questlog.batch.catalog.tasklet.CatalogImportGamesTasklet;
 import com.radusclifos.questlog.batch.catalog.tasklet.CatalogImportRelationsTasklet;
 import com.radusclifos.questlog.batch.catalog.tasklet.CatalogRefreshReferencesTasklet;
+import com.radusclifos.questlog.company.repository.CompanyRepository;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbClient;
 import jakarta.persistence.EntityManager;

@@ -1,5 +1,7 @@
 package com.radusclifos.questlog.batch.catalog;
 
+import com.radusclifos.questlog.company.Company;
+import com.radusclifos.questlog.company.repository.CompanyRepository;
 import com.radusclifos.questlog.game.*;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;

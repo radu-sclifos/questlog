@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game.mapper;
 
+import com.radusclifos.questlog.company.Company;
 import com.radusclifos.questlog.game.*;
 import com.radusclifos.questlog.game.dto.*;
 import org.mapstruct.Mapper;

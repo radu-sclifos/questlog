@@ -1,4 +1,4 @@
-package com.radusclifos.questlog.game;
+package com.radusclifos.questlog.company;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
