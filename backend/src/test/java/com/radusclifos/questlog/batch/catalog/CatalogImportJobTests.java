@@ -203,7 +203,7 @@ class CatalogImportJobTests {
         var companyId = jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class);
         writer.writePage(List.of(game(1, "Updated", """
                 ,"involved_companies":[{"company":{"id":1001,"name":"Renamed","country":56,
-                  "start_date":-1,"start_date_format":2,"logo":{"image_id":"studio_logo"}},"publisher":true}]
+                  "start_date":-1,"start_date_format":{"id":2,"format":"YYYY"},"logo":{"image_id":"studio_logo"}},"publisher":true}]
                 """)));
         assertEquals(companyId, jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class));
         assertEquals("Renamed", jdbc.queryForObject("select name from companies where igdb_id=1001", String.class));
@@ -215,7 +215,7 @@ class CatalogImportJobTests {
         var metadata = jdbc.queryForMap("select * from companies where id = ?", companyId);
         assertEquals(56, metadata.get("country_code"));
         assertEquals(java.sql.Date.valueOf("1969-12-31"), metadata.get("founded_date"));
-        assertEquals(2L, metadata.get("founded_date_format"));
+        assertEquals("YYYY", metadata.get("founded_date_format"));
         assertEquals("studio_logo", metadata.get("logo_image_id"));
 
         writer.writePage(List.of(game(1, "Updated again", """

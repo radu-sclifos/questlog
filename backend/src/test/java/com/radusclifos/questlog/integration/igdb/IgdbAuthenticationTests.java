@@ -299,7 +299,7 @@ class IgdbAuthenticationTests {
                 .andExpect(content().string(org.hamcrest.Matchers.allOf(
                         org.hamcrest.Matchers.containsString("involved_companies.company.country"),
                         org.hamcrest.Matchers.containsString("involved_companies.company.start_date,"),
-                        org.hamcrest.Matchers.containsString("involved_companies.company.start_date_format"),
+                        org.hamcrest.Matchers.containsString("involved_companies.company.start_date_format.format"),
                         org.hamcrest.Matchers.containsString("involved_companies.company.logo.image_id"))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("game_type.type")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(

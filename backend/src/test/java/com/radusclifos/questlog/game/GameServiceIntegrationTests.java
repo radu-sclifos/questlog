@@ -55,7 +55,7 @@ class GameServiceIntegrationTests {
             company.setIgdbId(42L);
             company.setCountryCode(56);
             company.setFoundedDate(LocalDate.of(1996, 1, 1));
-            company.setFoundedDateFormat(2L);
+            company.setFoundedDateFormat("YYYY");
             company.setLogoImageId("larian_logo");
             var type = new GameType("Main Game");
             for (var reference : List.of(genre, platform, engine, franchise, series, company, type))

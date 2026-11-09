@@ -48,17 +48,17 @@ public record IgdbGame(
     }
 
     public record CompanyReference(Long id, String name, Integer country,
-                                   Long startDate, Long startDateFormat, String logoImageId) {
+                                   Long startDate, String startDateFormat, String logoImageId) {
         @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
         public static CompanyReference fromJson(@JsonProperty("id") Long id,
                                                 @JsonProperty("name") String name,
                                                 @JsonProperty("country") Integer country,
                                                 @JsonProperty("start_date") Long startDate,
-                                                @JsonProperty("start_date_format") Long startDateFormat,
+                                                @JsonProperty("start_date_format") JsonNode startDateFormat,
                                                 @JsonProperty("logo") JsonNode logo) {
-            var imageId = logo == null ? null : logo.path("image_id");
-            return new CompanyReference(id, name, country, startDate, startDateFormat,
-                    imageId != null && imageId.isString() ? imageId.stringValue() : null);
+            return new CompanyReference(id, name, country, startDate,
+                    startDateFormat == null ? null : startDateFormat.path("format").stringValue(null),
+                    logo == null ? null : logo.path("image_id").stringValue(null));
         }
     }
 

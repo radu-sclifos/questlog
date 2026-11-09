@@ -116,7 +116,10 @@ country, founding date and logo fields stored in `companies`.
 
 `GET /api/companies/{id}` returns public company details by internal ID, or 404
 if the company does not exist. The response includes `id`, `igdbId`, `name`,
-`country`, `foundedDate`, `foundedDateFormat` and `logoImageId`. The backend
+`country`, `foundedDate` and `logoImageId`. The founding date is a display string
+(`dd/MM/yyyy`, `MM/yyyy`, or `yyyy`) or null when unavailable. Existing numeric
+format references display only the year until an associated game is reimported
+with the expanded format. The backend
 looks up the English country name in its bundled UN M49 data. Missing or unknown
 codes produce a null `country`.
 GameRelationDto contains relationType and a GameSummaryDto with id,

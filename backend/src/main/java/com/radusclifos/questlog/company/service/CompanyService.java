@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Properties;
 
 @Service
@@ -21,10 +24,13 @@ import java.util.Properties;
 @Transactional(readOnly = true)
 public class CompanyService {
 
-    private static final Properties COUNTRY_NAMES = loadCountryNames();
-
     @Autowired
     private final CompanyRepository companies;
+
+    private static final Properties COUNTRY_NAMES = loadCountryNames();
+    private static final DateTimeFormatter FULL_DATE = DateTimeFormatter.ofPattern("dd/MM/uuuu", Locale.ROOT);
+    private static final DateTimeFormatter MONTH_AND_YEAR = DateTimeFormatter.ofPattern("MM/uuuu", Locale.ROOT);
+    private static final DateTimeFormatter YEAR = DateTimeFormatter.ofPattern("uuuu", Locale.ROOT);
 
     public CompanyDetailDto findById(Long id) {
         var company = companies.findById(id)
@@ -32,7 +38,20 @@ public class CompanyService {
         var countryCode = company.getCountryCode();
         var country = countryCode == null ? null : COUNTRY_NAMES.getProperty(countryCode.toString());
         return new CompanyDetailDto(company.getId(), company.getIgdbId(), company.getName(),
-                country, company.getFoundedDate(), company.getFoundedDateFormat(), company.getLogoImageId());
+                country, formatFoundedDate(company.getFoundedDate(), company.getFoundedDateFormat()),
+                company.getLogoImageId());
+    }
+
+    private static String formatFoundedDate(LocalDate date, String format) {
+        if (date == null) return null;
+        if (format == null) return YEAR.format(date);
+
+        return switch (format.strip().toUpperCase(Locale.ROOT).replaceAll("[\\s/.-]", "")) {
+            case "YYYYMMMMDD", "YYYYMMDD", "DDMMMMYYYY", "DDMMYYYY" -> FULL_DATE.format(date);
+            case "YYYYMMMM", "YYYYMM", "MMMMYYYY", "MMYYYY" -> MONTH_AND_YEAR.format(date);
+            case "TBD" -> null;
+            default -> YEAR.format(date);
+        };
     }
 
     private static Properties loadCountryNames() {

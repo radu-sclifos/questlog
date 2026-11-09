@@ -32,7 +32,8 @@ public class Company {
 
     private LocalDate foundedDate;
 
-    private Long foundedDateFormat;
+    @Column(columnDefinition = "text")
+    private String foundedDateFormat;
 
     @Column(columnDefinition = "text")
     private String logoImageId;
