@@ -1,7 +1,10 @@
 package com.radusclifos.questlog.company.service;
 
+import com.radusclifos.questlog.company.CompanyRole;
 import com.radusclifos.questlog.company.dto.CompanyDetailDto;
 import com.radusclifos.questlog.company.repository.CompanyRepository;
+import com.radusclifos.questlog.game.dto.GameSummaryDto;
+import com.radusclifos.questlog.game.repository.GameCompanyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -16,6 +19,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -26,6 +31,7 @@ public class CompanyService {
 
     @Autowired
     private final CompanyRepository companies;
+    private final GameCompanyRepository gameCompanies;
 
     private static final Properties COUNTRY_NAMES = loadCountryNames();
     private static final DateTimeFormatter FULL_DATE = DateTimeFormatter.ofPattern("dd/MM/uuuu", Locale.ROOT);
@@ -39,7 +45,42 @@ public class CompanyService {
         var country = countryCode == null ? null : COUNTRY_NAMES.getProperty(countryCode.toString());
         return new CompanyDetailDto(company.getId(), company.getIgdbId(), company.getName(),
                 country, formatFoundedDate(company.getFoundedDate(), company.getFoundedDateFormat()),
-                company.getLogoImageId());
+                company.getLogoImageId(), availableRoles(id));
+    }
+
+    public List<GameSummaryDto> findGames(Long id, String role) {
+        CompanyRole companyRole;
+
+        try {
+            companyRole = CompanyRole.valueOf(role.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown company role");
+        }
+        if (!companies.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found");
+        }
+
+        return gameCompanies.findGameSummariesByCompanyAndRole(id, companyRole.value());
+    }
+
+    private List<CompanyRole> availableRoles(Long companyId) {
+        var availability = gameCompanies.findRoleAvailability(companyId);
+
+        var roles = EnumSet.noneOf(CompanyRole.class);
+        if (availability.getDeveloper()) {
+            roles.add(CompanyRole.DEVELOPER);
+        }
+        if (availability.getPublisher()) {
+            roles.add(CompanyRole.PUBLISHER);
+        }
+        if (availability.getPorting()) {
+            roles.add(CompanyRole.PORTING);
+        }
+        if (availability.getSupporting()) {
+            roles.add(CompanyRole.SUPPORTING);
+        }
+
+        return List.copyOf(roles);
     }
 
     private static String formatFoundedDate(LocalDate date, String format) {

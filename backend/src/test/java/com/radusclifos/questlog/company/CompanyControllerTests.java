@@ -3,10 +3,12 @@ package com.radusclifos.questlog.company;
 import com.radusclifos.questlog.company.controller.CompanyController;
 import com.radusclifos.questlog.company.repository.CompanyRepository;
 import com.radusclifos.questlog.company.service.CompanyService;
+import com.radusclifos.questlog.game.repository.GameCompanyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -27,7 +29,7 @@ class CompanyControllerTests {
         company.setCountryCode(380);
         company.setLogoImageId("studio_logo");
         when(companies.findById(1L)).thenReturn(Optional.of(company));
-        var mvc = MockMvcBuilders.standaloneSetup(new CompanyController(new CompanyService(companies))).build();
+        var mvc = mvcFor(companies);
 
         mvc.perform(get("/companies/1"))
                 .andExpect(status().isOk())
@@ -47,11 +49,17 @@ class CompanyControllerTests {
         company.setFoundedDate(LocalDate.of(1996, 5, 23));
         company.setFoundedDateFormat(format);
         when(companies.findById(1L)).thenReturn(Optional.of(company));
-        var mvc = MockMvcBuilders.standaloneSetup(new CompanyController(new CompanyService(companies))).build();
+        var mvc = mvcFor(companies);
 
         mvc.perform(get("/companies/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.foundedDate").value(expected))
                 .andExpect(jsonPath("$.foundedDateFormat").doesNotHaveJsonPath());
+    }
+
+    private MockMvc mvcFor(CompanyRepository companies) {
+        var gameCompanies = mock(GameCompanyRepository.class);
+        when(gameCompanies.findRoleAvailability(1L)).thenReturn(mock(GameCompanyRepository.RoleAvailability.class));
+        return MockMvcBuilders.standaloneSetup(new CompanyController(new CompanyService(companies, gameCompanies))).build();
     }
 }

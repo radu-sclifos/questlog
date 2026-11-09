@@ -116,12 +116,20 @@ country, founding date and logo fields stored in `companies`.
 
 `GET /api/companies/{id}` returns public company details by internal ID, or 404
 if the company does not exist. The response includes `id`, `igdbId`, `name`,
-`country`, `foundedDate` and `logoImageId`. The founding date is a display string
+`country`, `foundedDate`, `logoImageId` and `roles`. The founding date is a display string
 (`dd/MM/yyyy`, `MM/yyyy`, or `yyyy`) or null when unavailable. Existing numeric
 format references display only the year until an associated game is reimported
 with the expanded format. The backend
 looks up the English country name in its bundled UN M49 data. Missing or unknown
 codes produce a null `country`.
+
+`roles` lists the roles with at least one game in the local catalog, in display
+order: `developer`, `publisher`, `porting`, `supporting`.
+`GET /api/companies/{id}/games?role=developer` returns an unpaginated array of
+`GameSummaryDto` records for the requested role, sorted by name and internal ID.
+A game can appear under multiple roles. A known company with no matches returns
+an empty array. Missing or invalid roles return 400, and unknown companies return 404.
+
 GameRelationDto contains relationType and a GameSummaryDto with id,
 igdbId, name and coverImageId; they do not recursively include related games.
 Missing collections are returned as empty arrays and optional metadata as null.

@@ -1,8 +1,11 @@
 package com.radusclifos.questlog.company.dto;
 
+import com.radusclifos.questlog.company.CompanyRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,5 +18,6 @@ public class CompanyDetailDto {
     private String country;
     private String foundedDate;
     private String logoImageId;
+    private List<CompanyRole> roles;
 
 }
