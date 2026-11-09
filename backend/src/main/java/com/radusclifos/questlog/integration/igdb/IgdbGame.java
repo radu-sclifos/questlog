@@ -1,7 +1,9 @@
 package com.radusclifos.questlog.integration.igdb;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.radusclifos.questlog.game.GameRelationType;
+import tools.jackson.databind.JsonNode;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,7 +47,22 @@ public record IgdbGame(
     public record Link(Long targetIgdbId, GameRelationType gameRelationType) {
     }
 
-    public record Involvement(Long id, IgdbReference company, Boolean developer,
+    public record CompanyReference(Long id, String name, Integer country,
+                                   Long startDate, Long startDateFormat, String logoImageId) {
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        public static CompanyReference fromJson(@JsonProperty("id") Long id,
+                                                @JsonProperty("name") String name,
+                                                @JsonProperty("country") Integer country,
+                                                @JsonProperty("start_date") Long startDate,
+                                                @JsonProperty("start_date_format") Long startDateFormat,
+                                                @JsonProperty("logo") JsonNode logo) {
+            var imageId = logo == null ? null : logo.path("image_id");
+            return new CompanyReference(id, name, country, startDate, startDateFormat,
+                    imageId != null && imageId.isString() ? imageId.stringValue() : null);
+        }
+    }
+
+    public record Involvement(Long id, CompanyReference company, Boolean developer,
                               Boolean publisher, Boolean porting, Boolean supporting) {
         public Involvement {
             developer = Boolean.TRUE.equals(developer);

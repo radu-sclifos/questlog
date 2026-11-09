@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Entity
 @BatchSize(size = 100)
 @Table(name = "companies")
@@ -25,6 +27,15 @@ public class Company {
 
     @Column(nullable = false, columnDefinition = "text")
     private String name;
+
+    private Integer countryCode;
+
+    private LocalDate foundedDate;
+
+    private Long foundedDateFormat;
+
+    @Column(columnDefinition = "text")
+    private String logoImageId;
 
     public Company(String name) {
         if (name == null || name.isBlank()) {

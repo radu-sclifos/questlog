@@ -111,6 +111,8 @@ platforms, genres, engines, franchises, series, involvedCompanies and relations.
 GenreDto, PlatformDto, EngineDto, FranchiseDto, SeriesDto, GameTypeDto and
 CompanyDto contain id, igdbId and name. GameCompanyDto contains the
 company reference plus developer, publisher, porting and supporting flags.
+The reference contains the internal ID, IGDB ID and name. The API omits the
+country, founding date and logo fields stored in `companies`.
 GameRelationDto contains relationType and a GameSummaryDto with id,
 igdbId, name and coverImageId; they do not recursively include related games.
 Missing collections are returned as empty arrays and optional metadata as null.
