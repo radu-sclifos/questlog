@@ -89,16 +89,31 @@
         </div>
         @if (gamesPage(); as page) {
           @if (page.totalPages > 1) {
-            <nav class="mt-6 flex justify-center">
-              <div class="join">
-                <button type="button" class="join-item btn btn-sm" [disabled]="page.page === 0"
-                        (click)="selectPage(page.page - 1)">Previous</button>
-                <span class="join-item flex items-center border border-base-300 px-3 text-sm">
-                  {{ page.page + 1 }} / {{ page.totalPages }}
-                </span>
-                <button type="button" class="join-item btn btn-sm" [disabled]="page.page >= page.totalPages - 1"
-                        (click)="selectPage(page.page + 1)">Next</button>
+            <nav class="mt-7 flex flex-col items-center gap-2">
+              <div class="join rounded-box border border-base-300 bg-base-200">
+                <button type="button" class="join-item btn btn-ghost btn-square btn-sm" title="Previous page"
+                        [disabled]="page.page === 0" (click)="selectPage(page.page - 1)">
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 6-6 6 6 6" />
+                  </svg>
+                </button>
+                @for (number of pageNumbers(); track number) {
+                  <button type="button" class="join-item btn btn-sm min-w-9 tabular-nums"
+                          [class.btn-ghost]="number !== page.page"
+                          [class.btn-primary]="number === page.page"
+                          [class.btn-soft]="number === page.page"
+                          (click)="selectPage(number)">{{ number + 1 }}</button>
+                }
+                <button type="button" class="join-item btn btn-ghost btn-square btn-sm" title="Next page"
+                        [disabled]="page.page >= page.totalPages - 1" (click)="selectPage(page.page + 1)">
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </button>
               </div>
+              <span class="text-xs text-base-content/60">Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
             </nav>
           }
         }

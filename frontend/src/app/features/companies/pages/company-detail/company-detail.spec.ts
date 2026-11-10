@@ -105,15 +105,16 @@ describe('CompanyDetail', () => {
     await fixture.whenStable();
 
     page.querySelector<HTMLElement>('section:has(.tabs)')!.scrollIntoView = vi.fn();
-    const buttons = page.querySelectorAll<HTMLButtonElement>('nav button');
-    expect(buttons[0].disabled).toBe(true);
-    buttons[1].click();
+    expect(page.querySelector<HTMLButtonElement>('button[title="Previous page"]')?.disabled).toBe(true);
+    expect(page.querySelector('nav .btn-primary')?.textContent?.trim()).toBe('1');
+    page.querySelector<HTMLButtonElement>('button[title="Next page"]')!.click();
     http.expectOne('/api/companies/1/games?role=developer&page=1').flush(gamePage([second], 1, 25));
     await fixture.whenStable();
 
     expect(page.querySelector('a[href="/game/43"]')?.textContent).toContain('Second Game');
     expect(page.querySelector('a[href="/game/42"]')).toBeNull();
-    expect(page.querySelector<HTMLButtonElement>('nav button:last-child')?.disabled).toBe(true);
+    expect(page.querySelector<HTMLButtonElement>('button[title="Next page"]')?.disabled).toBe(true);
+    expect(page.querySelector('nav .btn-primary')?.textContent?.trim()).toBe('2');
     page.querySelector<HTMLInputElement>('input[value="publisher"]')!.click();
     http.expectOne('/api/companies/1/games?role=publisher&page=0').flush(gamePage([second]));
     await fixture.whenStable();

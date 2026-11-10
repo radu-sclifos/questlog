@@ -56,6 +56,14 @@ export class CompanyDetail {
   protected readonly selectedRole = signal<CompanyRole | null>(null);
   protected readonly gamesPage = signal<Page<GameSummary> | null>(null);
   protected readonly games = computed(() => this.gamesPage()?.items ?? []);
+  protected readonly pageNumbers = computed(() => {
+    const page = this.gamesPage();
+    if (!page) return [];
+
+    const count = Math.min(3, page.totalPages);
+    const start = Math.max(0, Math.min(page.page - 1, page.totalPages - count));
+    return Array.from({ length: count }, (_, index) => start + index);
+  });
   protected readonly gamesLoading = signal(false);
   protected readonly gamesError = signal(false);
 
