@@ -77,7 +77,10 @@
         <div class="grid grid-cols-[repeat(3,min(29%,9rem))] justify-evenly gap-y-6 sm:grid-cols-[repeat(4,min(22%,9rem))]">
           @for (game of games(); track game.id) {
             <a class="group block min-w-0 text-center" [routerLink]="['/game', game.id]">
-              <app-game-cover class="block" [imageId]="game.coverImageId" />
+              <app-game-cover
+                class="block rounded-lg group-hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-200 motion-safe:group-hover:scale-103"
+                [imageId]="game.coverImageId"
+              />
               <h3 class="mt-3 wrap-break-word text-sm font-semibold group-hover:text-primary">
                 {{ game.name }}
               </h3>

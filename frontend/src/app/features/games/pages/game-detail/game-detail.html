@@ -17,7 +17,12 @@
   } @else if (game(); as game) {
     <header class="game-heading mb-8">
 
-      <app-game-cover class="block min-w-0" [imageId]="game.coverImageId" [zoomable]="true" [name]="game.name" />
+      <app-game-cover
+        class="block min-w-0 rounded-lg hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-200 motion-safe:hover:scale-103"
+        [imageId]="game.coverImageId"
+        [zoomable]="true"
+        [name]="game.name"
+      />
 
       <div class="min-w-0 py-1 sm:py-4">
         <h1 class="wrap-break-word text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
