@@ -13,8 +13,8 @@
 }
 
 @media (min-width: 640px) {
-  :host {
-    // Reserve a separate rail outside the shared header/card column.
+  :host(.has-pagination) {
+    // Reserve a separate rail outside the shared header/card column
     padding-inline-end: 6.5rem;
   }
 

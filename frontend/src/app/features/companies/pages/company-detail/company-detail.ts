@@ -58,7 +58,9 @@ export class CompanyDetail {
   protected readonly games = computed(() => this.gamesPage()?.items ?? []);
   protected readonly pageNumbers = computed(() => {
     const page = this.gamesPage();
-    if (!page) return [];
+    if (!page) {
+      return [];
+    }
 
     const count = Math.min(3, page.totalPages);
     const start = Math.max(0, Math.min(page.page - 1, page.totalPages - count));

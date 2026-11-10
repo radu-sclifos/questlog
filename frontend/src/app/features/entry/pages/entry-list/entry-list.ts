@@ -27,6 +27,7 @@ import { SearchCriteria } from '../../../../shared/search/search-criteria';
 @Component({
   selector: 'app-entry-list',
   imports: [EntryListHeader, EntryCard, EntryEditorDialog, EntryDeleteDialog],
+  host: { '[class.has-pagination]': 'hasPagination()' },
   templateUrl: './entry-list.html',
   styleUrl: './entry-list.scss',
 })
@@ -45,6 +46,9 @@ export class EntryList {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly loading = signal(false);
   protected readonly page = signal<EntryPage | null>(null);
+  protected readonly hasPagination = computed(
+    () => (this.page()?.totalPages ?? 0) > 1 && !this.errorMessage(),
+  );
 
   protected readonly canEdit = computed(() => this.auth.user()?.username === this.username());
 
