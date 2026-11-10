@@ -48,18 +48,20 @@ describe('CompanyDetail', () => {
     expect(page.querySelector('h1')?.textContent).toContain('Example Studio');
     expect(page.textContent).toContain('05/1996');
     expect(page.textContent).toContain('Italy');
-    const buttons = Array.from(page.querySelectorAll('button'));
-    expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Developed', 'Published']);
-    expect(buttons[0].classList).toContain('btn-primary');
+    const tabs = Array.from(page.querySelectorAll('label.tab'));
+    const radios = page.querySelectorAll<HTMLInputElement>('.tab input[type="radio"]');
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(['Developed', 'Published']);
+    expect(radios[0].checked).toBe(true);
 
-    buttons[1].click();
+    radios[1].click();
     expect(developed.cancelled).toBe(true);
     http
       .expectOne('/api/companies/1/games?role=publisher')
       .flush([{ id: 42, igdbId: 420, name: 'Published Game', coverImageId: null }]);
     await fixture.whenStable();
 
-    expect(buttons[1].classList).toContain('btn-primary');
+    expect(radios[0].checked).toBe(false);
+    expect(radios[1].checked).toBe(true);
     expect(page.querySelector('a[href="/game/42"]')?.textContent).toContain('Published Game');
   });
 
@@ -70,9 +72,20 @@ describe('CompanyDetail', () => {
     http.expectOne('/api/companies/1/games?role=publisher').flush([]);
     await fixture.whenStable();
 
-    const buttons = Array.from(page.querySelectorAll('button'));
-    expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Published', 'Ported']);
-    expect(buttons[0].classList).toContain('btn-primary');
+    const tabs = Array.from(page.querySelectorAll('label.tab'));
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(['Published', 'Ported']);
+    expect(page.querySelector<HTMLInputElement>('.tab input:checked')?.value).toBe('publisher');
     expect(page.textContent).toContain('No games available in the catalog.');
+  });
+
+  it('shows a section title instead of tabs when there is only one role', async () => {
+    const fixture = TestBed.createComponent(CompanyDetail);
+    const page: HTMLElement = fixture.nativeElement;
+    http.expectOne('/api/companies/1').flush({ ...company, roles: ['publisher'] });
+    http.expectOne('/api/companies/1/games?role=publisher').flush([]);
+    await fixture.whenStable();
+
+    expect(page.querySelector('.tabs')).toBeNull();
+    expect(page.querySelector('h2')?.textContent?.trim()).toBe('Published games');
   });
 });

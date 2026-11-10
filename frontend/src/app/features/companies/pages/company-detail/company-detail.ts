@@ -1,4 +1,4 @@
-import { ViewportScroller } from '@angular/common';
+import { NgTemplateOutlet, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,7 +21,7 @@ import { CompanyService } from '../../services/company.service';
 
 @Component({
   selector: 'app-company-detail',
-  imports: [RouterLink, GameCover],
+  imports: [RouterLink, GameCover, NgTemplateOutlet],
   templateUrl: './company-detail.html',
 })
 export class CompanyDetail {

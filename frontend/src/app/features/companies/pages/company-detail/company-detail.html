@@ -46,31 +46,47 @@
       </div>
     </header>
 
-    <section class="card border border-base-content/10 bg-base-100/80 p-5 sm:p-6">
-      <h2 class="text-[1.375rem] font-semibold">Games</h2>
-      @if (company.roles.length) {
-        <div class="mt-4 flex flex-wrap gap-2">
+    @if (company.roles.length > 1) {
+      <section>
+        <h2 class="mb-3 text-[1.375rem] font-semibold">Games</h2>
+        <div class="tabs tabs-lift">
           @for (role of company.roles; track role) {
-            <button type="button" class="btn btn-sm"
-                    [class.btn-primary]="selectedRole() === role"
-                    [class.btn-soft]="selectedRole() === role"
-                    [class.btn-ghost]="selectedRole() !== role"
-                    (click)="selectRole(role)">
+            <label class="tab px-1.5 text-sm font-medium sm:px-4 sm:text-base">
+              <input type="radio" name="company-game-role" [value]="role"
+                     [checked]="selectedRole() === role" (change)="selectRole(role)" />
               {{ roleLabels[role] }}
-            </button>
+            </label>
+            <div class="tab-content border-base-300 bg-base-100 p-5 sm:p-6">
+              @if (selectedRole() === role) {
+                <ng-container *ngTemplateOutlet="gameList" />
+              }
+            </div>
           }
         </div>
-      }
+      </section>
+    } @else {
+      <section class="card border border-base-content/10 bg-base-100/80 p-5 sm:p-6">
+        <h2 class="mb-3 text-[1.375rem] font-semibold">
+          @if (selectedRole(); as role) {
+            {{ roleLabels[role] }} games
+          } @else {
+            Games
+          }
+        </h2>
+        <ng-container *ngTemplateOutlet="gameList" />
+      </section>
+    }
 
+    <ng-template #gameList>
       @if (gamesLoading()) {
-        <div class="mt-5 flex items-center gap-2 text-sm text-base-content/60">
+        <div class="flex items-center gap-2 text-sm text-base-content/60">
           <span class="loading loading-spinner loading-sm"></span>
           <p>Loading games…</p>
         </div>
       } @else if (gamesError()) {
-        <p class="mt-5 text-sm text-base-content/60">Unable to load these games.</p>
+        <p class="text-sm text-base-content/60">Unable to load these games.</p>
       } @else if (games().length) {
-        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           @for (game of games(); track game.id) {
             <a class="flex min-w-0 items-center gap-3 rounded-lg p-2 transition-colors hover:bg-base-content/5"
                [routerLink]="['/game', game.id]">
@@ -80,8 +96,8 @@
           }
         </div>
       } @else {
-        <p class="mt-5 text-sm text-base-content/60">No games available in the catalog.</p>
+        <p class="text-sm text-base-content/60">No games available in the catalog.</p>
       }
-    </section>
+    </ng-template>
   }
 </div>
