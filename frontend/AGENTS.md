@@ -167,7 +167,8 @@ button, or an outside click closes it. Related-game covers only navigate.
 `features/companies/pages/company-detail/` provides the public, lazy-loaded
 `/company/:id` route. Game credits link to it by internal company ID. The page
 uses `GET /api/companies/{id}` for the logo, name, optional display-ready
-founding date and country, and ordered available roles. The first available role
+founding date and country, and ordered available roles. Missing founding dates
+and countries display a dash. The first available role
 is selected by default. Changing roles fetches its unpaginated game list from
 `GET /api/companies/{id}/games?role=…` and cancels the previous request.
 Game results link back to `/game/:id`.
