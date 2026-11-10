@@ -125,10 +125,13 @@ codes produce a null `country`.
 
 `roles` lists the roles with at least one game in the local catalog, in display
 order: `developer`, `publisher`, `porting`, `supporting`.
-`GET /api/companies/{id}/games?role=developer` returns an unpaginated array of
+`GET /api/companies/{id}/games?role=developer&page=0&size=24` returns a page of
 `GameSummaryDto` records for the requested role, sorted by name and internal ID.
+The response contains `items`, `page`, `size`, `totalElements` and `totalPages`.
+Page numbers start at zero. The default size is 24 and the maximum is 100.
 A game can appear under multiple roles. A known company with no matches returns
-an empty array. Missing or invalid roles return 400, and unknown companies return 404.
+an empty page. Invalid pagination and missing or invalid roles return 400.
+Unknown companies return 404.
 
 GameRelationDto contains relationType and a GameSummaryDto with id,
 igdbId, name and coverImageId; they do not recursively include related games.

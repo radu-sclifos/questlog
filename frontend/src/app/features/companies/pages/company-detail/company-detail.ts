@@ -1,6 +1,6 @@
 import { NgTemplateOutlet, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,10 +10,12 @@ import {
   EMPTY,
   finalize,
   map,
+  of,
   startWith,
   Subject,
   switchMap,
 } from 'rxjs';
+import { Page } from '../../../../shared/search/page';
 import { GameCover } from '../../../games/components/game-cover/game-cover';
 import { GameSummary } from '../../../games/models/game';
 import { Company, CompanyRole } from '../../models/company';
@@ -30,6 +32,8 @@ export class CompanyDetail {
   private readonly title = inject(Title);
   private readonly viewportScroller = inject(ViewportScroller);
   private readonly roleSelection = new Subject<CompanyRole>();
+  private readonly pageSelection = new Subject<number>();
+  private readonly gamesSection = viewChild<ElementRef<HTMLElement>>('gamesSection');
 
   protected readonly roleLabels: Record<CompanyRole, string> = {
     developer: 'Developed',
@@ -50,7 +54,8 @@ export class CompanyDetail {
       : null;
   });
   protected readonly selectedRole = signal<CompanyRole | null>(null);
-  protected readonly games = signal<GameSummary[]>([]);
+  protected readonly gamesPage = signal<Page<GameSummary> | null>(null);
+  protected readonly games = computed(() => this.gamesPage()?.items ?? []);
   protected readonly gamesLoading = signal(false);
   protected readonly gamesError = signal(false);
 
@@ -72,18 +77,32 @@ export class CompanyDetail {
               return this.roleSelection.pipe(
                 startWith(firstRole),
                 distinctUntilChanged(),
-                switchMap((role) => this.loadGames(company.id, role)),
+                switchMap((role) => {
+                  this.selectedRole.set(role);
+                  return this.pageSelection.pipe(
+                    startWith(0),
+                    switchMap((page) => this.loadGames(company.id, role, page)),
+                  );
+                }),
               );
             }),
           ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((games) => this.games.set(games));
+      .subscribe((page) => this.gamesPage.set(page));
   }
 
   protected selectRole(role: CompanyRole): void {
     this.roleSelection.next(role);
+  }
+
+  protected selectPage(page: number): void {
+    const current = this.gamesPage();
+    if (!current || page < 0 || page >= current.totalPages || page === current.page) return;
+
+    this.gamesSection()?.nativeElement.scrollIntoView();
+    this.pageSelection.next(page);
   }
 
   private loadCompany(id: string) {
@@ -94,7 +113,7 @@ export class CompanyDetail {
     this.notFound.set(false);
     this.logoFailed.set(false);
     this.selectedRole.set(null);
-    this.games.set([]);
+    this.gamesPage.set(null);
     this.gamesError.set(false);
 
     const companyId = Number(id);
@@ -118,13 +137,15 @@ export class CompanyDetail {
     );
   }
 
-  private loadGames(id: number, role: CompanyRole) {
-    this.selectedRole.set(role);
-    this.games.set([]);
+  private loadGames(id: number, role: CompanyRole, page: number) {
+    this.gamesPage.set(null);
     this.gamesError.set(false);
     this.gamesLoading.set(true);
 
-    return this.companies.findGames(id, role).pipe(
+    return this.companies.findGames(id, role, page).pipe(
+      switchMap((result) =>
+        page > 0 && page >= result.totalPages ? this.companies.findGames(id, role, 0) : of(result),
+      ),
       catchError(() => {
         this.gamesError.set(true);
         return EMPTY;

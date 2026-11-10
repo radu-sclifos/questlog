@@ -169,6 +169,7 @@ button, or an outside click closes it. Related-game covers only navigate.
 uses `GET /api/companies/{id}` for the logo, name, optional display-ready
 founding date and country, and ordered available roles. Missing founding dates
 and countries display a dash. The first available role
-is selected by default. Changing roles fetches its unpaginated game list from
-`GET /api/companies/{id}/games?role=…` and cancels the previous request.
+is selected by default. Changing roles resets to page zero and cancels the
+previous request. `GET /api/companies/{id}/games?role=…&page=…` returns 24 games
+per page by default. Controls below the grid appear only for multiple pages.
 Game results link back to `/game/:id`.

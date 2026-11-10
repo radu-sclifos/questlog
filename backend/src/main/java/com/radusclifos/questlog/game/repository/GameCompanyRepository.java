@@ -2,13 +2,14 @@ package com.radusclifos.questlog.game.repository;
 
 import com.radusclifos.questlog.game.GameCompany;
 import com.radusclifos.questlog.game.dto.GameSummaryDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface GameCompanyRepository extends JpaRepository<GameCompany, Long> {
 
@@ -33,7 +34,7 @@ public interface GameCompanyRepository extends JpaRepository<GameCompany, Long> 
             )
             order by lower(g.name), g.id
             """)
-    List<GameSummaryDto> findGameSummariesByCompanyAndRole(Long companyId, String role);
+    Page<GameSummaryDto> findGameSummariesByCompanyAndRole(Long companyId, String role, Pageable pageable);
 
     @Modifying
     @Query("delete from GameCompany c where c.game.id in :gameIds")

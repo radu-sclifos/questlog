@@ -2,12 +2,13 @@ package com.radusclifos.questlog.company.service;
 
 import com.radusclifos.questlog.company.CompanyRole;
 import com.radusclifos.questlog.company.dto.CompanyDetailDto;
+import com.radusclifos.questlog.company.dto.CompanyGamePage;
 import com.radusclifos.questlog.company.repository.CompanyRepository;
-import com.radusclifos.questlog.game.dto.GameSummaryDto;
 import com.radusclifos.questlog.game.repository.GameCompanyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,10 @@ public class CompanyService {
                 company.getLogoImageId(), availableRoles(id));
     }
 
-    public List<GameSummaryDto> findGames(Long id, String role) {
+    public CompanyGamePage findGames(Long id, String role, int page, int size) {
+        if (page < 0 || size < 1 || size > 100 || (long) page * size > Integer.MAX_VALUE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
+        }
         CompanyRole companyRole;
 
         try {
@@ -60,7 +64,8 @@ public class CompanyService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found");
         }
 
-        return gameCompanies.findGameSummariesByCompanyAndRole(id, companyRole.value());
+        return new CompanyGamePage(gameCompanies.findGameSummariesByCompanyAndRole(
+                id, companyRole.value(), PageRequest.of(page, size)));
     }
 
     private List<CompanyRole> availableRoles(Long companyId) {

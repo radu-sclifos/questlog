@@ -54,19 +54,36 @@ class CompanyGamesIntegrationTests {
         mvc.perform(get(companyUrl)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles", contains("developer", "publisher", "porting")));
         mvc.perform(get(gamesUrl).param("role", "developer")).andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("alpha", "Zelda")));
+                .andExpect(jsonPath("$.items[*].name", contains("alpha", "Zelda")))
+                .andExpect(jsonPath("$.size").value(24));
+        mvc.perform(get(gamesUrl).param("role", "developer").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[*].name", contains("alpha")))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2));
+        mvc.perform(get(gamesUrl).param("role", "developer").param("page", "1").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[*].name", contains("Zelda")))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.totalPages").value(2));
         mvc.perform(get(gamesUrl).param("role", "publisher")).andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("Zelda")));
+                .andExpect(jsonPath("$.items[*].name", contains("Zelda")));
         mvc.perform(get(gamesUrl).param("role", "porting")).andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("Port")));
+                .andExpect(jsonPath("$.items[*].name", contains("Port")));
         mvc.perform(get(gamesUrl).param("role", "supporting")).andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.totalPages").value(0));
         mvc.perform(get("/companies/{id}/games", other.getId()).param("role", "supporting"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[*].name", contains("Unrelated")));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[*].name", contains("Unrelated")));
         mvc.perform(get("/companies/{id}", empty.getId())).andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles").isEmpty());
         mvc.perform(get(gamesUrl)).andExpect(status().isBadRequest());
         mvc.perform(get(gamesUrl).param("role", "unknown")).andExpect(status().isBadRequest());
+        mvc.perform(get(gamesUrl).param("role", "developer").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(gamesUrl).param("role", "developer").param("size", "101"))
+                .andExpect(status().isBadRequest());
         mvc.perform(get("/companies/{id}/games", Long.MAX_VALUE).param("role", "developer"))
                 .andExpect(status().isNotFound());
     }
