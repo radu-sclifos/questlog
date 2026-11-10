@@ -8,6 +8,7 @@ Built as a personal portfolio project, it combines an Angular frontend, a Spring
 
 - **Game catalog:** search games by name and view dedicated pages with covers, descriptions, platforms, studios, and related games.
 - **Personal library:** add, edit, and delete entries linked to catalog games, with duplicate detection and input validation.
+- **Company pages:** follow game credits to see a company's logo, founding date, and country when available, and browse the games it contributed to by role.
 - **Progress tracking:** record status, an optional rating from 0 to 10, playtime, reference platform, ownership, achievements, and personal notes.
 - **Library browsing:** search, filter, sort, and paginate entries in your own library or another user's public library.
 - **Personal profiles:** customize your profile and avatar, choose favorite games, and display currently playing titles and summary statistics.
@@ -55,7 +56,7 @@ See [backend testing](backend/docs/TESTING.md) for setup, isolation and commands
 
 ## Project Status
 
-The core features are implemented: catalog integration, authentication, personal libraries, public profiles, game detail pages, and game and user search.
+The core features are implemented: catalog integration, authentication, personal libraries, public profiles, game and company detail pages, and game and user search.
 
 QuestLog is being prepared for its first 1.0 release and a small closed trial. Deployment setup and release documentation are still being finalized. Self-service account registration is not currently available.
 
