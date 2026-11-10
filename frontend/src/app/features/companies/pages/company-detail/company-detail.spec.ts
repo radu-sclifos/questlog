@@ -78,14 +78,15 @@ describe('CompanyDetail', () => {
     expect(page.textContent).toContain('No games available in the catalog.');
   });
 
-  it('shows a section title instead of tabs when there is only one role', async () => {
+  it('shows the selected tab when there is only one role', async () => {
     const fixture = TestBed.createComponent(CompanyDetail);
     const page: HTMLElement = fixture.nativeElement;
     http.expectOne('/api/companies/1').flush({ ...company, roles: ['publisher'] });
     http.expectOne('/api/companies/1/games?role=publisher').flush([]);
     await fixture.whenStable();
 
-    expect(page.querySelector('.tabs')).toBeNull();
-    expect(page.querySelector('h2')?.textContent?.trim()).toBe('Published games');
+    expect(page.querySelectorAll('label.tab')).toHaveLength(1);
+    expect(page.querySelector('label.tab')?.textContent?.trim()).toBe('Published');
+    expect(page.querySelector<HTMLInputElement>('.tab input:checked')?.value).toBe('publisher');
   });
 });

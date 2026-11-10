@@ -46,7 +46,7 @@
       </div>
     </header>
 
-    @if (company.roles.length > 1) {
+    @if (company.roles.length) {
       <section>
         <h2 class="mb-3 text-[1.375rem] font-semibold">Games</h2>
         <div class="tabs tabs-lift">
@@ -66,13 +66,7 @@
       </section>
     } @else {
       <section class="card border border-base-content/10 bg-base-100/80 py-5 sm:py-6">
-        <h2 class="mb-3 px-5 text-[1.375rem] font-semibold sm:px-6">
-          @if (selectedRole(); as role) {
-            {{ roleLabels[role] }} games
-          } @else {
-            Games
-          }
-        </h2>
+        <h2 class="mb-3 px-5 text-[1.375rem] font-semibold sm:px-6">Games</h2>
         <ng-container *ngTemplateOutlet="gameList" />
       </section>
     }
