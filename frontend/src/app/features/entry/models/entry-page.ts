@@ -1,9 +1,4 @@
+import { Page } from '../../../shared/search/page';
 import { Entry } from './entry';
 
-export interface EntryPage {
-  items: Entry[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
+export type EntryPage = Page<Entry>;

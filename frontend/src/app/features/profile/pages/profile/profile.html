@@ -126,7 +126,10 @@
           <div class="profile-playing">
             @for (entry of user.currentlyPlaying; track entry.game.id) {
               <a class="group block min-w-0 text-center" [routerLink]="['/game', entry.game.id]">
-                <app-game-cover class="block" [imageId]="entry.game.coverImageId" />
+                <app-game-cover
+                  class="block rounded-lg group-hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-200 motion-safe:group-hover:scale-103"
+                  [imageId]="entry.game.coverImageId"
+                />
                 <h3 class="mt-3 wrap-break-word text-sm font-semibold group-hover:text-primary">{{ entry.game.name }}</h3>
               </a>
             }
@@ -166,7 +169,10 @@
           <div class="profile-favorites">
             @for (game of user.favorites; track game.id) {
               <a class="group block min-w-0" [routerLink]="['/game', game.id]">
-                <app-game-cover [imageId]="game.coverImageId" />
+                <app-game-cover
+                  class="block rounded-lg group-hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-200 motion-safe:group-hover:scale-103"
+                  [imageId]="game.coverImageId"
+                />
                 <h3 class="mt-3 wrap-break-word text-sm font-semibold group-hover:text-primary">{{ game.name }}</h3>
               </a>
             }

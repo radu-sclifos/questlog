@@ -120,6 +120,12 @@ No page maps survive completion or rollback, and no full company/platform/engine
 franchise tables are cached. This reduces lookup round trips even if every
 company in the page is different; it does not eliminate the association writes.
 
+Game requests also expand each involved company's country, founding date,
+date format text (`start_date_format.format`), and logo image ID. The importer saves these optional fields in
+`companies` in the same transaction as the game. Existing companies gain
+metadata when an associated game is imported again. A company-only change is
+picked up the next time a game that references it is imported.
+
 Before the first game page of each execution, the importer fetches the complete
 genres and game_types dictionaries (normally one request each, with pagination
 if necessary). HTTP calls run outside database transactions. Both dictionaries

@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.company.Company;
 import com.radusclifos.questlog.support.PostgresTest;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;

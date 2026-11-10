@@ -34,6 +34,12 @@ export const routes: Routes = [
       import('./features/games/pages/game-detail/game-detail').then((m) => m.GameDetail),
   },
   {
+    path: 'company/:id',
+    title: 'Company - QuestLog',
+    loadComponent: () =>
+      import('./features/companies/pages/company-detail/company-detail').then((m) => m.CompanyDetail),
+  },
+  {
     path: '**',
     redirectTo: ''
   },

@@ -8,14 +8,21 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
+
+interface TextLink {
+  name: string;
+  route: (string | number)[];
+}
 
 @Component({
   selector: '[app-expandable-text]',
+  imports: [RouterLink],
   templateUrl: './expandable-text.html',
 })
 export class ExpandableText {
   readonly label = input.required<string>();
-  readonly value = input.required<string | readonly string[]>();
+  readonly value = input.required<string | readonly (string | TextLink)[]>();
   protected readonly values = computed(() => {
     const value = this.value();
     if (typeof value === 'string') return [value];

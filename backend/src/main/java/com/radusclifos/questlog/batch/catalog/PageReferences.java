@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.batch.catalog;
 
+import com.radusclifos.questlog.company.Company;
 import com.radusclifos.questlog.game.*;
 
 import java.util.Map;

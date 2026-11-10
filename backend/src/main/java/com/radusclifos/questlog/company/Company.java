@@ -1,4 +1,4 @@
-package com.radusclifos.questlog.game;
+package com.radusclifos.questlog.company;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Entity
 @BatchSize(size = 100)
@@ -25,6 +27,16 @@ public class Company {
 
     @Column(nullable = false, columnDefinition = "text")
     private String name;
+
+    private Integer countryCode;
+
+    private LocalDate foundedDate;
+
+    @Column(columnDefinition = "text")
+    private String foundedDateFormat;
+
+    @Column(columnDefinition = "text")
+    private String logoImageId;
 
     public Company(String name) {
         if (name == null || name.isBlank()) {

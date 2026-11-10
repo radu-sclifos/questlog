@@ -48,7 +48,7 @@
     }
 
     <!-- Entry cards -->
-    <div class="library-layout" [class.has-pagination]="entryPage.totalPages > 1 && !errorMessage()">
+    <div class="library-layout" [class.has-pagination]="hasPagination()">
       <div class="min-w-0">
         @for (entry of entryPage.items; track entry.id) {
           <app-entry-card [entry]="entry" [canEdit]="canEdit()" (editRequested)="editorDialog.open($event)"
@@ -57,7 +57,7 @@
       </div>
 
       <!-- Pagination Controls -->
-      @if (entryPage.totalPages > 1 && !errorMessage()) {
+      @if (hasPagination()) {
         <aside class="pagination-rail">
           <nav #paginationControls class="pagination-controls border border-base-300 bg-base-100 rounded-box">
             <span class="pagination-caption text-xs text-base-content/60">PAGE</span>

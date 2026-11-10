@@ -111,6 +111,28 @@ platforms, genres, engines, franchises, series, involvedCompanies and relations.
 GenreDto, PlatformDto, EngineDto, FranchiseDto, SeriesDto, GameTypeDto and
 CompanyDto contain id, igdbId and name. GameCompanyDto contains the
 company reference plus developer, publisher, porting and supporting flags.
+The reference contains the internal ID, IGDB ID and name. The API omits the
+country, founding date and logo fields stored in `companies`.
+
+`GET /api/companies/{id}` returns public company details by internal ID, or 404
+if the company does not exist. The response includes `id`, `igdbId`, `name`,
+`country`, `foundedDate`, `logoImageId` and `roles`. The founding date is a display string
+(`dd/MM/yyyy`, `MM/yyyy`, or `yyyy`) or null when unavailable. Existing numeric
+format references display only the year until an associated game is reimported
+with the expanded format. The backend
+looks up the English country name in its bundled UN M49 data. Missing or unknown
+codes produce a null `country`.
+
+`roles` lists the roles with at least one game in the local catalog, in display
+order: `developer`, `publisher`, `porting`, `supporting`.
+`GET /api/companies/{id}/games?role=developer&page=0&size=24` returns a page of
+`GameSummaryDto` records for the requested role, sorted by name and internal ID.
+The response contains `items`, `page`, `size`, `totalElements` and `totalPages`.
+Page numbers start at zero. The default size is 24 and the maximum is 100.
+A game can appear under multiple roles. A known company with no matches returns
+an empty page. Invalid pagination and missing or invalid roles return 400.
+Unknown companies return 404.
+
 GameRelationDto contains relationType and a GameSummaryDto with id,
 igdbId, name and coverImageId; they do not recursively include related games.
 Missing collections are returned as empty arrays and optional metadata as null.

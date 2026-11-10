@@ -1,6 +1,7 @@
 package com.radusclifos.questlog.batch.catalog;
 
 import com.radusclifos.questlog.QuestlogApplication;
+import com.radusclifos.questlog.company.repository.CompanyRepository;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbClient;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;
@@ -201,7 +202,8 @@ class CatalogImportJobTests {
 
         var companyId = jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class);
         writer.writePage(List.of(game(1, "Updated", """
-                ,"involved_companies":[{"company":{"id":1001,"name":"Renamed"},"publisher":true}]
+                ,"involved_companies":[{"company":{"id":1001,"name":"Renamed","country":56,
+                  "start_date":-1,"start_date_format":{"id":2,"format":"YYYY"},"logo":{"image_id":"studio_logo"}},"publisher":true}]
                 """)));
         assertEquals(companyId, jdbc.queryForObject("select id from companies where igdb_id=1001", Long.class));
         assertEquals("Renamed", jdbc.queryForObject("select name from companies where igdb_id=1001", String.class));
@@ -209,6 +211,21 @@ class CatalogImportJobTests {
         assertEquals(19, count("game_platforms"));
         assertEquals(Boolean.TRUE, jdbc.queryForObject("select publisher from game_companies where company_id=?", Boolean.class, companyId));
         assertEquals(Boolean.FALSE, jdbc.queryForObject("select developer from game_companies where company_id=?", Boolean.class, companyId));
+
+        var metadata = jdbc.queryForMap("select * from companies where id = ?", companyId);
+        assertEquals(56, metadata.get("country_code"));
+        assertEquals(java.sql.Date.valueOf("1969-12-31"), metadata.get("founded_date"));
+        assertEquals("YYYY", metadata.get("founded_date_format"));
+        assertEquals("studio_logo", metadata.get("logo_image_id"));
+
+        writer.writePage(List.of(game(1, "Updated again", """
+                ,"involved_companies":[{"company":{"id":1001,"name":"Renamed","country":250},"publisher":true}]
+                """)));
+        var updated = jdbc.queryForMap("select * from companies where id = ?", companyId);
+        assertEquals(250, updated.get("country_code"));
+        assertNull(updated.get("founded_date"));
+        assertNull(updated.get("founded_date_format"));
+        assertNull(updated.get("logo_image_id"));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.radusclifos.questlog.batch.catalog;
 
+import com.radusclifos.questlog.company.Company;
+import com.radusclifos.questlog.company.repository.CompanyRepository;
 import com.radusclifos.questlog.game.*;
 import com.radusclifos.questlog.game.repository.*;
 import com.radusclifos.questlog.integration.igdb.IgdbGame;
@@ -8,12 +10,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Finds shared catalog records, such as platforms and companies, using the IGDB ID from a IgdbReference.
+ * Finds shared catalog records, such as platforms and companies, using their IGDB IDs.
  * Genres and game types are synchronized before the first game page and resolved from memory.
  * Other references are created or updated as games arrive, preserving their internal IDs.
  */
@@ -166,9 +170,9 @@ public class CatalogReferenceResolver {
         return series;
     }
 
-    public Company company(IgdbReference source, PageReferences page) {
+    public Company company(IgdbGame.CompanyReference source, PageReferences page) {
         if (source == null) return null;
-        validate(source, "Company");
+        validate(source.id(), source.name(), "Company");
 
         var company = page.companies().computeIfAbsent(source.id(), ignored -> {
             var created = new Company(source.name());
@@ -176,6 +180,11 @@ public class CatalogReferenceResolver {
             return companies.save(created);
         });
         company.setName(source.name().strip());
+        company.setCountryCode(source.country());
+        company.setFoundedDate(source.startDate() == null ? null
+                : Instant.ofEpochSecond(source.startDate()).atZone(ZoneOffset.UTC).toLocalDate());
+        company.setFoundedDateFormat(source.startDateFormat());
+        company.setLogoImageId(source.logoImageId());
         return company;
     }
 
@@ -188,7 +197,11 @@ public class CatalogReferenceResolver {
     }
 
     private void validate(IgdbReference source, String type) {
-        if (source.id() == null || source.id() < 0 || source.name() == null || source.name().isBlank()) {
+        validate(source.id(), source.name(), type);
+    }
+
+    private void validate(Long id, String name, String type) {
+        if (id == null || id < 0 || name == null || name.isBlank()) {
             throw new IllegalArgumentException("Missing expanded IGDB " + type + " metadata");
         }
     }

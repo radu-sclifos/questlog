@@ -37,7 +37,7 @@ conventions change, without turning them into an activity log.
 | Shell | `src/app/app.html` | Main container, router outlet, global toasts |
 | Global navbar | `src/app/shared/navbar/` | Sticky top bar except on login; session menu with profile, library, and logout |
 | Navbar search | `src/app/shared/navbar/components/navbar-search/` | Games/Users, minimum 3 characters, 300 ms debounce, up to 6 results with images; `/api/games/suggestions` and `/api/users/suggestions?name=...&limit=6`; second row below 768 px |
-| Routes | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, `/user/:username`, home redirect |
+| Routes | `src/app/app.routes.ts` | `/login`, `/list/:username`, `/game/:id`, `/company/:id`, `/user/:username`, home redirect |
 | Authentication | `src/app/features/auth/` | Login, session service, interceptor, guards |
 | Library | `src/app/features/entry/pages/entry-list/` | Search, pagination, UI permissions, refresh after CRUD |
 | Entry components | `src/app/features/entry/components/` | Filter header, expandable cards, editor/delete dialogs, status badge |
@@ -161,3 +161,15 @@ button still toggle details; links are not nested inside the expansion button.
 The main cover enables `GameCover.zoomable`: it opens a native dialog with daisyUI
 modal classes, an IGDB `t_1080p` image, and a darkened backdrop. Escape, the close
 button, or an outside click closes it. Related-game covers only navigate.
+
+## Company detail page
+
+`features/companies/pages/company-detail/` provides the public, lazy-loaded
+`/company/:id` route. Game credits link to it by internal company ID. The page
+uses `GET /api/companies/{id}` for the logo, name, optional display-ready
+founding date and country, and ordered available roles. Missing founding dates
+and countries display a dash. The first available role
+is selected by default. Changing roles resets to page zero and cancels the
+previous request. `GET /api/companies/{id}/games?role=…&page=…` returns 24 games
+per page by default. Controls below the grid appear only for multiple pages.
+Game results link back to `/game/:id`.

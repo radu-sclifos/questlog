@@ -1,5 +1,6 @@
 package com.radusclifos.questlog.game;
 
+import com.radusclifos.questlog.company.Company;
 import com.radusclifos.questlog.game.service.GameService;
 import com.radusclifos.questlog.shared.search.FilterCriteria;
 import com.radusclifos.questlog.shared.search.FilterOperator;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +34,9 @@ class GameServiceIntegrationTests {
     @Autowired
     PlatformTransactionManager transactions;
 
+    @Autowired
+    JsonMapper jsonMapper;
+
     @Test
     void returnsCompleteResponsesAfterTheTransactionClosesWithoutRecursiveGames() {
         var id = new TransactionTemplate(transactions).execute(status -> {
@@ -47,6 +52,11 @@ class GameServiceIntegrationTests {
             var franchise = new Franchise("Forgotten Realms");
             var series = new Series("Baldur's Gate");
             var company = new Company("Larian");
+            company.setIgdbId(42L);
+            company.setCountryCode(56);
+            company.setFoundedDate(LocalDate.of(1996, 1, 1));
+            company.setFoundedDateFormat("YYYY");
+            company.setLogoImageId("larian_logo");
             var type = new GameType("Main Game");
             for (var reference : List.of(genre, platform, engine, franchise, series, company, type))
                 em.persist(reference);
@@ -89,6 +99,12 @@ class GameServiceIntegrationTests {
         assertTrue(involvement.isPublisher());
         assertFalse(involvement.isPorting());
         assertFalse(involvement.isSupporting());
+        var companyJson = jsonMapper.valueToTree(response)
+                .path("involvedCompanies").path(0).path("company");
+        assertEquals(3, companyJson.size());
+        assertTrue(companyJson.has("id"));
+        assertEquals(42L, companyJson.path("igdbId").longValue());
+        assertEquals("Larian", companyJson.path("name").stringValue());
         assertEquals(GameRelationType.REMAKE, response.getRelations().getFirst().getRelationType());
         assertEquals("Related game", response.getRelations().getFirst().getGame().getName());
         var criteria = new SearchCriteria(List.of(new FilterCriteria("id", FilterOperator.EQUAL, id)), List.of());

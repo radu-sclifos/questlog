@@ -18,7 +18,9 @@ public class IgdbClient {
             fields name,summary,storyline,first_release_date,
             game_type.type,cover.image_id,platforms.name,genres.name,game_engines.name,
             franchises.name,collections.name,
-            involved_companies.company.name,involved_companies.developer,
+            involved_companies.company.name,involved_companies.company.country,
+            involved_companies.company.start_date,involved_companies.company.start_date_format.format,
+            involved_companies.company.logo.image_id,involved_companies.developer,
             involved_companies.publisher,involved_companies.porting,involved_companies.supporting,
             version_title,parent_game,version_parent,dlcs,expansions,standalone_expansions,
             remakes,remasters,ports,expanded_games,forks;
