@@ -7,6 +7,7 @@ import { Title } from '@angular/platform-browser';
 import { catchError, distinctUntilChanged, EMPTY, finalize, map, switchMap } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import { Game, GameRelationType } from '../../models/game';
+import { CompanyRole } from '../../../companies/models/company';
 import { sortPlatforms } from '../../models/platform-order';
 import { GameCover } from '../../components/game-cover/game-cover';
 import { ExpandableText } from '../../components/expandable-text/expandable-text';
@@ -41,17 +42,17 @@ export class GameDetail {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly notFound = signal(false);
-  protected readonly developers = computed(() => this.companyNames('developer').join(', '));
+  protected readonly developers = computed(() => this.companyLinks('developer'));
   protected readonly detailFields = computed(() => {
     const game = this.game();
     if (!game) {
       return [];
     }
-    const porting = this.companyNames('porting');
-    const supporting = this.companyNames('supporting');
+    const porting = this.companyLinks('porting');
+    const supporting = this.companyLinks('supporting');
     return [
-      { label: 'Developer', value: this.companyNames('developer') },
-      { label: 'Publisher', value: this.companyNames('publisher') },
+      { label: 'Developer', value: this.developers() },
+      { label: 'Publisher', value: this.companyLinks('publisher') },
       ...(porting.length || supporting.length
         ? [
             { label: 'Porting', value: porting },
@@ -125,9 +126,12 @@ export class GameDetail {
     return values.map((value) => value.name);
   }
 
-  private companyNames(role: 'developer' | 'publisher' | 'porting' | 'supporting'): string[] {
+  private companyLinks(role: CompanyRole) {
     return (this.game()?.involvedCompanies ?? [])
       .filter((company) => company[role])
-      .map((company) => company.company.name);
+      .map(({ company }) => ({
+        name: company.name,
+        route: ['/company', company.id],
+      }));
   }
 }
